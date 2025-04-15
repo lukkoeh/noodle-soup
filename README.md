@@ -1,2 +1,3 @@
-# noodle-soup
-Learning Management System with extra MSG
+![NOODLES](noodle-soup.png)
+# Noodle-Soup
+Learning Management System with extra MSG for great taste
