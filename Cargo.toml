@@ -1,0 +1,8 @@
+[package]
+name = "noodle-soup"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.8.3"
+axum-login = "0.17.0"
