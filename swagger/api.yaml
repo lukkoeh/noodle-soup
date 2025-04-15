@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  title: Noodle Backend
+  version: "1.0"
+  description: This is a Server concept for the Noodle learning management system backend
+tags:
+  - name: user
+    description: Operations about user
+security:
+  - basicAuth: []
+paths:
+  /cats/images:
+    get:
+      tags:
+        - cat
+      summary: get a random cat image
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatImage'
+        '404':
+          description: no image was found.
+  /cats/facts:
+    get:
+      tags:
+        - cat
+      summary: get random cat fact.
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatFact'
+        '404':
+          description: no fact was found
+  /cats/images/search:
+    get:
+      tags:
+        - cat
+      summary: searches for images that mach query.
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          description: search value
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatImageList'
+        '404':
+          description: no images found.
+  /cats/images/upload:
+    post:
+      security:
+        - basicAuth: []
+      tags:
+        - cat
+      summary: enables api Users to upload images
+      requestBody:
+        description: Image to upload
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                catImage:
+                  type: string
+                  format: binary
+                imageDescription:
+                  type: string
+            encoding:
+              catImage:
+                contentType: image/png, image/jpeg
+      responses:
+        '201':
+          description: upload successful
+        '400':
+          description: bad request
+        '401':
+          description: you are not authorized.
+        '500':
+          description: internal server error
+
+  /cats/facts/upload:
+    post:
+      security:
+        - basicAuth: []
+      tags:
+        - cat
+      summary: enables api Users to upload facts
+      requestBody:
+        description: Fact to upload
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fact:
+                  type: string
+      responses:
+        '201':
+          description: upload successful
+        '400':
+          description: bad request
+        '401':
+          description: you are not authorized.
+        '500':
+          description: internal server error
+
+  /user:
+    post:
+      tags:
+        - user
+      summary: Create user
+      requestBody:
+        description: Created user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: successful operation
+        '400':
+          description: invalid username / password
+        '500':
+          description: internal server error
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+  schemas:
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+          example: theUser
+        email:
+          type: string
+          example: john@email.com
+        password:
+          type: string
+          example: '12345'
+    CatImage:
+      required:
+        - url
+      type: object
+      properties:
+        url:
+          type: string
+          example: "https://pxhere.com/en/photo/609263"
+        description:
+          type: string
+          example: "Image of a Tiger"
+    CatImageList:
+      required:
+        - url
+        - description
+      type: array
+      items:
+        type: object
+        properties:
+          url:
+            type: string
+            example: "https://pxhere.com/en/photo/609263"
+          description:
+            type: string
+            example: "Image of a Tiger."
+
+    CatFact:
+      required:
+        - fact
+      type: object
+      properties:
+        fact:
+          type: string
+          example: "cats are not small elephants"
