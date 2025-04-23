@@ -2,147 +2,182 @@ openapi: 3.0.3
 info:
   title: Noodle Backend
   version: "1.0"
-  description: This is a Server concept for the Noodle learning management system backend
+  description: This is a server concept for the Noodle learning management system backend
 tags:
   - name: user
     description: Operations about user
 security:
-  - basicAuth: []
+  - cookieAuth: [ ]
 paths:
-  /cats/images:
+  /users/{userId}:
     get:
       tags:
-        - cat
-      summary: get a random cat image
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CatImage'
-        '404':
-          description: no image was found.
-  /cats/facts:
-    get:
-      tags:
-        - cat
-      summary: get random cat fact.
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CatFact'
-        '404':
-          description: no fact was found
-  /cats/images/search:
-    get:
-      tags:
-        - cat
-      summary: searches for images that mach query.
+        - user
+      summary: Retrieve user data
       parameters:
-        - in: query
-          name: q
+        - in: path
+          name: userId
           schema:
-            type: string
-          description: search value
+            type: integer
+          required: true
       responses:
         '200':
-          description: Successful operation
+          description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CatImageList'
-        '404':
-          description: no images found.
-  /cats/images/upload:
-    post:
-      security:
-        - basicAuth: []
-      tags:
-        - cat
-      summary: enables api Users to upload images
-      requestBody:
-        description: Image to upload
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                catImage:
-                  type: string
-                  format: binary
-                imageDescription:
-                  type: string
-            encoding:
-              catImage:
-                contentType: image/png, image/jpeg
-      responses:
-        '201':
-          description: upload successful
+                $ref: '#/components/schemas/UserProfile'
         '400':
-          description: bad request
+          description: Malformed request
         '401':
-          description: you are not authorized.
+          description: You're not allowed to access user data
         '500':
           description: internal server error
-
-  /cats/facts/upload:
-    post:
-      security:
-        - basicAuth: []
+    patch:
       tags:
-        - cat
-      summary: enables api Users to upload facts
-      requestBody:
-        description: Fact to upload
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                fact:
-                  type: string
+        - user
+      summary: Change user data
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
       responses:
-        '201':
-          description: upload successful
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
         '400':
-          description: bad request
+          description: Malformed request
         '401':
-          description: you are not authorized.
+          description: You're not allowed to access user data
         '500':
           description: internal server error
-
+    delete:
+      tags:
+        - user
+      summary: Delete user
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Malformed request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid userId"
+        '401':
+          description: You're not allowed to access user data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "You are not authorized."
+        '500':
+          description: internal server error
   /user:
+    get:
+      tags:
+        - user
+      summary: Retrieve your user data
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Malformed request
+        '401':
+          description: You're not allowed to access user data
+        '500':
+          description: internal server error
     post:
       tags:
         - user
       summary: Create user
       requestBody:
-        description: Created user object
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/User'
       responses:
-        '201':
+        '200':
           description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "This email is already taken."
         '400':
-          description: invalid username / password
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "The password is too weak"
+        '401':
+          description: You're not allowed to access user data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "You are not authorized."
         '500':
           description: internal server error
+
 components:
   securitySchemes:
-    basicAuth:
-      type: http
-      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie,
+      name: BLOODLESSNESS
   schemas:
     User:
       type: object
       properties:
-        username:
+        firstname:
+          type: string
+          example: theUser
+        lastname:
           type: string
           example: theUser
         email:
@@ -151,37 +186,18 @@ components:
         password:
           type: string
           example: '12345'
-    CatImage:
-      required:
-        - url
+    UserProfile:
       type: object
       properties:
-        url:
+        userId:
+          type: integer
+          example: 69
+        firstname:
           type: string
-          example: "https://pxhere.com/en/photo/609263"
-        description:
+          example: theUser
+        lastname:
           type: string
-          example: "Image of a Tiger"
-    CatImageList:
-      required:
-        - url
-        - description
-      type: array
-      items:
-        type: object
-        properties:
-          url:
-            type: string
-            example: "https://pxhere.com/en/photo/609263"
-          description:
-            type: string
-            example: "Image of a Tiger."
-
-    CatFact:
-      required:
-        - fact
-      type: object
-      properties:
-        fact:
+          example: theUser
+        email:
           type: string
-          example: "cats are not small elephants"
+          example: john@email.com
