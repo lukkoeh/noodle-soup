@@ -30,7 +30,7 @@ paths:
         '400':
           description: Malformed request
         '401':
-          description: You're not allowed to access user data
+          description: You're not allowed to access user data.
         '500':
           description: internal server error
     patch:
@@ -52,8 +52,14 @@ paths:
                 $ref: '#/components/schemas/UserProfile'
         '400':
           description: Malformed request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailValidation'
         '401':
-          description: You're not allowed to access user data
+          description: You're not allowed to access user data.
+        '409':
+          description: Email is already taken.
         '500':
           description: internal server error
     delete:
@@ -71,24 +77,8 @@ paths:
           description: successful operation
         '400':
           description: Malformed request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Invalid userId"
         '401':
-          description: You're not allowed to access user data
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "You are not authorized."
+          description: You're not allowed to access user data.
         '500':
           description: internal server error
   /user:
@@ -106,7 +96,7 @@ paths:
         '400':
           description: Malformed request
         '401':
-          description: You're not allowed to access user data
+          description: You're not allowed to access user data.
         '500':
           description: internal server error
     post:
@@ -126,35 +116,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserProfile'
         '409':
-          description: User already exists
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "This email is already taken."
+          description: User already exists.
         '400':
           description: Invalid request
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "The password is too weak"
+                $ref: '#/components/schemas/CredentialsValidation'
         '401':
-          description: You're not allowed to access user data
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "You are not authorized."
+          description: You're not allowed to access user data.
         '500':
           description: internal server error
 
@@ -192,6 +162,43 @@ components:
         lastname:
           type: string
           example: theUser
+    CredentialsValidation:
+      type: object
+      properties:
         email:
-          type: string
-          example: john@email.com
+          $ref: '#/components/schemas/EmailValidation'
+        password:
+          $ref: '#/components/schemas/PasswordValidation'
+    PasswordValidation:
+      type: object
+      properties:
+        tooShort:
+          type: boolean
+          example: true
+        uppercaseMissing:
+          type: boolean
+          example: false
+        lowercaseMissing:
+          type: boolean
+          example: true
+        digitMissing:
+          type: boolean
+          example: false
+        specialMissing:
+          type: boolean
+          example: true
+    EmailValidation:
+      type: object
+      properties:
+        tooShort:
+          type: boolean
+          example: true
+        tooLong:
+          type: boolean
+          example: false
+        illegalChar:
+          type: boolean
+          example: true
+        invalidFormat:
+          type: boolean
+          example: false
