@@ -58,11 +58,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = tokio::net::TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 3000))).await?;
 
     let app = Router::new()
-        .route("/user", get(user::get_self_handler))
-        .route("/user", post(user::create_user_handler))
-        .route("/user/{id}", get(user::get_user_handler))
-        .route("/user/{id}", patch(user::change_user_handler))
-        .route("/user/{id}", delete(user::delete_user_handler))
+        .route("/user", get(user::http::fetch_self))
+        .route("/user", post(user::http::create))
+        .route("/user/{id}", get(user::http::fetch))
+        .route("/user/{id}", patch(user::http::update))
+        .route("/user/{id}", delete(user::http::delete))
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary
         .route("/login", post(auth::create_session_handler))

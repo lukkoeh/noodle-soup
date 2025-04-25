@@ -1,10 +1,3 @@
-use axum::{
-    Json,
-    extract::{Path, State},
-    http::StatusCode,
-    response::{IntoResponse, Response},
-};
-use axum_login::AuthSession;
 use serde::Deserialize;
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -50,188 +43,191 @@ pub struct New {
     pub(crate) password: String,
 }
 
-pub async fn delete_user_handler(
-    Path(id): Path<i64>,
-    State(state): State<crate::AppState>,
-) -> StatusCode {
-    match sqlx::query("DELETE FROM \"user\" WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await
-    {
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        Ok(num) => {
-            if num.rows_affected() < 1 {
-                StatusCode::BAD_REQUEST
-            } else {
-                StatusCode::OK
-            }
-        }
-    }
-}
+pub mod http {
+    use super::{New, Profile, validation};
+    use axum::{
+        Json,
+        extract::{Path, State},
+        http::StatusCode,
+        response::{IntoResponse, Response},
+    };
+    use axum_login::AuthSession;
 
-pub async fn change_user_handler(
-    Path(id): Path<i64>,
-    State(state): State<crate::AppState>,
-    Json(profile): Json<Profile>,
-) -> Response {
-    let mail_validation = validation::email(&profile.email);
-    if !mail_validation.is_valid() {
-        return (StatusCode::BAD_REQUEST, Json(mail_validation)).into_response();
-    }
-    match sqlx::query_as::<_, (i64,)>("SELECT id FROM \"user\" WHERE email = $1")
-        .bind(&profile.email)
-        .fetch_optional(&state.db)
-        .await
-    {
-        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-        Ok(Some(i)) => {
-            if i.0 != id {
-                return (
-                    StatusCode::CONFLICT,
-                    Json(crate::Message {
-                        message: "Mail is already taken".into(),
-                    }),
-                )
-                    .into_response();
-            }
-        }
-        _ => {}
-    }
-    if let Err(_) =
-        sqlx::query("UPDATE \"user\" SET firstname = $1, lastname = $2, email = $3 WHERE id = $4")
-            .bind(&profile.firstname)
-            .bind(&profile.lastname)
-            .bind(&profile.email)
+    pub async fn delete(Path(id): Path<i64>, State(state): State<crate::AppState>) -> StatusCode {
+        match sqlx::query("DELETE FROM \"user\" WHERE id = $1")
             .bind(id)
             .execute(&state.db)
             .await
-    {
-        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        {
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(num) => {
+                if num.rows_affected() < 1 {
+                    StatusCode::BAD_REQUEST
+                } else {
+                    StatusCode::OK
+                }
+            }
+        }
     }
-    return Json(Profile::new(
-        id,
-        profile.firstname,
-        profile.lastname,
-        profile.email,
-    ))
-    .into_response();
-}
+    pub async fn update(
+        Path(id): Path<i64>,
+        State(state): State<crate::AppState>,
+        Json(profile): Json<Profile>,
+    ) -> Response {
+        let mail_validation = validation::email(&profile.email);
+        if !mail_validation.is_valid() {
+            return (StatusCode::BAD_REQUEST, Json(mail_validation)).into_response();
+        }
+        match sqlx::query_as::<_, (i64,)>("SELECT id FROM \"user\" WHERE email = $1")
+            .bind(&profile.email)
+            .fetch_optional(&state.db)
+            .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(Some(i)) => {
+                if i.0 != id {
+                    return (
+                        StatusCode::CONFLICT,
+                        Json(crate::Message {
+                            message: "Mail is already taken".into(),
+                        }),
+                    )
+                        .into_response();
+                }
+            }
+            _ => {}
+        }
+        if let Err(_) = sqlx::query(
+            "UPDATE \"user\" SET firstname = $1, lastname = $2, email = $3 WHERE id = $4",
+        )
+        .bind(&profile.firstname)
+        .bind(&profile.lastname)
+        .bind(&profile.email)
+        .bind(id)
+        .execute(&state.db)
+        .await
+        {
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        }
+        return Json(Profile::new(
+            id,
+            profile.firstname,
+            profile.lastname,
+            profile.email,
+        ))
+        .into_response();
+    }
 
-pub async fn get_user_handler(
-    Path(id): Path<i64>,
-    State(state): State<crate::AppState>,
-) -> Response {
-    let user: Result<Option<(i64, String, String, String)>, _> =
-        sqlx::query_as("SELECT id, firstname, lastname, email FROM \"user\" WHERE id = $1")
-            .bind(id)
+    pub async fn fetch(Path(id): Path<i64>, State(state): State<crate::AppState>) -> Response {
+        let user: Result<Option<(i64, String, String, String)>, _> =
+            sqlx::query_as("SELECT id, firstname, lastname, email FROM \"user\" WHERE id = $1")
+                .bind(id)
+                .fetch_optional(&state.db)
+                .await;
+
+        if let Err(_) = user {
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        }
+        if let Some(u) = user.unwrap() {
+            Json(Profile::new(u.0, u.1, u.2, u.3)).into_response()
+        } else {
+            StatusCode::NOT_FOUND.into_response()
+        }
+    }
+
+    pub async fn create(State(state): State<crate::AppState>, Json(user): Json<New>) -> Response {
+        let result = sqlx::query("SELECT 1 FROM \"user\" WHERE email = $1")
+            .bind(&user.email)
             .fetch_optional(&state.db)
             .await;
+        match result {
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(Some(_)) => StatusCode::CONFLICT.into_response(),
+            Ok(None) => {
+                let validation = validation::credentials(&user.email, &user.password);
+                if !validation.is_valid() {
+                    return (StatusCode::BAD_REQUEST, Json(validation)).into_response();
+                }
 
-    if let Err(_) = user {
-        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-    }
-    if let Some(u) = user.unwrap() {
-        Json(Profile::new(u.0, u.1, u.2, u.3)).into_response()
-    } else {
-        StatusCode::NOT_FOUND.into_response()
-    }
-}
+                let hashed = tokio::task::spawn_blocking(|| {
+                    bcrypt::hash(user.password, bcrypt::DEFAULT_COST)
+                })
+                .await;
 
-pub async fn create_user_handler(
-    State(state): State<crate::AppState>,
-    Json(user): Json<New>,
-) -> Response {
-    let result = sqlx::query("SELECT 1 FROM \"user\" WHERE email = $1")
-        .bind(&user.email)
-        .fetch_optional(&state.db)
-        .await;
-    match result {
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-        Ok(Some(_)) => StatusCode::CONFLICT.into_response(),
-        Ok(None) => {
-            let validation = validation::credentials(&user.email, &user.password);
-            if !validation.is_valid() {
-                return (StatusCode::BAD_REQUEST, Json(validation)).into_response();
-            }
+                if let Ok(pw) = hashed {
+                    if let Err(_) = pw {
+                        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                    };
 
-            let hashed =
-                tokio::task::spawn_blocking(|| bcrypt::hash(user.password, bcrypt::DEFAULT_COST))
-                    .await;
-
-            if let Ok(pw) = hashed {
-                if let Err(_) = pw {
-                    return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-                };
-
-                let result =sqlx::query("INSERT INTO \"user\" (firstname, lastname, email, password) VALUES ($1, $2, $3, $4)")
+                    let result =sqlx::query("INSERT INTO \"user\" (firstname, lastname, email, password) VALUES ($1, $2, $3, $4)")
                     .bind(&user.firstname)
                     .bind(&user.lastname)
                     .bind(&user.email)
                     .bind(pw.unwrap())
                     .execute(&state.db).await;
-                if let Err(_) = result {
-                    return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                    if let Err(_) = result {
+                        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                    }
+                    let result: Result<Option<(i64,)>, _> =
+                        sqlx::query_as("SELECT id FROM \"user\" WHERE email = $1")
+                            .bind(&user.email)
+                            .fetch_optional(&state.db)
+                            .await;
+                    if let Err(_) | Ok(None) = result {
+                        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                    }
+                    (
+                        StatusCode::CREATED,
+                        Json(Profile::new(
+                            result.unwrap().unwrap().0,
+                            user.firstname,
+                            user.lastname,
+                            user.email,
+                        )),
+                    )
+                        .into_response()
+                } else {
+                    StatusCode::INTERNAL_SERVER_ERROR.into_response()
                 }
-                let result: Result<Option<(i64,)>, _> =
-                    sqlx::query_as("SELECT id FROM \"user\" WHERE email = $1")
-                        .bind(&user.email)
-                        .fetch_optional(&state.db)
-                        .await;
-                if let Err(_) | Ok(None) = result {
-                    return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-                }
-                (
-                    StatusCode::CREATED,
-                    Json(Profile::new(
-                        result.unwrap().unwrap().0,
-                        user.firstname,
-                        user.lastname,
-                        user.email,
-                    )),
-                )
-                    .into_response()
-            } else {
-                StatusCode::INTERNAL_SERVER_ERROR.into_response()
             }
         }
     }
-}
 
-pub async fn get_self_handler(auth_session: AuthSession<crate::auth::Backend>) -> Json<Profile> {
-    let user = auth_session.user.unwrap();
-    Json(Profile::new(
-        user.user_id,
-        user.firstname,
-        user.lastname,
-        user.email,
-    ))
+    pub async fn fetch_self(auth_session: AuthSession<crate::auth::Backend>) -> Json<Profile> {
+        let user = auth_session.user.unwrap();
+        Json(Profile::new(
+            user.user_id,
+            user.firstname,
+            user.lastname,
+            user.email,
+        ))
+    }
 }
 
 mod validation {
     use serde::Serialize;
 
     #[derive(Serialize)]
-    pub struct Credentials {
-        email: Email,
-        password: Password,
+    pub struct CredentialsErrors {
+        email: EmailErrors,
+        password: PasswordErrors,
     }
 
-    impl Credentials {
+    impl CredentialsErrors {
         pub fn is_valid(&self) -> bool {
             self.email.is_valid() && self.password.is_valid()
         }
     }
 
-    pub fn credentials(email: &str, password: &str) -> Credentials {
-        Credentials {
+    pub fn credentials(email: &str, password: &str) -> CredentialsErrors {
+        CredentialsErrors {
             email: self::email(email),
             password: self::password(password),
         }
     }
 
     #[derive(Serialize)]
-    pub struct Password {
+    pub struct PasswordErrors {
         too_short: bool,
         uppercase_missing: bool,
         lowercase_missing: bool,
@@ -239,7 +235,7 @@ mod validation {
         special_missing: bool,
     }
 
-    impl Password {
+    impl PasswordErrors {
         pub fn is_valid(&self) -> bool {
             !self.too_short
                 && !self.uppercase_missing
@@ -249,8 +245,8 @@ mod validation {
         }
     }
 
-    pub fn password(password: &str) -> Password {
-        Password {
+    pub fn password(password: &str) -> PasswordErrors {
+        PasswordErrors {
             too_short: password.len() < 8,
             uppercase_missing: !password.contains(|c: char| c.is_ascii_uppercase()),
             lowercase_missing: !password.contains(|c: char| c.is_ascii_lowercase()),
@@ -262,20 +258,20 @@ mod validation {
     }
 
     #[derive(Serialize)]
-    pub struct Email {
+    pub struct EmailErrors {
         too_short: bool,
         too_long: bool,
         illegal_char: bool,
         invalid_format: bool,
     }
 
-    impl Email {
+    impl EmailErrors {
         pub fn is_valid(&self) -> bool {
             !self.too_short && !self.too_long && !self.illegal_char && !self.invalid_format
         }
     }
 
-    impl Default for Email {
+    impl Default for EmailErrors {
         fn default() -> Self {
             Self {
                 too_short: false,
@@ -286,8 +282,8 @@ mod validation {
         }
     }
 
-    pub fn email(email: &str) -> Email {
-        let mut status = Email::default();
+    pub fn email(email: &str) -> EmailErrors {
+        let mut status = EmailErrors::default();
         if email.len() < 3 {
             status.too_short = true
         }
