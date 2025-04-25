@@ -16,8 +16,9 @@ debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-.env
+server/.env
+client/target/
+server/target/
 
 # Added by cargo
-
 /target
