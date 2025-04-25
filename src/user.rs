@@ -86,13 +86,7 @@ pub mod http {
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
             Ok(Some(i)) => {
                 if i.0 != id {
-                    return (
-                        StatusCode::CONFLICT,
-                        Json(crate::Message {
-                            message: "Mail is already taken".into(),
-                        }),
-                    )
-                        .into_response();
+                    return StatusCode::CONFLICT.into_response();
                 }
             }
             _ => {}
