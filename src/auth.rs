@@ -57,7 +57,6 @@ impl error::Error for Error {
 impl AuthnBackend for Backend {
     type User = user::User;
     type Credentials = user::Credentials;
-    //TODO: proper error handling
     type Error = Error;
 
     async fn authenticate(

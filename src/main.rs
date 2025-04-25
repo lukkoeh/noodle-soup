@@ -5,17 +5,11 @@ use axum_login::{AuthManagerLayerBuilder, login_required};
 use dotenv::dotenv;
 use noodle_soup::AppState;
 use noodle_soup::{auth, user};
-use serde::Serialize;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::net::SocketAddr;
 use tokio::task::AbortHandle;
 use tower_sessions_sqlx_store::PostgresStore;
-
-#[derive(Serialize)]
-pub struct Message {
-    message: String,
-}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

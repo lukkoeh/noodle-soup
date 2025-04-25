@@ -75,18 +75,37 @@ pub async fn change_user_handler(
     State(state): State<crate::AppState>,
     Json(profile): Json<Profile>,
 ) -> Response {
-    //TODO: validation
-    if let Err(_) =
-        //TODO: Checken, ob neue E-mail bereits vergeben
-        sqlx::query(
-            "UPDATE \"user\" SET firstname = $1, lastname = $2, email = $3 WHERE id = $4",
-        )
-        .bind(&profile.firstname)
-        .bind(&profile.lastname)
+    let mail_validation = validation::email(&profile.email);
+    if !mail_validation.is_valid() {
+        return (StatusCode::BAD_REQUEST, Json(mail_validation)).into_response();
+    }
+    match sqlx::query_as::<_, (i64,)>("SELECT id FROM \"user\" WHERE email = $1")
         .bind(&profile.email)
-        .bind(id)
-        .execute(&state.db)
+        .fetch_optional(&state.db)
         .await
+    {
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Ok(Some(i)) => {
+            if i.0 != id {
+                return (
+                    StatusCode::CONFLICT,
+                    Json(crate::Message {
+                        message: "Mail is already taken".into(),
+                    }),
+                )
+                    .into_response();
+            }
+        }
+        _ => {}
+    }
+    if let Err(_) =
+        sqlx::query("UPDATE \"user\" SET firstname = $1, lastname = $2, email = $3 WHERE id = $4")
+            .bind(&profile.firstname)
+            .bind(&profile.lastname)
+            .bind(&profile.email)
+            .bind(id)
+            .execute(&state.db)
+            .await
     {
         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
     }
@@ -123,7 +142,6 @@ pub async fn create_user_handler(
     State(state): State<crate::AppState>,
     Json(user): Json<New>,
 ) -> Response {
-    //TODO: validation
     let result = sqlx::query("SELECT 1 FROM \"user\" WHERE email = $1")
         .bind(&user.email)
         .fetch_optional(&state.db)
@@ -132,6 +150,11 @@ pub async fn create_user_handler(
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         Ok(Some(_)) => StatusCode::CONFLICT.into_response(),
         Ok(None) => {
+            let validation = validation::credentials(&user.email, &user.password);
+            if !validation.is_valid() {
+                return (StatusCode::BAD_REQUEST, Json(validation)).into_response();
+            }
+
             let hashed =
                 tokio::task::spawn_blocking(|| bcrypt::hash(user.password, bcrypt::DEFAULT_COST))
                     .await;
@@ -183,4 +206,107 @@ pub async fn get_self_handler(auth_session: AuthSession<crate::auth::Backend>) -
         user.lastname,
         user.email,
     ))
+}
+
+mod validation {
+    use serde::Serialize;
+
+    #[derive(Serialize)]
+    pub struct Credentials {
+        email: Email,
+        password: Password,
+    }
+
+    impl Credentials {
+        pub fn is_valid(&self) -> bool {
+            self.email.is_valid() && self.password.is_valid()
+        }
+    }
+
+    pub fn credentials(email: &str, password: &str) -> Credentials {
+        Credentials {
+            email: self::email(email),
+            password: self::password(password),
+        }
+    }
+
+    #[derive(Serialize)]
+    pub struct Password {
+        too_short: bool,
+        uppercase_missing: bool,
+        lowercase_missing: bool,
+        digit_missing: bool,
+        special_missing: bool,
+    }
+
+    impl Password {
+        pub fn is_valid(&self) -> bool {
+            !self.too_short
+                && !self.uppercase_missing
+                && !self.lowercase_missing
+                && !self.digit_missing
+                && !self.special_missing
+        }
+    }
+
+    pub fn password(password: &str) -> Password {
+        Password {
+            too_short: password.len() < 8,
+            uppercase_missing: !password.contains(|c: char| c.is_ascii_uppercase()),
+            lowercase_missing: !password.contains(|c: char| c.is_ascii_lowercase()),
+            digit_missing: !password.contains(|c: char| c.is_ascii_digit()),
+            special_missing: !password.contains(|c: char| {
+                !c.is_ascii_uppercase() && !c.is_ascii_lowercase() && !c.is_ascii_digit()
+            }),
+        }
+    }
+
+    #[derive(Serialize)]
+    pub struct Email {
+        too_short: bool,
+        too_long: bool,
+        illegal_char: bool,
+        invalid_format: bool,
+    }
+
+    impl Email {
+        pub fn is_valid(&self) -> bool {
+            !self.too_short && !self.too_long && !self.illegal_char && !self.invalid_format
+        }
+    }
+
+    impl Default for Email {
+        fn default() -> Self {
+            Self {
+                too_short: false,
+                too_long: false,
+                illegal_char: false,
+                invalid_format: false,
+            }
+        }
+    }
+
+    pub fn email(email: &str) -> Email {
+        let mut status = Email::default();
+        if email.len() < 3 {
+            status.too_short = true
+        }
+        if email.len() > 255 {
+            status.too_long = true
+        }
+        if email.contains([' ', '\t', '\n']) {
+            status.illegal_char = true
+        }
+        match email.find('@') {
+            Some(at) => {
+                status.invalid_format =
+                    at == 0 || at == (email.len() - 1) || email[at + 1..].contains('@');
+                status
+            }
+            None => {
+                status.invalid_format = true;
+                status
+            }
+        }
+    }
 }
