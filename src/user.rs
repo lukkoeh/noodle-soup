@@ -221,6 +221,7 @@ mod validation {
     }
 
     #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
     pub struct PasswordErrors {
         too_short: bool,
         uppercase_missing: bool,
@@ -252,6 +253,7 @@ mod validation {
     }
 
     #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
     pub struct EmailErrors {
         too_short: bool,
         too_long: bool,
