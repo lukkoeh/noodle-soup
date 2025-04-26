@@ -1,0 +1,9 @@
+[package]
+name = "libnoodle-search"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+fastembed = "4.7.0"
+sqlite-vec = "0.1.6"
+
