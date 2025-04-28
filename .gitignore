@@ -16,9 +16,9 @@ debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-server/.env
-client/target/
-server/target/
+noodle-server/.env
+noodle-client/target/
+noodle-server/target/
 
 # Added by cargo
 /target
