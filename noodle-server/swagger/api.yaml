@@ -6,6 +6,10 @@ info:
 tags:
   - name: user
     description: Operations about user
+  - name: role
+    description: Operations about permission groups (roles)
+  - name: group
+    description: Operations about user groups
 security:
   - cookieAuth: [ ]
 paths:
@@ -31,6 +35,8 @@ paths:
           description: Malformed request
         '401':
           description: You're not allowed to access user data.
+        '404':
+          description: User not found.
         '500':
           description: internal server error
     patch:
@@ -81,6 +87,248 @@ paths:
           description: You're not allowed to access user data.
         '500':
           description: internal server error
+  /users/{userId}/roles:
+    get:
+      tags:
+        - user
+      summary: Get roles of user
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+        '400':
+          description: Malformed request
+        '401':
+          description: You're not allowed to access this user's role data.
+        '404':
+          description: User not found.
+        '500':
+          description: internal server error
+    put:
+      tags:
+        - user
+      summary: Replace roles of user
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              description: Role IDs
+              items:
+                type: integer
+              example: [5,3,2]
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+        '400':
+          description: Malformed request
+        '401':
+          description: You're not allowed to access this user's role data.
+        '404':
+          description: User not found.
+        '500':
+          description: internal server error
+    post:
+      tags:
+        - user
+      summary: Assign user to role(s)
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              description: Role IDs
+              items:
+                type: integer
+              example: [5,3,2]
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+        '400':
+          description: Malformed request
+        '401':
+          description: You're not allowed to access this user's role data.
+        '404':
+          description: User not found.
+        '500':
+          description: internal server error
+    delete:
+      tags:
+        - user
+      summary: Delete all roles of user
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Malformed request
+        '401':
+          description: You're not allowed to access this user's role data.
+        '404':
+          description: User not found.
+        '500':
+          description: internal server error
+  /users/{userId}/groups:
+    get:
+      tags:
+        - user
+      summary: Get groups of user
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserGroup'
+        '400':
+          description: Malformed request
+        '401':
+          description: You're not allowed to access this user's group data.
+        '404':
+          description: User not found.
+        '500':
+          description: internal server error
+    put:
+      tags:
+        - user
+      summary: Replace groups of user
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              description: User group IDs
+              items:
+                type: integer
+              example: [6,4,1]
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserGroup'
+        '400':
+          description: Malformed request
+        '401':
+          description: You're not allowed to access this user's group data.
+        '404':
+          description: User not found.
+        '500':
+          description: internal server error
+    post:
+      tags:
+        - user
+      summary: Assign user to group(s)
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              description: User group IDs
+              items:
+                type: integer
+              example: [6,2,3]
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserGroup'
+        '400':
+          description: Malformed request
+        '401':
+          description: You're not allowed to access this user's role data.
+        '404':
+          description: User not found.
+        '500':
+          description: internal server error
+    delete:
+      tags:
+        - user
+      summary: Delete all groups of user
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Malformed request
+        '401':
+          description: You're not allowed to access this user's group data.
+        '404':
+          description: User not found.
+        '500':
+          description: internal server error
   /user:
     get:
       tags:
@@ -127,7 +375,272 @@ paths:
           description: You're not allowed to access user data.
         '500':
           description: internal server error
-
+  /roles/{roleId}:
+    get:
+      tags:
+        - role
+      summary: Get role by ID
+      parameters:
+        - in: path
+          name: roleId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '400':
+          description: Invalid request
+        '401':
+          description: Access Denied.
+        '404':
+          description: Role not found.
+        '500':
+          description: internal server error
+    patch:
+      tags:
+        - role
+      summary: Edit role
+      parameters:
+        - in: path
+          name: roleId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleDescription'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '400':
+          description: Invalid request
+        '401':
+          description: Access Denied.
+        '404':
+          description: Role not found.
+        '500':
+          description: internal server error
+    delete:
+      tags:
+        - role
+      summary: Delete role
+      parameters:
+        - in: path
+          name: roleId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid request
+        '401':
+          description: Access Denied.
+        '404':
+          description: Role not found.
+        '500':
+          description: internal server error
+  /roles:
+    get:
+      tags:
+        - role
+      summary: Get your role(s)
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '400':
+          description: Invalid request
+        '401':
+          description: Access Denied.
+        '500':
+          description: internal server error
+    post:
+      tags:
+        - role
+      summary: Create role
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleDescription'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '409':
+          description: Role already exists.
+        '400':
+          description: Invalid request
+        '401':
+          description: Access Denied.
+        '500':
+          description: internal server error
+  /groups/{groupId}:
+    get:
+      tags:
+        - group
+      summary: Get user group by ID
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+        '400':
+          description: Invalid request
+        '401':
+          description: Access Denied.
+        '404':
+          description: Group not found.
+        '500':
+          description: internal server error
+    patch:
+      tags:
+        - group
+      summary: Edit user group
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroupDescription'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+        '400':
+          description: Invalid request
+        '401':
+          description: Access Denied.
+        '404':
+          description: Group not found.
+        '500':
+          description: internal server error
+    delete:
+      tags:
+        - group
+      summary: Delete user group
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid request
+        '401':
+          description: Access Denied.
+        '404':
+          description: Group not found.
+        '500':
+          description: internal server error
+  /groups/{groupId}/users:
+    get:
+      tags:
+        - group
+      summary: Get users in group
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Invalid request
+        '401':
+          description: Access Denied.
+        '404':
+          description: Group not found.
+        '500':
+          description: internal server error
+  /groups:
+    get:
+      tags:
+        - group
+      summary: Get the user group(s) you're in
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+        '400':
+          description: Invalid request
+        '401':
+          description: Access Denied.
+        '500':
+          description: internal server error
+    post:
+      tags:
+        - group
+      summary: Create user group
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroupDescription'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+        '409':
+          description: User group already exists.
+        '400':
+          description: Invalid request
+        '401':
+          description: Access Denied.
+        '500':
+          description: internal server error
 components:
   securitySchemes:
     cookieAuth:
@@ -162,6 +675,9 @@ components:
         lastname:
           type: string
           example: theUser
+        email:
+          type: string
+          example: john@email.com
     CredentialsValidation:
       type: object
       properties:
@@ -202,3 +718,52 @@ components:
         invalidFormat:
           type: boolean
           example: false
+    RoleDescription:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Dozent"
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+          example: "[{subject: \"user\", ops: 0b1100}, {subject: \"role\", 0b0011}]"
+    Role:
+      allOf:
+        - type: object
+          properties:
+            roleId:
+              type: integer
+              example: 1
+        - $ref: '#/components/schemas/RoleDescription'
+    Permission:
+      type: object
+      properties:
+        subject:
+          type: string
+          description: type of resource to be managed
+          example: "user"
+        ops:
+          type: integer
+          description: "4 bit integer (0 - 15), 1st (rightmost) bit: create, 2nd bit: read, 3rd bit: update, 4th bit: 
+          delete"
+          example: 0b1001
+    UserGroupDescription:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Psychologie"
+        type:
+          type: string
+          example: "subject"
+    UserGroup:
+      allOf:
+        - type: object
+          properties:
+            groupId:
+              type: integer
+              example: 1
+        - $ref: '#/components/schemas/UserGroupDescription'
+      type: object
