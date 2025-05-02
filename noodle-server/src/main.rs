@@ -57,12 +57,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let listener = tokio::net::TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 3000))).await?;
 
+    use auth::permission;
     let app = Router::new()
         .route("/user", get(user::http::fetch_self))
         .route("/user", post(user::http::create))
         .route("/user/{id}", get(user::http::fetch))
         .route("/user/{id}", patch(user::http::update))
         .route("/user/{id}", delete(user::http::delete))
+        .route("/roles", post(permission::http::role::create))
+        .route("/roles", get(permission::http::role::get_all))
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary
         .route("/login", post(auth::create_session_handler))
