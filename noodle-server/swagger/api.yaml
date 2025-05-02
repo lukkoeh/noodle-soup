@@ -586,6 +586,12 @@ paths:
       tags:
         - role
       summary: Assign users(s) to role
+      parameters:
+        - in: path
+          name: roleId
+          schema:
+            type: integer
+          required: true
       requestBody:
         content:
           application/json:
@@ -813,6 +819,12 @@ paths:
       tags:
         - group
       summary: Assign users to user group
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: integer
+          required: true
       requestBody:
         content:
           application/json:
@@ -1006,8 +1018,7 @@ components:
           example: "user"
         ops:
           type: integer
-          description: "4 bit integer (0 - 15), 1st (rightmost) bit: create, 2nd bit: read, 3rd bit: update, 4th bit: 
-          delete"
+          description: "4 bit integer (0 - 15), 1st (rightmost) bit: create, 2nd bit: read, 3rd bit: update, 4th bit: delete"
           example: 0b1001
     UserGroupDescription:
       type: object
