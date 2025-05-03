@@ -1,9 +1,9 @@
 use serde::Deserialize;
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, sqlx::types::Type, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Profile {
-    pub user_id: i64,
+    pub id: i64,
     pub firstname: String,
     pub lastname: String,
     pub email: String,
@@ -12,7 +12,7 @@ pub struct Profile {
 impl Profile {
     pub fn new(user_id: i64, firstname: String, lastname: String, email: String) -> Self {
         Profile {
-            user_id,
+            id: user_id,
             firstname,
             lastname,
             email,

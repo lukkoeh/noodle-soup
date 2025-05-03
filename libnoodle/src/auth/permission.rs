@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use sqlx::Decode;
+use sqlx::{Decode, Postgres};
 
 use crate::resources;
 
@@ -94,6 +94,13 @@ pub struct GroupRow {
     name: String,
     kind: GroupKind,
     parent: Option<i64>,
+}
+
+pub fn add_user_to_group_query<'a>()
+-> sqlx::query::Query<'a, Postgres, <Postgres as sqlx::Database>::Arguments<'a>> {
+    sqlx::query(
+        "INSERT INTO \"user_in_group\"(user_id, group_id) SELECT * FROM UNNEST($1::bigserial[], $2::bigserial[])",
+    )
 }
 
 #[derive(Serialize, Deserialize)]

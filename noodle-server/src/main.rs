@@ -1,4 +1,4 @@
-use axum::routing::{delete, patch, post};
+use axum::routing::post;
 use axum::{Router, routing::get};
 use axum_login::tower_sessions::{ExpiredDeletion, SessionManagerLayer};
 use axum_login::{AuthManagerLayerBuilder, login_required};
@@ -41,10 +41,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         db: db_pool.clone(),
     };
 
+    //for testing only
     sqlx::raw_sql("DELETE FROM \"user\"")
         .execute(&db_pool)
         .await?;
 
+    //for testing only
     sqlx::raw_sql(&format!(
         "INSERT INTO \"user\" (firstname, lastname, email, password) VALUES ('{}', '{}', '{}', '{}');",
         &env::var("ADMIN_FIRSTNAME").unwrap(),
@@ -59,15 +61,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     use auth::permission;
     let app = Router::new()
-        .route("/user", get(user::http::fetch_self))
-        .route("/user", post(user::http::create))
-        .route("/user/{id}", get(user::http::fetch))
-        .route("/user/{id}", patch(user::http::update))
-        .route("/user/{id}", delete(user::http::delete))
-        .route("/roles", post(permission::http::role::create))
-        .route("/roles", get(permission::http::role::get_all))
-        .route("/groups", post(permission::http::group::create))
-        .route("/groups", get(permission::http::group::get_all))
+        .route(
+            "/user",
+            get(user::http::fetch_self).post(user::http::create),
+        )
+        .route(
+            "/users/{id}",
+            get(user::http::fetch)
+                .patch(user::http::update)
+                .delete(user::http::delete),
+        )
+        .route(
+            "/roles",
+            get(permission::http::role::get_all).post(permission::http::role::create),
+        )
+        .route(
+            "/groups",
+            get(permission::http::group::get_all).post(permission::http::group::create),
+        )
+        .route(
+            "/groups/{id}",
+            get(permission::http::group::get_by_id).delete(permission::http::group::delete),
+        )
+        .route(
+            "/groups/{id}/users",
+            get(permission::http::group::get_users)
+                .put(permission::http::group::replace_users)
+                .post(permission::http::group::add_users)
+                .delete(permission::http::group::delete_users),
+        )
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary
         .route("/login", post(auth::create_session_handler))
