@@ -70,4 +70,37 @@ impl From<Role> for RoleDescription {
     }
 }
 
+#[derive(Serialize, Deserialize, sqlx::types::Type)]
+#[serde(rename_all = "snake_case")]
+#[sqlx(type_name = "group_kind", rename_all = "lowercase")]
+pub enum GroupKind {
+    Organization,
+    Learning,
+    Contact,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Group {
+    id: i64,
+    name: String,
+    kind: GroupKind,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    parent: Option<Box<Group>>,
+}
+
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
+pub struct GroupRow {
+    id: i64,
+    name: String,
+    kind: GroupKind,
+    parent: Option<i64>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GroupDescription {
+    name: String,
+    kind: GroupKind,
+    parent: Option<i64>,
+}
+
 pub mod http;

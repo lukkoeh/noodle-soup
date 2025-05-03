@@ -66,6 +66,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/user/{id}", delete(user::http::delete))
         .route("/roles", post(permission::http::role::create))
         .route("/roles", get(permission::http::role::get_all))
+        .route("/groups", post(permission::http::group::create))
+        .route("/groups", get(permission::http::group::get_all))
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary
         .route("/login", post(auth::create_session_handler))
