@@ -1,9 +1,9 @@
-DROP TABLE IF EXISTS "user";
-DROP TABLE IF EXISTS "role";
-DROP TABLE IF EXISTS "group";
-DROP TABLE IF EXISTS "user_has_role";
-DROP TABLE IF EXISTS "user_in_group";
 DROP TABLE IF EXISTS "user_has_permissions";
+DROP TABLE IF EXISTS "user_has_role";
+DROP TABLE IF EXISTS "role";
+DROP TABLE IF EXISTS "user_in_group";
+DROP TABLE IF EXISTS "group";
+DROP TABLE IF EXISTS "user";
 DROP TYPE IF EXISTS "group_kind";
 
 CREATE TABLE IF NOT EXISTS "user" (
@@ -28,21 +28,21 @@ CREATE TABLE IF NOT EXISTS "group" (
     "id" BIGSERIAL PRIMARY KEY,
     "kind" "group_kind",
     "name" VARCHAR(255) UNIQUE,
-    "parent" BIGINT REFERENCES "group"(id)
+    "parent" BIGINT REFERENCES "group"(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS "user_has_role" (
-    "user_id" BIGSERIAL REFERENCES "user",
-    "role_id" BIGSERIAL REFERENCES "role"
+    "user_id" BIGSERIAL REFERENCES "user" ON DELETE CASCADE,
+    "role_id" BIGSERIAL REFERENCES "role" ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "user_in_group" (
-    "user_id" BIGSERIAL REFERENCES "user",
-    "group_id" BIGSERIAL REFERENCES "group"
+    "user_id" BIGSERIAL REFERENCES "user" ON DELETE CASCADE,
+    "group_id" BIGSERIAL REFERENCES "group" ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "user_has_permissions" (
-    "user_id" BIGSERIAL REFERENCES "user",
+    "user_id" BIGSERIAL REFERENCES "user" ON DELETE CASCADE,
     "resource" VARCHAR(255) NOT NULL,
     "permission" SMALLINT DEFAULT 0
 );
