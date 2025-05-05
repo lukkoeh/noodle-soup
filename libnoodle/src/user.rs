@@ -44,6 +44,8 @@ pub struct New {
 }
 
 pub mod http {
+    use crate::auth::permission::{GroupRow, add_users_to_groups_query};
+
     use super::{New, Profile, validation};
     use axum::{
         Json,
@@ -69,6 +71,7 @@ pub mod http {
             }
         }
     }
+
     pub async fn update(
         Path(id): Path<i64>,
         State(state): State<crate::AppState>,
@@ -112,7 +115,7 @@ pub mod http {
         .into_response();
     }
 
-    pub async fn fetch(Path(id): Path<i64>, State(state): State<crate::AppState>) -> Response {
+    pub async fn get(Path(id): Path<i64>, State(state): State<crate::AppState>) -> Response {
         let user: Result<Option<(i64, String, String, String)>, _> =
             sqlx::query_as("SELECT id, firstname, lastname, email FROM \"user\" WHERE id = $1")
                 .bind(id)
@@ -187,7 +190,49 @@ pub mod http {
         }
     }
 
-    pub async fn fetch_self(auth_session: AuthSession<crate::auth::Backend>) -> Json<Profile> {
+    pub async fn add_to_groups(
+        Path(user_id): Path<i64>,
+        State(state): State<crate::AppState>,
+        Json(group_ids): Json<Vec<i64>>,
+    ) -> StatusCode {
+        if group_ids.len() < 1 {
+            return StatusCode::BAD_REQUEST;
+        }
+        match sqlx::query("SELECT 1 FROM \"user\" WHERE id = $1")
+            .bind(user_id)
+            .fetch_optional(&state.db)
+            .await
+        {
+            Ok(None) => return StatusCode::NOT_FOUND,
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(Some(_)) => {}
+        };
+        if group_ids.len() == 1 {
+            if let Err(_) =
+                sqlx::query("INSERT INTO \"user_in_group\"(user_id, group_id) VALUES ($1, $2)")
+                    .bind(user_id)
+                    .bind(group_ids[0])
+                    .execute(&state.db)
+                    .await
+            {
+                return StatusCode::INTERNAL_SERVER_ERROR;
+            }
+            return StatusCode::CREATED;
+        }
+        let mut user_ids = Vec::with_capacity(group_ids.len());
+        user_ids.fill(user_id);
+        match add_users_to_groups_query()
+            .bind(user_ids)
+            .bind(group_ids)
+            .execute(&state.db)
+            .await
+        {
+            Ok(_) => StatusCode::CREATED,
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    pub async fn get_self(auth_session: AuthSession<crate::auth::Backend>) -> Json<Profile> {
         let user = auth_session.user.unwrap();
         Json(Profile::new(
             user.user_id,
@@ -195,6 +240,101 @@ pub mod http {
             user.lastname,
             user.email,
         ))
+    }
+
+    pub async fn get_groups(
+        Path(user_id): Path<i64>,
+        State(state): State<crate::AppState>,
+    ) -> Response {
+        match GroupRow::from_user_id(&state.db, user_id).await {
+            Ok(g) => Json(g).into_response(),
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        }
+    }
+
+    pub async fn get_self_groups(
+        State(state): State<crate::AppState>,
+        auth_session: AuthSession<crate::auth::Backend>,
+    ) -> Response {
+        let user = auth_session.user.unwrap();
+        match GroupRow::from_user_id(&state.db, user.user_id).await {
+            Ok(g) => Json(g).into_response(),
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        }
+    }
+
+    pub async fn replace_groups(
+        Path(user_id): Path<i64>,
+        State(state): State<crate::AppState>,
+        Json(group_ids): Json<Vec<i64>>,
+    ) -> Response {
+        match sqlx::query_as::<_, (i32,)>("SELECT 1 FROM \"user\" WHERE id = $1")
+            .bind(user_id)
+            .fetch_optional(&state.db)
+            .await
+        {
+            Ok(Some(_)) => {
+                if group_ids.len() == 0 {
+                    return StatusCode::BAD_REQUEST.into_response();
+                } else {
+                    let Ok(mut transaction) = state.db.begin().await else {
+                        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                    };
+                    if let Err(_) = sqlx::query("DELETE FROM \"user_in_group\" WHERE user_id = $1")
+                        .bind(group_ids[0])
+                        .execute(&mut *transaction)
+                        .await
+                    {
+                        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                    }
+                    if group_ids.len() == 1 {
+                        if let Err(_) = sqlx::query(
+                            "INSERT INTO \"user_in_group\"(user_id, group_id) VALUES($1, $2)",
+                        )
+                        .bind(user_id)
+                        .bind(group_ids[0])
+                        .execute(&mut *transaction)
+                        .await
+                        {
+                            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                        }
+                    } else {
+                        let mut user_ids = Vec::with_capacity(group_ids.len());
+                        user_ids.fill(user_id);
+                        if let Err(_) = add_users_to_groups_query()
+                            .bind(&user_ids)
+                            .bind(&group_ids)
+                            .execute(&mut *transaction)
+                            .await
+                        {
+                            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                        }
+                    }
+                    if let Err(_) = transaction.commit().await {
+                        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                    }
+                    Json(group_ids).into_response()
+                }
+            }
+            Ok(None) => StatusCode::NOT_FOUND.into_response(),
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        }
+    }
+
+    pub async fn delete_groups(
+        Path(user_id): Path<i64>,
+        State(state): State<crate::AppState>,
+        Json(group_ids): Json<Vec<i64>>,
+    ) -> StatusCode {
+        match sqlx::query("DELETE FROM \"user_in_group\" WHERE group_id = ANY($1) AND user_id = $2")
+            .bind(group_ids)
+            .bind(user_id)
+            .execute(&state.db)
+            .await
+        {
+            Ok(_) => StatusCode::OK,
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
     }
 }
 

@@ -33,12 +33,14 @@ CREATE TABLE IF NOT EXISTS "group" (
 
 CREATE TABLE IF NOT EXISTS "user_has_role" (
     "user_id" BIGSERIAL REFERENCES "user" ON DELETE CASCADE,
-    "role_id" BIGSERIAL REFERENCES "role" ON DELETE CASCADE
+    "role_id" BIGSERIAL REFERENCES "role" ON DELETE CASCADE,
+    PRIMARY KEY ("user_id", "role_id")
 );
 
 CREATE TABLE IF NOT EXISTS "user_in_group" (
     "user_id" BIGSERIAL REFERENCES "user" ON DELETE CASCADE,
-    "group_id" BIGSERIAL REFERENCES "group" ON DELETE CASCADE
+    "group_id" BIGSERIAL REFERENCES "group" ON DELETE CASCADE,
+    PRIMARY KEY ("user_id", "group_id")
 );
 
 CREATE TABLE IF NOT EXISTS "user_has_permissions" (

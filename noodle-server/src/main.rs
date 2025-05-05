@@ -61,15 +61,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     use auth::permission;
     let app = Router::new()
-        .route(
-            "/user",
-            get(user::http::fetch_self).post(user::http::create),
-        )
+        .route("/user", get(user::http::get_self).post(user::http::create))
+        .route("/user/groups", get(user::http::get_self_groups))
         .route(
             "/users/{id}",
-            get(user::http::fetch)
+            get(user::http::get)
                 .patch(user::http::update)
                 .delete(user::http::delete),
+        )
+        .route(
+            "/users/{id}/groups",
+            get(user::http::get_groups)
+                .put(user::http::replace_groups)
+                .post(user::http::add_to_groups)
+                .delete(user::http::delete_groups),
         )
         .route(
             "/roles",
@@ -81,7 +86,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .route(
             "/groups/{id}",
-            get(permission::http::group::get_by_id).delete(permission::http::group::delete),
+            get(permission::http::group::get_by_id)
+                .patch(permission::http::group::update)
+                .delete(permission::http::group::delete),
         )
         .route(
             "/groups/{id}/users",

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use sqlx::{Decode, Postgres};
+use sqlx::{Decode, PgPool, Postgres};
 
 use crate::resources;
 
@@ -96,7 +96,16 @@ pub struct GroupRow {
     parent: Option<i64>,
 }
 
-pub fn add_user_to_group_query<'a>()
+impl GroupRow {
+    pub async fn from_user_id(db: &PgPool, user_id: i64) -> Result<Vec<Self>, sqlx::Error> {
+        match sqlx::query_as::<_, GroupRow>("SELECT id, \"name\", kind, parent FROM \"group\" LEFT JOIN user_in_group ON group_id = id WHERE user_id = $1").bind(user_id).fetch_all(db).await {
+            Ok(g) => Ok(g),
+            Err(e) => Err(e)
+        }
+    }
+}
+
+pub fn add_users_to_groups_query<'a>()
 -> sqlx::query::Query<'a, Postgres, <Postgres as sqlx::Database>::Arguments<'a>> {
     sqlx::query(
         "INSERT INTO \"user_in_group\"(user_id, group_id) SELECT * FROM UNNEST($1::bigserial[], $2::bigserial[])",

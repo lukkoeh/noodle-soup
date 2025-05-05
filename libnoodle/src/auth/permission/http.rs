@@ -69,7 +69,7 @@ pub mod group {
 
     use super::*;
     use crate::{
-        auth::permission::{GroupDescription, GroupRow, add_user_to_group_query},
+        auth::permission::{GroupDescription, GroupRow, add_users_to_groups_query},
         user,
     };
 
@@ -154,25 +154,58 @@ pub mod group {
         }
     }
 
+    pub async fn update(
+        Path(group_id): Path<i64>,
+        State(state): State<crate::AppState>,
+        Json(group): Json<GroupDescription>,
+    ) -> Response {
+        match sqlx::query("SELECT 1 FROM \"group\" WHERE id = $1")
+            .bind(group.parent)
+            .fetch_optional(&state.db)
+            .await
+        {
+            Ok(Some(_)) => {}
+            Ok(None) => return StatusCode::BAD_REQUEST.into_response(),
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        }
+        match sqlx::query(
+            "UPDATE \"group\" SET \"name\" = $1, kind = $2, parent = $3 WHERE id = $4",
+        )
+        .bind(&group.name)
+        .bind(&group.kind)
+        .bind(&group.parent)
+        .bind(group_id)
+        .execute(&state.db)
+        .await
+        {
+            Ok(r) => match r.rows_affected() {
+                0 => StatusCode::NOT_FOUND.into_response(),
+                1 => Json(group).into_response(),
+                _ => StatusCode::BAD_REQUEST.into_response(),
+            },
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        }
+    }
+
     pub async fn add_users(
         Path(group_id): Path<i64>,
         State(state): State<crate::AppState>,
-        Json(ids): Json<Vec<i64>>,
+        Json(user_ids): Json<Vec<i64>>,
     ) -> StatusCode {
+        if user_ids.len() < 1 {
+            return StatusCode::BAD_REQUEST;
+        }
         match sqlx::query_as::<_, (i32,)>("SELECT 1 FROM \"group\" WHERE id = $1")
             .bind(group_id)
             .fetch_optional(&state.db)
             .await
         {
             Ok(Some(_)) => {
-                if ids.len() < 1 {
-                    return StatusCode::BAD_REQUEST;
-                }
-                if ids.len() == 1 {
+                if user_ids.len() == 1 {
                     if let Err(_) = sqlx::query(
                         "INSERT INTO \"user_in_group\"(user_id, group_id) VALUES ($1, $2)",
                     )
-                    .bind(ids[0])
+                    .bind(user_ids[0])
                     .bind(group_id)
                     .execute(&state.db)
                     .await
@@ -182,10 +215,10 @@ pub mod group {
                     return StatusCode::CREATED;
                 }
 
-                let mut group_ids = Vec::with_capacity(ids.len());
+                let mut group_ids = Vec::with_capacity(user_ids.len());
                 group_ids.fill(group_id);
-                if let Err(_) = add_user_to_group_query()
-                    .bind(&ids)
+                if let Err(_) = add_users_to_groups_query()
+                    .bind(&user_ids)
                     .bind(group_ids)
                     .execute(&state.db)
                     .await
@@ -234,11 +267,10 @@ pub mod group {
                         {
                             return StatusCode::INTERNAL_SERVER_ERROR.into_response();
                         }
-                        Json(ids).into_response()
                     } else {
                         let mut group_ids = Vec::with_capacity(ids.len());
                         group_ids.fill(group_id);
-                        if let Err(_) = add_user_to_group_query()
+                        if let Err(_) = add_users_to_groups_query()
                             .bind(&ids)
                             .bind(&group_ids)
                             .execute(&mut *transaction)
@@ -246,12 +278,12 @@ pub mod group {
                         {
                             return StatusCode::INTERNAL_SERVER_ERROR.into_response();
                         }
-
-                        if let Err(_) = transaction.commit().await {
-                            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-                        }
-                        Json(ids).into_response()
                     }
+
+                    if let Err(_) = transaction.commit().await {
+                        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                    }
+                    Json(ids).into_response()
                 }
             }
             Ok(None) => StatusCode::NOT_FOUND.into_response(),
