@@ -63,6 +63,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .route("/user", get(user::http::get_self).post(user::http::create))
         .route("/user/groups", get(user::http::get_self_groups))
+        .route("/user/roles", get(user::http::get_self_roles))
         .route(
             "/users/{id}",
             get(user::http::get)
@@ -74,11 +75,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get(user::http::get_groups)
                 .put(user::http::replace_groups)
                 .post(user::http::add_to_groups)
-                .delete(user::http::delete_groups),
+                .delete(user::http::remove_from_groups),
+        )
+        .route(
+            "/users/{id}/roles",
+            get(user::http::get_roles)
+                .put(user::http::replace_roles) //TODO: Auch in entsprechender Gruppe
+                .post(user::http::assign_roles)
+                .delete(user::http::unassign_roles),
         )
         .route(
             "/roles",
             get(permission::http::role::get_all).post(permission::http::role::create),
+        )
+        .route(
+            "/roles/{id}",
+            get(permission::http::role::get_by_id)
+                .patch(permission::http::role::update)
+                .delete(permission::http::role::delete),
+        )
+        .route(
+            "/roles/{id}/users",
+            get(permission::http::role::get_users)
+                .put(permission::http::role::replace_users)
+                .post(permission::http::role::add_users)
+                .delete(permission::http::role::delete_users),
         )
         .route(
             "/groups",
