@@ -1,4 +1,4 @@
-use axum::routing::{delete, patch, post};
+use axum::routing::post;
 use axum::{Router, routing::get};
 use axum_login::tower_sessions::{ExpiredDeletion, SessionManagerLayer};
 use axum_login::{AuthManagerLayerBuilder, login_required};
@@ -41,10 +41,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         db: db_pool.clone(),
     };
 
+    //for testing only
     sqlx::raw_sql("DELETE FROM \"user\"")
         .execute(&db_pool)
         .await?;
 
+    //for testing only
     sqlx::raw_sql(&format!(
         "INSERT INTO \"user\" (firstname, lastname, email, password) VALUES ('{}', '{}', '{}', '{}');",
         &env::var("ADMIN_FIRSTNAME").unwrap(),
@@ -57,12 +59,65 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let listener = tokio::net::TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 3000))).await?;
 
+    use auth::permission;
     let app = Router::new()
-        .route("/user", get(user::http::fetch_self))
-        .route("/user", post(user::http::create))
-        .route("/user/{id}", get(user::http::fetch))
-        .route("/user/{id}", patch(user::http::update))
-        .route("/user/{id}", delete(user::http::delete))
+        .route("/user", get(user::http::get_self).post(user::http::create))
+        .route("/user/groups", get(user::http::get_self_groups))
+        .route("/user/roles", get(user::http::get_self_roles))
+        .route(
+            "/users/{id}",
+            get(user::http::get)
+                .patch(user::http::update)
+                .delete(user::http::delete),
+        )
+        .route(
+            "/users/{id}/groups",
+            get(user::http::get_groups)
+                .put(user::http::replace_groups)
+                .post(user::http::add_to_groups)
+                .delete(user::http::remove_from_groups),
+        )
+        .route(
+            "/users/{id}/roles",
+            get(user::http::get_roles)
+                .put(user::http::replace_roles) //TODO: Auch in entsprechender Gruppe
+                .post(user::http::assign_roles)
+                .delete(user::http::unassign_roles),
+        )
+        .route(
+            "/roles",
+            get(permission::http::role::get_all).post(permission::http::role::create),
+        )
+        .route(
+            "/roles/{id}",
+            get(permission::http::role::get_by_id)
+                .patch(permission::http::role::update)
+                .delete(permission::http::role::delete),
+        )
+        .route(
+            "/roles/{id}/users",
+            get(permission::http::role::get_users)
+                .put(permission::http::role::replace_users)
+                .post(permission::http::role::add_users)
+                .delete(permission::http::role::delete_users),
+        )
+        .route(
+            "/groups",
+            get(permission::http::group::get_all).post(permission::http::group::create),
+        )
+        .route(
+            "/groups/{id}",
+            get(permission::http::group::get_by_id)
+                .patch(permission::http::group::update)
+                .delete(permission::http::group::delete),
+        )
+        .route(
+            "/groups/{id}/users",
+            get(permission::http::group::get_users)
+                .put(permission::http::group::replace_users)
+                .post(permission::http::group::add_users)
+                .delete(permission::http::group::delete_users),
+        )
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary
         .route("/login", post(auth::create_session_handler))
