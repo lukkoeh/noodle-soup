@@ -53,16 +53,18 @@ pub enum ResourceCreateError {
 
 #[derive(Serialize, Deserialize, Decode, sqlx::FromRow)]
 #[sqlx(no_pg_array)]
+#[serde(rename_all = "camelCase")]
 pub struct Role {
-    id: i64,
+    role_id: i64,
     name: String,
     permissions: Vec<Permission>,
 }
 
 #[derive(Serialize, sqlx::FromRow)]
 #[sqlx(no_pg_array)]
+#[serde(rename = "camelCase")]
 pub struct RoleRow {
-    id: i64,
+    role_id: i64,
     name: String,
     permissions: sqlx::types::Json<Vec<Permission>>,
     group: Option<i64>,
@@ -132,8 +134,9 @@ pub enum GroupKind {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Group {
-    id: i64,
+    group_id: i64,
     name: String,
     kind: GroupKind,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -141,8 +144,9 @@ pub struct Group {
 }
 
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
 pub struct GroupRow {
-    id: i64,
+    group_id: i64,
     name: String,
     kind: GroupKind,
     parent: Option<i64>,
