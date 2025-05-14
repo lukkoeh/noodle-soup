@@ -142,6 +142,21 @@ const groups = [
   }
 ]
 
+const roles = [
+  {
+    roleId: 1,
+    name: "Dozent",
+    permissions: [],
+    group: 4,
+  },
+  {
+    roleId: DONT_CARE,
+    name: "Dozent",
+    permissions: [],
+    group: DONT_CARE,
+  },
+]
+
 const loggedinTests = [
   Test(method.get, "/user", null, 200,
     {
@@ -237,6 +252,18 @@ const loggedinTests = [
   Test(method.delete, `/groups/${groups[1].groupId}`, null, 200, null),
   Test(method.get, `/groups/${groups[1].groupId}`, null, 404, null),
   Test(method.get, `/groups/${groups[3].groupId}`, null, 404, null),
+  Test(method.post, "/roles", {
+    name: roles[0].name,
+    permissions: roles[0].permissions
+  }, 201, {
+    roleId: roles[0].roleId,
+    name: roles[0].name,
+    permissions: roles[0].permissions,
+  }),
+  Test(method.post, "/roles", {
+    name: roles[0].name,
+    permissions: roles[0].permissions
+  }, 409, DONT_CARE)
 ]
 
 async function runTests() {
