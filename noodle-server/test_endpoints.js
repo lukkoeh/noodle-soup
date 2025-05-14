@@ -1,7 +1,7 @@
 import { config as dotenvConfig } from 'dotenv'
 dotenvConfig()
 import _ from 'lodash'
-import { SQL, sql } from "bun"
+import { SQL } from "bun"
 const DONT_CARE = -1
 const method = {
   get: "GET",
@@ -18,71 +18,71 @@ const adminPassword = "12345678"
 
 
 const nologinTests = [
-  Test(method.get, "/user", null, 401, {}),
-  Test(method.patch, "/user", {}, 405, {}),
-  Test(method.put, "/user", {}, 401, {}),
-  Test(method.post, "/user", {}, 405, {}),
-  Test(method.delete, "/user", {}, 405, {}),
-  Test(method.get, "/user/groups", null, 401, {}),
-  Test(method.patch, "/user/groups", {}, 405, {}),
-  Test(method.put, "/user/groups", {}, 405, {}),
-  Test(method.post, "/user/groups", {}, 405, {}),
-  Test(method.delete, "/user/groups", {}, 405, {}),
-  Test(method.get, "/user/roles", null, 401, {}),
-  Test(method.patch, "/user/roles", {}, 405, {}),
-  Test(method.put, "/user/roles", {}, 405, {}),
-  Test(method.post, "/user/roles", {}, 405, {}),
-  Test(method.delete, "/user/roles", {}, 405, {}),
-  Test(method.get, "/users/1", null, 401, {}),
-  Test(method.patch, "/users/1", {}, 401, {}),
-  Test(method.put, "/users/1", {}, 405, {}),
-  Test(method.post, "/users/1", {}, 405, {}),
-  Test(method.delete, "/users/1", {}, 401, {}),
-  Test(method.get, "/users/5/groups", null, 401, {}),
-  Test(method.patch, "/users/5/groups", {}, 405, {}),
-  Test(method.put, "/users/5/groups", {}, 401, {}),
-  Test(method.post, "/users/5/groups", {}, 401, {}),
-  Test(method.delete, "/users/5/groups", {}, 401, {}),
-  Test(method.get, "/users/3/roles", null, 401, {}),
-  Test(method.patch, "/users/3/roles", {}, 405, {}),
-  Test(method.put, "/users/3/roles", {}, 401, {}),
-  Test(method.post, "/users/3/roles", {}, 401, {}),
-  Test(method.delete, "/users/3/roles", {}, 401, {}),
-  Test(method.get, "/roles", null, 401, {}),
-  Test(method.patch, "/roles", {}, 405, {}),
-  Test(method.put, "/roles", {}, 405, {}),
-  Test(method.post, "/roles", {}, 401, {}),
-  Test(method.delete, "/roles", {}, 405, {}),
-  Test(method.get, "/roles/4", null, 401, {}),
-  Test(method.patch, "/roles/4", {}, 401, {}),
-  Test(method.put, "/roles/4", {}, 405, {}),
-  Test(method.post, "/roles/4", {}, 405, {}),
-  Test(method.delete, "/roles/4", {}, 401, {}),
-  Test(method.get, "/roles/4/users", null, 401, {}),
-  Test(method.patch, "/roles/4/users", {}, 405, {}),
-  Test(method.put, "/roles/4/users", {}, 401, {}),
-  Test(method.post, "/roles/4/users", {}, 401, {}),
-  Test(method.delete, "/roles/4/users", {}, 401, {}),
-  Test(method.get, "/groups", null, 401, {}),
-  Test(method.patch, "/groups", {}, 405, {}),
-  Test(method.put, "/groups", {}, 405, {}),
-  Test(method.post, "/groups", {}, 401, {}),
-  Test(method.delete, "/groups", {}, 405, {}),
-  Test(method.get, "/groups/4", null, 401, {}),
-  Test(method.patch, "/groups/4", {}, 401, {}),
-  Test(method.put, "/groups/4", {}, 405, {}),
-  Test(method.post, "/groups/4", {}, 405, {}),
-  Test(method.delete, "/groups/4", {}, 401, {}),
-  Test(method.get, "/groups/4/users", null, 401, {}),
-  Test(method.patch, "/groups/4/users", {}, 405, {}),
-  Test(method.put, "/groups/4/users", {}, 401, {}),
-  Test(method.post, "/groups/4/users", {}, 401, {}),
-  Test(method.delete, "/groups/4/users", {}, 401, {}),
-  Test(method.get, "/login", null, 405, {}),
-  Test(method.patch, "/login", {}, 405, {}),
-  Test(method.put, "/login", {}, 405, {}),
+  Test(method.get, "/user", null, 401, null),
+  Test(method.patch, "/user", {}, 405, null),
+  Test(method.put, "/user", {}, 401, null),
+  Test(method.post, "/user", {}, 405, null),
+  Test(method.delete, "/user", {}, 405, null),
+  Test(method.get, "/user/groups", null, 401, null),
+  Test(method.patch, "/user/groups", {}, 405, null),
+  Test(method.put, "/user/groups", {}, 405, null),
+  Test(method.post, "/user/groups", {}, 405, null),
+  Test(method.delete, "/user/groups", {}, 405, null),
+  Test(method.get, "/user/roles", null, 401, null),
+  Test(method.patch, "/user/roles", {}, 405, null),
+  Test(method.put, "/user/roles", {}, 405, null),
+  Test(method.post, "/user/roles", {}, 405, null),
+  Test(method.delete, "/user/roles", {}, 405, null),
+  Test(method.get, "/users/1", null, 401, null),
+  Test(method.patch, "/users/1", {}, 401, null),
+  Test(method.put, "/users/1", {}, 405, null),
+  Test(method.post, "/users/1", {}, 405, null),
+  Test(method.delete, "/users/1", {}, 401, null),
+  Test(method.get, "/users/5/groups", null, 401, null),
+  Test(method.patch, "/users/5/groups", {}, 405, null),
+  Test(method.put, "/users/5/groups", {}, 401, null),
+  Test(method.post, "/users/5/groups", {}, 401, null),
+  Test(method.delete, "/users/5/groups", {}, 401, null),
+  Test(method.get, "/users/3/roles", null, 401, null),
+  Test(method.patch, "/users/3/roles", {}, 405, null),
+  Test(method.put, "/users/3/roles", {}, 401, null),
+  Test(method.post, "/users/3/roles", {}, 401, null),
+  Test(method.delete, "/users/3/roles", {}, 401, null),
+  Test(method.get, "/roles", null, 401, null),
+  Test(method.patch, "/roles", {}, 405, null),
+  Test(method.put, "/roles", {}, 405, null),
+  Test(method.post, "/roles", {}, 401, null),
+  Test(method.delete, "/roles", {}, 405, null),
+  Test(method.get, "/roles/4", null, 401, null),
+  Test(method.patch, "/roles/4", {}, 401, null),
+  Test(method.put, "/roles/4", {}, 405, null),
+  Test(method.post, "/roles/4", {}, 405, null),
+  Test(method.delete, "/roles/4", {}, 401, null),
+  Test(method.get, "/roles/4/users", null, 401, null),
+  Test(method.patch, "/roles/4/users", {}, 405, null),
+  Test(method.put, "/roles/4/users", {}, 401, null),
+  Test(method.post, "/roles/4/users", {}, 401, null),
+  Test(method.delete, "/roles/4/users", {}, 401, null),
+  Test(method.get, "/groups", null, 401, null),
+  Test(method.patch, "/groups", {}, 405, null),
+  Test(method.put, "/groups", {}, 405, null),
+  Test(method.post, "/groups", {}, 401, null),
+  Test(method.delete, "/groups", {}, 405, null),
+  Test(method.get, "/groups/4", null, 401, null),
+  Test(method.patch, "/groups/4", {}, 401, null),
+  Test(method.put, "/groups/4", {}, 405, null),
+  Test(method.post, "/groups/4", {}, 405, null),
+  Test(method.delete, "/groups/4", {}, 401, null),
+  Test(method.get, "/groups/4/users", null, 401, null),
+  Test(method.patch, "/groups/4/users", {}, 405, null),
+  Test(method.put, "/groups/4/users", {}, 401, null),
+  Test(method.post, "/groups/4/users", {}, 401, null),
+  Test(method.delete, "/groups/4/users", {}, 401, null),
+  Test(method.get, "/login", null, 405, null),
+  Test(method.patch, "/login", {}, 405, null),
+  Test(method.put, "/login", {}, 405, null),
   Test(method.post, "/login", {}, 400, DONT_CARE),
-  Test(method.delete, "/login", {}, 405, {}),
+  Test(method.delete, "/login", {}, 405, null),
 ]
 
 const users = [
@@ -106,6 +106,39 @@ const users = [
     lastname: "Lastname2",
     email: "mail@mail.com",
     password: "SecurePassword!1234"
+  }
+]
+
+const groups = [
+  {
+    groupId: DONT_CARE,
+    name: "Programming",
+    kind: "lol",
+    parent: null
+  },
+  {
+    groupId: 1,
+    name: "Programming",
+    kind: "learning",
+    parent: null
+  },
+  {
+    groupId: DONT_CARE,
+    name: "Programming",
+    kind: "learning",
+    parent: null
+  },
+  {
+    groupId: DONT_CARE,
+    name: "Design",
+    kind: "learning",
+    parent: 3
+  },
+  {
+    groupId: 3,
+    name: "Design",
+    kind: "learning",
+    parent: 1
   }
 ]
 
@@ -147,6 +180,63 @@ const loggedinTests = [
       lastname: users[0].lastname,
       email: users[0].email
     }),
+  Test(method.post, "/user", {
+    firstname: users[2].firstname,
+    lastname: users[2].lastname,
+    email: users[2].email,
+    password: users[2].password
+  }, 201, {
+    userId: users[2].userId,
+    firstname: users[2].firstname,
+    lastname: users[2].lastname,
+    email: users[2].email
+  }),
+  Test(method.get, `/users/${users[2].userId}`, null, 200,
+    {
+      userId: users[2].userId,
+      firstname: users[2].firstname,
+      lastname: users[2].lastname,
+      email: users[2].email
+    }),
+  Test(method.post, "/groups", {
+    name: groups[0].name,
+    kind: groups[0].kind,
+    parent: groups[0].parent
+  }, 422, DONT_CARE),
+  Test(method.post, "/groups", {
+    name: groups[1].name,
+    kind: groups[1].kind,
+    parent: groups[1].parent
+  }, 201, {
+    groupId: groups[1].groupId,
+    name: groups[1].name,
+    kind: groups[1].kind,
+    parent: groups[1].parent
+  }),
+  Test(method.post, "/groups", {
+    name: groups[2].name,
+    kind: groups[2].kind,
+    parent: groups[2].parent
+  }, 409, DONT_CARE),
+  Test(method.post, "/groups", {
+    name: groups[3].name,
+    kind: groups[3].kind,
+    parent: groups[3].parent
+  }, 500, DONT_CARE), //TODO: This shoul return 400, fix in another PR eventually.
+  Test(method.post, "/groups", {
+    name: groups[4].name,
+    kind: groups[4].kind,
+    parent: groups[4].parent
+  }, 201, {
+    groupId: groups[4].groupId,
+    name: groups[4].name,
+    kind: groups[4].kind,
+    parent: groups[4].parent
+  }),
+  //deleting parent group causes child groups to be deleted too.
+  Test(method.delete, `/groups/${groups[1].groupId}`, null, 200, null),
+  Test(method.get, `/groups/${groups[1].groupId}`, null, 404, null),
+  Test(method.get, `/groups/${groups[3].groupId}`, null, 404, null),
 ]
 
 async function runTests() {
@@ -294,7 +384,7 @@ async function login(email, password) {
   sessionCookie = response.headers.get("set-cookie")
 }
 
-const db = new SQL({
+const sql = new SQL({
   url: process.env.PG_TEST_URL,
   max: 20,
   idleTimeout: 30,
@@ -302,7 +392,7 @@ const db = new SQL({
   connectionTimeout: 30
 })
 
-await db.file("./src/web/db/setup.sql")
-await db.file("./src/test/example_data.sql")
+await sql.file("./src/test/reset_tables.sql")
+await sql.file("./src/test/example_data.sql")
 
 runTests()
