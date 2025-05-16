@@ -10,6 +10,8 @@ tags:
     description: Operations about permission groups (roles)
   - name: group
     description: Operations about user groups
+  - name: branding
+    description: Operations about branding, like colors and stuff
 security:
   - cookieAuth: [ ]
 paths:
@@ -889,6 +891,25 @@ paths:
           description: Access Denied.
         '500':
           description: internal server error
+  /design:
+    get:
+      tags:
+        - branding
+      description: Returns the asset image data as well as the accent color hex code. Authentication handles the assignment of accounts.
+      responses:
+        200:
+          description: Returns the data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branding'
+        '400':
+          description: Invalid request
+        '401':
+          description: Access Denied.
+        '500':
+          description: internal server error
+
 components:
   securitySchemes:
     cookieAuth:
@@ -1021,3 +1042,19 @@ components:
               example: 1
         - $ref: '#/components/schemas/UserGroupDescription'
       type: object
+    Branding:
+      type: object
+      properties:
+        color:
+          type: string
+          example: "#fafafa"
+        image:
+          type: object
+          properties:
+            mime_type:
+              type: string
+              description: The type of image
+              example: "image/jpeg"
+            image_data:
+              type: string
+              description: The data of the image, raw
