@@ -990,18 +990,84 @@ paths:
       tags:
         - content
       summary: Get all content elements from a course by courseId
+      responses:
+        200:
+          description: Returns all the content from a course
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentElementCollection'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Resource not found for this uid
+        500:
+          description: The server exploded while processing the request
     post:
       tags:
         - content
       summary: Create a new content element inside a course
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentElementCreationRequest'
+      responses:
+        200:
+          description: Returns the newly created content resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentElement'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: No course found for this uid
+        500:
+          description: The server exploded while processing the request
     put:
       tags:
         - content
       summary: Update a content element
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentElement'
+      responses:
+        200:
+          description: Returns the updated content resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentElement'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: No course found for this uid
+        500:
+          description: The server exploded while processing the request
     delete:
       tags:
         - content
       summary: Delete a content element from a course
+      responses:
+        200:
+          description: Resource deleted successfully
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: No course found for this uid
+        500:
+          description: The server exploded while processing the request
   /files:
     get:
       tags:
@@ -1298,6 +1364,13 @@ components:
           description: Array of file creationRequests (PDF, IMAGE) to be requested seperately to keep request slim
           items:
             $ref: '#/components/schemas/FileCreationRequest'
+    ContentElementCollection:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentElement'
     FileReference:
       type: object
       properties:
