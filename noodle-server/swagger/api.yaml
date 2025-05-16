@@ -14,8 +14,12 @@ tags:
     description: Operations about course rooms, content depends on it
   - name: content
     description: Operations about leaning content elements
-  - name: Files
+  - name: files
     description: Operations about files
+  - name: templates
+    description: Operations about templates
+  - name: branding
+    description: Operations about branding, like colors and stuff
 security:
   - cookieAuth: [ ]
 paths:
@@ -592,6 +596,12 @@ paths:
       tags:
         - role
       summary: Assign users(s) to role
+      parameters:
+        - in: path
+          name: roleId
+          schema:
+            type: integer
+          required: true
       requestBody:
         content:
           application/json:
@@ -819,6 +829,12 @@ paths:
       tags:
         - group
       summary: Assign users to user group
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: integer
+          required: true
       requestBody:
         content:
           application/json:
@@ -1183,7 +1199,24 @@ paths:
           description: I have never seen this file in my entire life
         500:
           description: The server crashed
-
+  /design:
+    get:
+      tags:
+        - branding
+      description: Returns the asset image data as well as the accent color hex code. Authentication handles the assignment of accounts.
+      responses:
+        200:
+          description: Returns the data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branding'
+        '400':
+          description: Invalid request
+        '401':
+          description: Access Denied.
+        '500':
+          description: internal server error
 components:
   securitySchemes:
     cookieAuth:
@@ -1282,11 +1315,18 @@ components:
         - $ref: '#/components/schemas/RoleDescription'
     Permission:
       type: object
+      required: [ "subject", "ops" ]
       properties:
         subject:
           type: string
           description: type of resource to be managed
           example: "user"
+        ids:
+          type: array
+          items:
+            type: integer
+          description: ids of resource to be managed
+          example: [ 1,2,3 ]
         ops:
           type: integer
           description: "4 bit integer (0 - 15), 1st (rightmost) bit: create, 2nd bit: read, 3rd bit: update, 4th bit: 
@@ -1335,7 +1375,7 @@ components:
           description: optional content
           items:
             $ref: '#/components/schemas/ContentElementCreationRequest'
-        
+
     ContentElement:
       type: object
       properties:
@@ -1413,3 +1453,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/File'
+    Template:
+      type: object
+      properties:
+        name:
+          description: the template name
+          type: string
+          example: "Klassischer Kurs"
+        collection:
+          $ref: '#/components/schemas/ContentElementCollection'
+        owner:
+          description: Owner User ID
+          type: integer
+          example: 69
+        users:
+          type: array
+          description: Array of User IDs capable of READING the element
+          items:
+            type: integer
+            description: User ID
+            example: 420
+    Branding:
+      type: object
+      properties:
+        color:
+          type: string
+          example: "#fafafa"
+        image:
+          $ref: '#/components/schemas/FileReference'
