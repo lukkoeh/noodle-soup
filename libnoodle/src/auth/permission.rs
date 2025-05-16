@@ -62,8 +62,9 @@ pub struct Role {
 
 #[derive(Serialize, sqlx::FromRow)]
 #[sqlx(no_pg_array)]
-#[serde(rename = "camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct RoleRow {
+    #[sqlx(rename = "id")]
     role_id: i64,
     name: String,
     permissions: sqlx::types::Json<Vec<Permission>>,
@@ -146,6 +147,7 @@ pub struct Group {
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct GroupRow {
+    #[sqlx(rename = "id")]
     group_id: i64,
     name: String,
     kind: GroupKind,

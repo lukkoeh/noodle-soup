@@ -1,8 +1,9 @@
 use serde::Deserialize;
 
-#[derive(serde::Serialize, serde::Deserialize, sqlx::types::Type, sqlx::FromRow)]
+#[derive(serde::Serialize, serde::Deserialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Profile {
+    #[sqlx(rename = "id")]
     pub user_id: i64,
     pub firstname: String,
     pub lastname: String,
@@ -321,13 +322,14 @@ pub mod http {
             Ok(Some(_)) => {}
         };
         if group_ids.len() == 1 {
-            if let Err(_) =
+            if let Err(e) =
                 sqlx::query("INSERT INTO \"user_in_group\"(user_id, group_id) VALUES ($1, $2)")
                     .bind(user_id)
                     .bind(group_ids[0])
                     .execute(&state.db)
                     .await
             {
+                println!("{}", e);
                 return StatusCode::INTERNAL_SERVER_ERROR;
             }
             return StatusCode::CREATED;
@@ -371,12 +373,20 @@ pub mod http {
             .await
         {
             Ok(None) => return StatusCode::NOT_FOUND.into_response(),
-            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Err(e) => {
+                return {
+                    println!("{}", e);
+                    StatusCode::INTERNAL_SERVER_ERROR.into_response()
+                };
+            }
             _ => {}
         }
         match RoleRow::from_user_id(&state.db, user_id).await {
             Ok(r) => Json(r).into_response(),
-            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Err(e) => {
+                println!("{}", e);
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            }
         }
     }
 

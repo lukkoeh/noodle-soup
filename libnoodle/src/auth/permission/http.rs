@@ -484,7 +484,10 @@ pub mod group {
         {
             Ok(Some(g)) => Json(g).into_response(),
             Ok(None) => StatusCode::NOT_FOUND.into_response(),
-            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Err(e) => {
+                println!("{}", e);
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            }
         }
     }
 
@@ -546,7 +549,10 @@ WHERE group_id = $1",
         .await
         {
             Ok(u) => Json(u).into_response(),
-            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Err(e) => {
+                println!("{}", e);
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            }
         }
     }
 
@@ -638,8 +644,7 @@ WHERE group_id = $1",
                     return StatusCode::CREATED;
                 }
 
-                let mut group_ids = Vec::with_capacity(user_ids.len());
-                group_ids.fill(group_id);
+                let group_ids = vec![group_id; user_ids.len()];
                 if let Err(_) = add_users_to_groups_query()
                     .bind(&user_ids)
                     .bind(group_ids)
