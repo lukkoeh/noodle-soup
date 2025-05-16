@@ -149,12 +149,6 @@ const roles = [
     permissions: [],
     group: 4,
   },
-  {
-    roleId: DONT_CARE,
-    name: "Dozent",
-    permissions: [],
-    group: DONT_CARE,
-  },
 ]
 
 const loggedinTests = [
@@ -260,10 +254,116 @@ const loggedinTests = [
     name: roles[0].name,
     permissions: roles[0].permissions,
   }),
+  Test(method.get, `/groups/${roles[0].group}`, null, 200, {
+    groupId: roles[0].group,
+    name: roles[0].name,
+    kind: "role",
+    parent: null
+  }),
+  Test(method.post, `/groups/${groups[4].groupId}/users`, [1], 201, DONT_CARE),
+  Test(method.get, `/groups/${groups[4].groupId}/users`, null, 200, [{
+    userId: users[0].userId,
+    firstname: users[0].firstname,
+    lastname: users[0].lastname,
+    email: users[0].email,
+  }]),
+  Test(method.post, `/groups/${groups[4].groupId}/users`, [2], 201, DONT_CARE),
+  Test(method.get, `/groups/${groups[4].groupId}/users`, null, 200, [
+    {
+      userId: users[0].userId,
+      firstname: users[0].firstname,
+      lastname: users[0].lastname,
+      email: users[0].email,
+    },
+    {
+      userId: users[2].userId,
+      firstname: users[2].firstname,
+      lastname: users[2].lastname,
+      email: users[2].email,
+    }
+  ]),
   Test(method.post, "/roles", {
     name: roles[0].name,
     permissions: roles[0].permissions
-  }, 409, DONT_CARE)
+  }, 409, DONT_CARE),
+  Test(method.post, `/roles/${roles[0].roleId}/users`, [users[0].userId], 201, DONT_CARE),
+  Test(method.get, `/roles/${roles[0].roleId}/users`, null, 200, [{
+    userId: users[0].userId,
+    firstname: users[0].firstname,
+    lastname: users[0].lastname,
+    email: users[0].email,
+  }]),
+  Test(method.get, `/groups/${roles[0].group}/users`, null, 200, [{
+    userId: users[0].userId,
+    firstname: users[0].firstname,
+    lastname: users[0].lastname,
+    email: users[0].email,
+  }]),
+  Test(method.post, `/roles/${roles[0].roleId}/users`, [users[2].userId], 201, DONT_CARE),
+  Test(method.get, `/roles/${roles[0].roleId}/users`, null, 200, [
+    {
+      userId: users[0].userId,
+      firstname: users[0].firstname,
+      lastname: users[0].lastname,
+      email: users[0].email,
+    },
+    {
+      userId: users[2].userId,
+      firstname: users[2].firstname,
+      lastname: users[2].lastname,
+      email: users[2].email,
+    }
+  ]),
+  Test(method.get, `/groups/${roles[0].group}/users`, null, 200, [
+    {
+      userId: users[0].userId,
+      firstname: users[0].firstname,
+      lastname: users[0].lastname,
+      email: users[0].email,
+    },
+    {
+      userId: users[2].userId,
+      firstname: users[2].firstname,
+      lastname: users[2].lastname,
+      email: users[2].email,
+    }
+  ]),
+  Test(method.delete, `/roles/${roles[0].roleId}/users`, [users[2].userId], 200, DONT_CARE),
+  Test(method.get, `/roles/${roles[0].roleId}/users`, null, 200, [{
+    userId: users[0].userId,
+    firstname: users[0].firstname,
+    lastname: users[0].lastname,
+    email: users[0].email,
+  }]),
+  Test(method.get, `/groups/${roles[0].group}/users`, null, 200, [{
+    userId: users[0].userId,
+    firstname: users[0].firstname,
+    lastname: users[0].lastname,
+    email: users[0].email,
+  }]),
+  Test(method.post, `/users/${users[2].userId}/roles`, [roles[0].roleId], 201, DONT_CARE),
+  Test(method.get, `/users/${users[2].userId}/groups`, null, 200, [{
+    groupId: roles[0].group,
+    name: roles[0].name,
+    kind: "role",
+    parent: null
+  }]),
+  Test(method.get, `/users/${users[2].userId}/roles`, null, 200, [{
+    roleId: roles[0].roleId,
+    name: roles[0].name,
+    permissions: [],
+    group: roles[0].group
+  }]),
+  Test(method.delete, `/users/${users[2].userId}/roles`, [roles[0].roleId], 200, DONT_CARE),
+  Test(method.get, `/users/${users[2].userId}/groups`, null, 200, []),
+  Test(method.get, `/users/${users[2].userId}/roles`, null, 200, []),
+  Test(method.post, `/users/${users[2].userId}/groups`, [groups[4].groupId], 201, DONT_CARE),
+  Test(method.get, `/users/${users[2].userId}/groups`, null, 200, [{
+    groupId: groups[4].groupId,
+    name: groups[4].name,
+    kind: groups[4].kind,
+    parent: null
+  }]),
 ]
 
 async function runTests() {
@@ -347,10 +447,10 @@ function Test(
       let result = {
         failed: false, expected: {
           responseCode: self.expectedResponseCode,
-          responseBody: typeof self.expectedResponseBody == 'object' ? JSON.stringify(self.expectedResponseBody) : self.expectedResponseBody
+          responseBody: typeof self.expectedResponseBody == 'object' ? JSON.stringify(self.expectedResponseBody, null, 2) : self.expectedResponseBody
         }, actual: {
           responseCode: self.expectedResponseCode,
-          responseBody: typeof self.expectedResponseBody == 'object' ? JSON.stringify(self.expectedResponseBody) : self.expectedResponseBody
+          responseBody: typeof self.expectedResponseBody == 'object' ? JSON.stringify(self.expectedResponseBody, null, 2) : self.expectedResponseBody
         }
       }
       const status = response.status
@@ -372,7 +472,6 @@ function Test(
           if (bodyMatches) {
             for (const k of expectedKeys) {
               if (self.expectedResponseBody[k] != DONT_CARE && !_.isEqual(self.expectedResponseBody[k], body[k])) {
-                console.log("bodies dont match")
                 bodyMatches = false
                 break
               }
@@ -386,7 +485,7 @@ function Test(
       if (!bodyMatches || !statusMatches) {
         result.failed = true
         result.actual.responseCode = status
-        result.actual.responseBody = typeof body == 'object' ? JSON.stringify(body) : body
+        result.actual.responseBody = typeof body == 'object' ? JSON.stringify(body, null, 2) : body
       }
 
       return result
