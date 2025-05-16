@@ -10,6 +10,12 @@ tags:
     description: Operations about permission groups (roles)
   - name: group
     description: Operations about user groups
+  - name: course
+    description: Operations about course rooms, content depends on it
+  - name: content
+    description: Operations about leaning content elements
+  - name: Files
+    description: Operations about files
 security:
   - cookieAuth: [ ]
 paths:
@@ -153,7 +159,7 @@ paths:
               description: Role IDs
               items:
                 type: integer
-              example: [5,3,2]
+              example: [ 5,3,2 ]
       responses:
         '200':
           description: successful operation
@@ -183,7 +189,7 @@ paths:
               description: Role IDs
               items:
                 type: integer
-              example: [5,3,2]
+              example: [ 5,3,2 ]
       responses:
         '201':
           description: successful operation
@@ -270,7 +276,7 @@ paths:
               description: User group IDs
               items:
                 type: integer
-              example: [6,4,1]
+              example: [ 6,4,1 ]
       responses:
         '200':
           description: successful operation
@@ -300,7 +306,7 @@ paths:
               description: User group IDs
               items:
                 type: integer
-              example: [6,2,3]
+              example: [ 6,2,3 ]
       responses:
         '201':
           description: successful operation
@@ -546,7 +552,7 @@ paths:
               description: User IDs
               items:
                 type: integer
-              example: [6,4,1]
+              example: [ 6,4,1 ]
       responses:
         '200':
           description: successful operation
@@ -779,7 +785,7 @@ paths:
               description: User IDs
               items:
                 type: integer
-              example: [6,4,1]
+              example: [ 6,4,1 ]
       responses:
         '200':
           description: successful operation
@@ -889,6 +895,217 @@ paths:
           description: Access Denied.
         '500':
           description: internal server error
+  /courses:
+    get:
+      tags:
+        - course
+      summary: Get all Courses that you have access to
+      responses:
+        200:
+          description: Returns all courses as JSON Objects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseCollection'
+    post:
+      tags:
+        - course
+      summary: Create a new course, by default empty, optionally with content
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseCreationRequest'
+      responses:
+        200:
+          description: Course was created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        500:
+          description: The server exploded while processing the request
+  /course/{courseId}:
+    get:
+      tags:
+        - course
+      summary: Get details for course
+      responses:
+        200:
+          description: Returns the course data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: No course found for this uid
+        500:
+          description: The server exploded while processing the request
+    put:
+      tags:
+        - course
+      summary: Edit course details
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Course'
+      responses:
+        200:
+          description: The course was edited and is now in sync with the client
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: No course found for this uid
+        500:
+          description: The server exploded while processing the request
+    delete:
+      tags:
+        - course
+      summary: Delete a course
+      responses:
+        200:
+          description: The course was deleted
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: No course found for this uid
+        500:
+          description: The server exploded while processing the request
+
+  /course/{courseId}/content:
+    get:
+      tags:
+        - content
+      summary: Get all content elements from a course by courseId
+    post:
+      tags:
+        - content
+      summary: Create a new content element inside a course
+    put:
+      tags:
+        - content
+      summary: Update a content element
+    delete:
+      tags:
+        - content
+      summary: Delete a content element from a course
+  /files:
+    get:
+      tags:
+        - files
+      summary: Get all files of the instance with their ids
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileCollection'
+        204:
+          description: No files found, but successful otherwise
+        400:
+          description: Bad Request
+        404:
+          description: Resource not found, something has gone wrong
+        500:
+          description: Internal Server Error
+        401:
+          description: Unauthorized
+  /file/{file_uid}:
+    get:
+      tags:
+        - files
+      summary: Get a file by uid and its contents
+      responses:
+        200:
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: No file found for this uid
+        500:
+          description: The server exploded while processing the request
+    post:
+      tags:
+        - files
+      summary: Upload a new file, and obtain its new uid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileCreationRequest"
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/File'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    put:
+      tags:
+        - files
+      summary: Replace a file, without altering the uid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/File'
+      responses:
+        200:
+          description: Successful replacement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/File'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    delete:
+      tags:
+        - files
+      summary: Delete a file by uid, also deletes relations to it
+      responses:
+        200:
+          description: File deleted
+        400:
+          description: Bad Request
+        404:
+          description: I have never seen this file in my entire life
+        500:
+          description: The server crashed
+
 components:
   securitySchemes:
     cookieAuth:
@@ -1021,3 +1238,99 @@ components:
               example: 1
         - $ref: '#/components/schemas/UserGroupDescription'
       type: object
+    CourseCollection:
+      type: object
+      properties:
+        courses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Course'
+    Course:
+      type: object
+      properties:
+        uid:
+          type: integer
+          description: Unique ID of the course
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentElement'
+    CourseCreationRequest:
+      type: object
+      properties:
+        content:
+          type: array
+          description: optional content
+          items:
+            $ref: '#/components/schemas/ContentElementCreationRequest'
+        
+    ContentElement:
+      type: object
+      properties:
+        uid:
+          type: integer
+          description: Unique ID of the content element
+        course_id:
+          type: integer
+          description: ID of the assigned course
+        type:
+          type: string
+          description: content_type as a string which is mapped to a rendering definition on device
+        content:
+          type: string
+          description: Encoded content of the content element (Like text in Markdown -> Base64), used by the renderer
+        files:
+          type: array
+          description: Array of file references (PDF, IMAGE) to be requested seperately to keep request slim
+          items:
+            $ref: '#/components/schemas/FileReference'
+    ContentElementCreationRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          description: content_type as a string which is mapped to a rendering definition on device
+        content:
+          type: string
+          description: Encoded content of the content element (Like text in Markdown -> Base64), used by the renderer
+        files:
+          type: array
+          description: Array of file creationRequests (PDF, IMAGE) to be requested seperately to keep request slim
+          items:
+            $ref: '#/components/schemas/FileCreationRequest'
+    FileReference:
+      type: object
+      properties:
+        target_uid:
+          type: integer
+    File:
+      type: object
+      properties:
+        uid:
+          type: integer
+          description: File Uid to be referenced by FileReference
+        type:
+          type: string
+          description: The mime type of the file, like image/jpeg
+        data:
+          type: string
+          description: file data in bytes, or in base64...
+        last_modified:
+          type: string
+          description: ISO String of last modification time, used for caching
+    FileCreationRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          description: The mime type, such as image/jpeg
+        data:
+          type: string
+          description: File Data in bytes or base64
+    FileCollection:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/File'
