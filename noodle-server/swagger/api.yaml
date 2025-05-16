@@ -1205,6 +1205,138 @@ paths:
           description: Access Denied.
         '500':
           description: internal server error
+  /templates:
+    get:
+      tags:
+        - templates
+      description: Get all templates accesible by the user
+      parameters:
+        - in: query
+          name: owned
+          schema:
+            type: boolean
+          description: Query the owned or all visible templates, owned = true means only owned
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateCollection'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+  /template/{template_id}:
+    get:
+      tags:
+        - templates
+      description: Return a single template
+      parameters:
+        - in: path
+          name: template_id
+          schema:
+            type: integer
+          description: The specific ID of the template to be queried
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    post:
+      tags:
+        - templates
+      description: Creates a template
+      parameters:
+        - in: path
+          name: template_id
+          schema:
+            type: integer
+          description: The specific ID of the template to be queried
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateCreationRequest'
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    put:
+      tags:
+        - templates
+      description: Uploads a single template
+      parameters:
+        - in: path
+          name: template_id
+          schema:
+            type: integer
+          description: The specific ID of the template to be queried
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Template'
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    delete:
+      tags:
+        - templates
+      parameters:
+        - in: path
+          name: template_id
+          schema:
+            type: integer
+          description: The specific ID of the template to be queried
+      responses:
+        200:
+          description: Successful
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
 components:
   securitySchemes:
     cookieAuth:
@@ -1443,6 +1575,10 @@ components:
     Template:
       type: object
       properties:
+        uid:
+          description: Unique ID for templates
+          type: integer
+          example: 1234
         name:
           description: the template name
           type: string
@@ -1460,6 +1596,33 @@ components:
             type: integer
             description: User ID
             example: 420
+    TemplateCreationRequest:
+      type: object
+      properties:
+        name:
+          description: the template name
+          type: string
+          example: "Klassischer Kurs"
+        collection:
+          $ref: '#/components/schemas/ContentElementCollection'
+        owner:
+          description: Owner User ID
+          type: integer
+          example: 69
+        users:
+          type: array
+          description: Array of User IDs capable of READING the element
+          items:
+            type: integer
+            description: User ID
+            example: 420
+    TemplateCollection:
+      type: object
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/Template'
     Branding:
       type: object
       properties:
