@@ -4,7 +4,7 @@ use axum_login::tower_sessions::{ExpiredDeletion, SessionManagerLayer};
 use axum_login::{AuthManagerLayerBuilder, login_required};
 use dotenv::dotenv;
 use libnoodle::AppState;
-use libnoodle::{auth, user};
+use libnoodle::{auth, resources, user};
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::net::SocketAddr;
@@ -126,6 +126,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .post(permission::http::group::add_users)
                 .delete(permission::http::group::delete_users),
         )
+        .route("/files", get(resources::file::http::get_all))
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary
         .route("/login", post(auth::create_session_handler))
