@@ -950,6 +950,12 @@ paths:
       tags:
         - course
       summary: Get details for course
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
       responses:
         200:
           description: Returns the course data
@@ -969,6 +975,12 @@ paths:
       tags:
         - course
       summary: Edit course details
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
       requestBody:
         content:
           application/json:
@@ -989,6 +1001,12 @@ paths:
       tags:
         - course
       summary: Delete a course
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
       responses:
         200:
           description: The course was deleted
@@ -1006,6 +1024,12 @@ paths:
       tags:
         - content
       summary: Get all content elements from a course by courseId
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
       responses:
         200:
           description: Returns all the content from a course
@@ -1025,6 +1049,12 @@ paths:
       tags:
         - content
       summary: Create a new content element inside a course
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
       requestBody:
         content:
           application/json:
@@ -1049,6 +1079,12 @@ paths:
       tags:
         - content
       summary: Update a content element
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
       requestBody:
         content:
           application/json:
@@ -1073,6 +1109,12 @@ paths:
       tags:
         - content
       summary: Delete a content element from a course
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
       responses:
         200:
           description: Resource deleted successfully
@@ -1106,11 +1148,17 @@ paths:
           description: Internal Server Error
         401:
           description: Unauthorized
-  /file/{file_uid}:
+  /file/{fileUid}:
     get:
       tags:
         - files
       summary: Get a file by uid and its contents
+      parameters:
+        - in: path
+          name: fileUid
+          schema:
+            type: integer
+          required: true
       responses:
         200:
           description: Successful Operation
@@ -1154,6 +1202,12 @@ paths:
       tags:
         - files
       summary: Replace a file, without altering the uid
+      parameters:
+        - in: path
+          name: fileUid
+          schema:
+            type: integer
+          required: true
       requestBody:
         content:
           application/json:
@@ -1178,6 +1232,12 @@ paths:
       tags:
         - files
       summary: Delete a file by uid, also deletes relations to it
+      parameters:
+        - in: path
+          name: fileUid
+          schema:
+            type: integer
+          required: true
       responses:
         200:
           description: File deleted
@@ -1470,12 +1530,9 @@ components:
         - $ref: '#/components/schemas/UserGroupDescription'
       type: object
     CourseCollection:
-      type: object
-      properties:
-        courses:
-          type: array
-          items:
-            $ref: '#/components/schemas/Course'
+      type: array
+      items:
+        $ref: '#/components/schemas/Course'
     Course:
       type: object
       properties:
