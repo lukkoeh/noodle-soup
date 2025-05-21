@@ -1482,6 +1482,9 @@ components:
         uid:
           type: integer
           description: Unique ID of the course
+        name:
+          type: string
+          description: Name of the course
         content:
           type: array
           items:
@@ -1489,6 +1492,9 @@ components:
     CourseCreationRequest:
       type: object
       properties:
+        name:
+          type: string
+          description: Name of the course
         content:
           type: array
           description: optional content
@@ -1530,12 +1536,9 @@ components:
           items:
             $ref: '#/components/schemas/FileCreationRequest'
     ContentElementCollection:
-      type: object
-      properties:
-        content:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContentElement'
+      type: array
+      items:
+        $ref: '#/components/schemas/ContentElement'
     FileReference:
       type: object
       properties:
@@ -1617,12 +1620,9 @@ components:
             description: User ID
             example: 420
     TemplateCollection:
-      type: object
-      properties:
-        templates:
-          type: array
-          items:
-            $ref: '#/components/schemas/Template'
+      type: array
+      items:
+        $ref: '#/components/schemas/Template'
     Branding:
       type: object
       properties:
