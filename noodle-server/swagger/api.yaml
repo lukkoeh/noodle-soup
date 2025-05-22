@@ -20,6 +20,8 @@ tags:
     description: Operations about templates
   - name: branding
     description: Operations about branding, like colors and stuff
+  - name: section
+    description: Operations about content sections
 security:
   - cookieAuth: [ ]
 paths:
@@ -1148,6 +1150,30 @@ paths:
           description: Internal Server Error
         401:
           description: Unauthorized
+    post:
+        tags:
+          - files
+        summary: Upload a new file, and obtain its new uid
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileCreationRequest"
+        responses:
+          200:
+            description: Successful operation
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/File'
+          400:
+            description: Bad Request
+          401:
+            description: No Access Permission to this resource
+          404:
+            description: Something was not found
+          500:
+            description: The server exploded while processing the request
   /file/{fileUid}:
     get:
       tags:
@@ -1172,30 +1198,6 @@ paths:
           description: No Access Permission to this resource
         404:
           description: No file found for this uid
-        500:
-          description: The server exploded while processing the request
-    post:
-      tags:
-        - files
-      summary: Upload a new file, and obtain its new uid
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/FileCreationRequest"
-      responses:
-        200:
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/File'
-        400:
-          description: Bad Request
-        401:
-          description: No Access Permission to this resource
-        404:
-          description: Something was not found
         500:
           description: The server exploded while processing the request
     put:
@@ -1397,6 +1399,157 @@ paths:
           description: Something was not found
         500:
           description: The server exploded while processing the request
+
+  /course/{course_id}/sections:
+    get:
+      tags:
+        - section
+      description: Get all sections of a course
+      parameters:
+        - in: path
+          name: course_id
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentSectionCollection'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    post:
+      tags:
+        - section
+      description: Create a new section for a course
+      parameters:
+        - in: path
+          name: course_id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentSectionCreationRequest'
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentSection'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+  /course/{course_id}/section/{section_id}:
+    get:
+      tags:
+        - section
+      description: Get a single section of a course
+      parameters:
+        - in: path
+          name: course_id
+          schema:
+            type: integer
+          required: true
+        - in: path
+          name: section_id
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentSection'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    put:
+      tags:
+        - section
+      description: Update a section of a course
+      parameters:
+        - in: path
+          name: course_id
+          schema:
+            type: integer
+            required: true
+        - in: path
+          name: section_id
+          schema:
+            type: integer
+            required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentSection'
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentSection'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    delete:
+      tags:
+        - section
+      description: Delete a section of a course
+      parameters:
+        - in: path
+          name: course_id
+          schema:
+            type: integer
+            required: true
+        - in: path
+          name: section_id
+          schema:
+            type: integer
+            required: true
+      responses:
+        200:
+          description: Successful
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+
+
 components:
   securitySchemes:
     cookieAuth:
@@ -1545,7 +1698,7 @@ components:
         content:
           type: array
           items:
-            $ref: '#/components/schemas/ContentElement'
+            $ref: '#/components/schemas/ContentSection'
     CourseCreationRequest:
       type: object
       properties:
@@ -1601,6 +1754,29 @@ components:
       properties:
         target_uid:
           type: integer
+    ContentSection:
+      type: object
+      properties:
+        sectionId:
+          type: integer
+          description: Unique ID of the section
+        headline:
+          type: string
+          description: Headline of the section
+        content:
+          $ref: '#/components/schemas/ContentElementCollection'
+    ContentSectionCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/ContentSection'
+    ContentSectionCreationRequest:
+      type: object
+      properties:
+        headline:
+          type: string
+          description: Headline of the section
+        content:
+          $ref: '#/components/schemas/ContentElementCollection'
     File:
       type: object
       properties:
@@ -1644,7 +1820,7 @@ components:
           type: string
           example: "Klassischer Kurs"
         collection:
-          $ref: '#/components/schemas/ContentElementCollection'
+          $ref: '#/components/schemas/ContentSectionCollection'
         owner:
           description: Owner User ID
           type: integer
@@ -1664,7 +1840,7 @@ components:
           type: string
           example: "Klassischer Kurs"
         collection:
-          $ref: '#/components/schemas/ContentElementCollection'
+          $ref: '#/components/schemas/ContentSectionCollection'
         owner:
           description: Owner User ID
           type: integer
