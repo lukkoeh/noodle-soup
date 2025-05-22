@@ -47,6 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let app_state = AppState {
         db: db_pool.clone(),
+        media_path: env::var("MEDIA_PATH").unwrap(),
     };
 
     //for testing only
