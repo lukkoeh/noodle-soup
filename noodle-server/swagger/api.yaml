@@ -1717,9 +1717,12 @@ components:
         uid:
           type: integer
           description: Unique ID of the content element
-        course_id:
+        courseId:
           type: integer
           description: ID of the assigned course
+        parentSectionId:
+          type: integer
+          description: ID of the parent section
         type:
           type: string
           description: content_type as a string which is mapped to a rendering definition on device
@@ -1737,6 +1740,9 @@ components:
         type:
           type: string
           description: content_type as a string which is mapped to a rendering definition on device
+        parentSectionId:
+          type: integer
+          description: ID of the parent section
         content:
           type: string
           description: Encoded content of the content element (Like text in Markdown -> Base64), used by the renderer
@@ -1760,6 +1766,9 @@ components:
         sectionId:
           type: integer
           description: Unique ID of the section
+        parentCourseId:
+          type: integer
+          description: ID of the parent course
         headline:
           type: string
           description: Headline of the section
@@ -1775,6 +1784,9 @@ components:
         headline:
           type: string
           description: Headline of the section
+        parentCourseId:
+          type: integer
+          description: ID of the parent course
         content:
           $ref: '#/components/schemas/ContentElementCollection'
     File:
