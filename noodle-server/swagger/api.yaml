@@ -1493,12 +1493,12 @@ paths:
       description: Update a section of a course
       parameters:
         - in: path
-          name: course_id
+          name: courseId
           schema:
             type: integer
             required: true
         - in: path
-          name: section_id
+          name: sectionId
           schema:
             type: integer
             required: true
