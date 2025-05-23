@@ -47,6 +47,7 @@ pub struct File {
 pub struct FileRow {
     uid: Uuid,
     filename: String,
+    #[sqlx(rename = "type")]
     mime_type: String,
     location: String,
     created_at: chrono::DateTime<chrono::Utc>,
@@ -81,11 +82,12 @@ pub mod http {
             .await
         {
             Ok(file_rows) => {
-                let mut files = Vec::new();
+                let mut files = Vec::with_capacity(file_rows.len());
                 for file in file_rows {
-                    let file_contents =
-                        std::fs::read(Path::from_relative_path(&state.media_path, &file.location))
-                            .unwrap();
+                    let mut path = Path::from_relative_path(&state.media_path, &file.location);
+                    path.0.push(&file.filename);
+
+                    let file_contents = tokio::fs::read(&path).await.unwrap();
                     files.push(File {
                         uid: file.uid,
                         mime_type: file.mime_type,
@@ -141,12 +143,12 @@ pub mod http {
         }
         let file_id = Uuid::new_v4();
         match sqlx::query_scalar::<_, chrono::DateTime<chrono::Utc>>(
-            "INSERT INTO \"file\" (id, \"type\", location, filename) VALUES ($1, $2, $3, $4) RETURNING created_at",
+            "INSERT INTO \"file\" (uid, filename, \"type\", location) VALUES ($1, $2, $3, $4) RETURNING created_at",
         )
-        .bind(&file_id.simple().to_string())
+        .bind(&file_id)
+        .bind(&file.filename)
         .bind(&file.mime_type)
         .bind(&path_str)
-        .bind(&file.filename)
         .fetch_one(&state.db)
         .await
         {
