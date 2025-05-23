@@ -1758,7 +1758,7 @@ components:
     FileReference:
       type: object
       properties:
-        target_uid:
+        targetUid:
           type: integer
     ContentSection:
       type: object
