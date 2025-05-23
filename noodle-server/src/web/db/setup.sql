@@ -67,10 +67,10 @@ CREATE TABLE IF NOT EXISTS "group_permissions" (-- `user` -> CRUD rights for `gr
 );
 
 CREATE TABLE IF NOT EXISTS "file" (
-    "id" CHAR(32) PRIMARY KEY,
+    "uid" UUID PRIMARY KEY,
+    "filename" VARCHAR(255),
     "type" VARCHAR(255),
     "location" VARCHAR(512),
-    "filename" VARCHAR(255),
     "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
