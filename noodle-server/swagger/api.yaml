@@ -1795,6 +1795,9 @@ components:
         uid:
           type: integer
           description: File Uid to be referenced by FileReference
+        filename:
+          type: string
+          description: filename of the file
         type:
           type: string
           description: The mime type of the file, like image/jpeg
@@ -1807,6 +1810,9 @@ components:
     FileCreationRequest:
       type: object
       properties:
+        filename:
+          type: string
+          description: filename of the file
         type:
           type: string
           description: The mime type, such as image/jpeg
