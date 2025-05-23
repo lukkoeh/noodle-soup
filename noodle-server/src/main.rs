@@ -127,7 +127,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .post(permission::http::group::add_users)
                 .delete(permission::http::group::delete_users),
         )
-        .route("/files", get(resources::file::http::get_all))
+        .route(
+            "/files",
+            get(resources::file::http::get_all).post(resources::file::http::create),
+        )
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary
         .route("/login", post(auth::create_session_handler))
