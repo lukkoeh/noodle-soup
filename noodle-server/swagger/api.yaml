@@ -1456,7 +1456,7 @@ paths:
           description: Something was not found
         500:
           description: The server exploded while processing the request
-  /course/{course_id}/section/{section_id}:
+  /course/{courseId}/section/{sectionId}:
     get:
       tags:
         - section
