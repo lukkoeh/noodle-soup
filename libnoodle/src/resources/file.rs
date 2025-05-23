@@ -88,11 +88,16 @@ pub mod http {
                     path.0.push(&file.filename);
 
                     let file_contents = tokio::fs::read(&path).await.unwrap();
+                    let file_contents_encoded =
+                        tokio::task::spawn_blocking(|| STANDARD_NO_PAD.encode(file_contents))
+                            .await
+                            .unwrap();
+
                     files.push(File {
                         uid: file.uid,
                         mime_type: file.mime_type,
                         filename: file.filename,
-                        data: STANDARD_NO_PAD.encode(file_contents),
+                        data: file_contents_encoded,
                         last_modified: file.updated_at,
                     })
                 }
