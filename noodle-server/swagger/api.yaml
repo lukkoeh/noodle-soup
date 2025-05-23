@@ -580,12 +580,6 @@ paths:
           schema:
             type: integer
           required: true
-      parameters:
-        - in: path
-          name: roleId
-          schema:
-            type: integer
-          required: true
       requestBody:
         content:
           application/json:
@@ -813,12 +807,6 @@ paths:
       tags:
         - group
       summary: Assign users to user group
-      parameters:
-        - in: path
-          name: groupId
-          schema:
-            type: integer
-          required: true
       parameters:
         - in: path
           name: groupId
@@ -1304,6 +1292,7 @@ paths:
           schema:
             type: integer
           description: The specific ID of the template to be queried
+          required: true
       responses:
         200:
           description: Successful
@@ -1329,6 +1318,7 @@ paths:
           schema:
             type: integer
           description: The specific ID of the template to be queried
+          required: true
       requestBody:
         content:
           application/json:
@@ -1359,6 +1349,7 @@ paths:
           schema:
             type: integer
           description: The specific ID of the template to be queried
+          required: true
       requestBody:
         content:
           application/json:
@@ -1388,6 +1379,7 @@ paths:
           schema:
             type: integer
           description: The specific ID of the template to be queried
+          required: true
       responses:
         200:
           description: Successful
@@ -1496,12 +1488,12 @@ paths:
           name: courseId
           schema:
             type: integer
-            required: true
+          required: true
         - in: path
           name: sectionId
           schema:
             type: integer
-            required: true
+          required: true
       requestBody:
         content:
           application/json:
@@ -1531,12 +1523,12 @@ paths:
           name: courseId
           schema:
             type: integer
-            required: true
+          required: true
         - in: path
           name: sectionId
           schema:
             type: integer
-            required: true
+          required: true
       responses:
         200:
           description: Successful
