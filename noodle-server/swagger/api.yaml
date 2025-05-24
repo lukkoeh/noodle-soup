@@ -1281,14 +1281,14 @@ paths:
           description: Something was not found
         500:
           description: The server exploded while processing the request
-  /template/{template_id}:
+  /template/{templateId}:
     get:
       tags:
         - templates
       description: Return a single template
       parameters:
         - in: path
-          name: template_id
+          name: templateId
           schema:
             type: integer
           description: The specific ID of the template to be queried
@@ -1314,7 +1314,7 @@ paths:
       description: Creates a template
       parameters:
         - in: path
-          name: template_id
+          name: templateId
           schema:
             type: integer
           description: The specific ID of the template to be queried
@@ -1345,7 +1345,7 @@ paths:
       description: Uploads a single template
       parameters:
         - in: path
-          name: template_id
+          name: templateId
           schema:
             type: integer
           description: The specific ID of the template to be queried
@@ -1375,7 +1375,7 @@ paths:
         - templates
       parameters:
         - in: path
-          name: template_id
+          name: templateId
           schema:
             type: integer
           description: The specific ID of the template to be queried
@@ -1796,7 +1796,7 @@ components:
         data:
           type: string
           description: file data in bytes, or in base64...
-        last_modified:
+        lastModified:
           type: string
           description: ISO String of last modification time, used for caching
     FileCreationRequest:
