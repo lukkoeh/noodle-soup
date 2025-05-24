@@ -1,0 +1,16 @@
+{
+  "name": "noodle-server",
+  "type": "module",
+  "version": "1.0.0",
+  "main": "test_endpoints.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "GPL-3.0-or-later",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "lodash": "^4.17.21"
+  }
+}

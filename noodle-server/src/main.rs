@@ -15,10 +15,18 @@ use tower_sessions_sqlx_store::PostgresStore;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
-    let db_pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&env::var("PG_URL").unwrap())
-        .await?;
+    let args: Vec<_> = std::env::args().collect();
+
+    let pool_options = PgPoolOptions::new().max_connections(5);
+
+    let db_pool;
+    if args.len() > 1 && args[1] == "test" {
+        db_pool = pool_options
+            .connect(&env::var("PG_TEST_URL").unwrap())
+            .await?;
+    } else {
+        db_pool = pool_options.connect(&env::var("PG_URL").unwrap()).await?;
+    }
 
     let session_store = PostgresStore::new(db_pool.clone());
     session_store.migrate().await?;
