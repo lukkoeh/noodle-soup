@@ -1,17 +1,32 @@
 use std::{
     env::{self, VarError},
     str::FromStr,
+    sync::Arc,
 };
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 pub struct Path(std::path::PathBuf);
+use base64::{Engine, engine::general_purpose::STANDARD_NO_PAD};
 impl Path {
     pub fn from_relative_path(base_path: &str, path: &str) -> Self {
         let mut path_buf = std::path::PathBuf::with_capacity(base_path.len() + path.len() + 2);
         path_buf.push(base_path);
         path_buf.push(path);
+        Self(path_buf)
+    }
+
+    pub fn from_file_row(base_path: &str, file_row: &FileRow) -> Self {
+        Self::from_file_location_and_name(base_path, &file_row.location, &file_row.filename)
+    }
+
+    pub fn from_file_location_and_name(base_path: &str, location: &str, name: &str) -> Self {
+        let mut path_buf =
+            std::path::PathBuf::with_capacity(base_path.len() + location.len() + name.len() + 3);
+        path_buf.push(base_path);
+        path_buf.push(location);
+        path_buf.push(name);
         Self(path_buf)
     }
 }
@@ -54,6 +69,19 @@ pub struct FileRow {
     updated_at: chrono::DateTime<chrono::Utc>,
 }
 
+impl FileRow {
+    pub async fn get_contents_b64(&self, media_path: &str) -> String {
+        let path = Path::from_file_row(media_path, self);
+
+        let file_contents = tokio::fs::read(&path).await.unwrap();
+        let file_contents_encoded =
+            tokio::task::spawn_blocking(|| STANDARD_NO_PAD.encode(file_contents))
+                .await
+                .unwrap();
+        file_contents_encoded
+    }
+}
+
 #[derive(Deserialize)]
 pub struct FileDescription {
     filename: String,
@@ -63,17 +91,17 @@ pub struct FileDescription {
 }
 
 pub mod http {
+    //TODO: proper error handling for failed I/O operations
     use std::{fmt::Write, sync::Arc};
 
     use super::*;
     use axum::{
         Json,
-        extract::State,
+        extract::{Path as UrlPath, State},
         http::StatusCode,
         response::{IntoResponse, Response},
     };
     use axum_login::AuthSession;
-    use base64::{Engine, engine::general_purpose::STANDARD_NO_PAD};
     use sha1::{Digest, Sha1};
 
     pub async fn get_all(State(state): State<crate::AppState>) -> Response {
@@ -84,14 +112,7 @@ pub mod http {
             Ok(file_rows) => {
                 let mut files = Vec::with_capacity(file_rows.len());
                 for file in file_rows {
-                    let mut path = Path::from_relative_path(&state.media_path, &file.location);
-                    path.0.push(&file.filename);
-
-                    let file_contents = tokio::fs::read(&path).await.unwrap();
-                    let file_contents_encoded =
-                        tokio::task::spawn_blocking(|| STANDARD_NO_PAD.encode(file_contents))
-                            .await
-                            .unwrap();
+                    let file_contents_encoded = file.get_contents_b64(&state.media_path).await;
 
                     files.push(File {
                         uid: file.uid,
@@ -173,5 +194,77 @@ pub mod http {
             },
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
+    }
+
+    pub async fn get_by_uid(
+        UrlPath(uid): UrlPath<Uuid>,
+        State(state): State<crate::AppState>,
+    ) -> Response {
+        match sqlx::query_as::<_, FileRow>("SELECT * FROM \"file\" WHERE uid = $1")
+            .bind(&uid)
+            .fetch_optional(&state.db)
+            .await
+        {
+            Ok(Some(file)) => {
+                let encoded_contents = file.get_contents_b64(&state.media_path).await;
+                Json(File {
+                    uid,
+                    filename: file.filename,
+                    mime_type: file.mime_type,
+                    data: encoded_contents,
+                    last_modified: file.updated_at,
+                })
+                .into_response()
+            }
+            Ok(None) => StatusCode::NOT_FOUND.into_response(),
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        }
+    }
+
+    pub async fn update(
+        UrlPath(uid): UrlPath<Uuid>,
+        State(state): State<crate::AppState>,
+        Json(new_file): Json<FileDescription>,
+    ) -> Response {
+        if new_file.filename.len() < 1 {
+            return StatusCode::BAD_REQUEST.into_response();
+        }
+        let old_file = match sqlx::query_as::<_, FileRow>("SELECT * FROM \"file\" WHERE uid = $1")
+            .bind(&uid)
+            .fetch_optional(&state.db)
+            .await
+        {
+            Ok(None) => return StatusCode::NOT_FOUND.into_response(),
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(Some(file)) => file,
+        };
+
+        let shared_contents = Arc::new(new_file.data);
+        let new_contents = {
+            let data_for_decode = Arc::clone(&shared_contents);
+            tokio::task::spawn_blocking(move || {
+                STANDARD_NO_PAD.decode(data_for_decode.as_bytes()).unwrap()
+            })
+            .await
+            .unwrap()
+        };
+
+        tokio::fs::write(
+            &Path::from_file_location_and_name(
+                &state.media_path,
+                &old_file.location,
+                &new_file.filename,
+            ),
+            new_contents,
+        )
+        .await
+        .unwrap();
+
+        if old_file.filename != new_file.filename {
+            tokio::fs::remove_file(&Path::from_file_row(&state.media_path, &old_file))
+                .await
+                .unwrap();
+        }
+        //TODO: Update DB, return response
     }
 }

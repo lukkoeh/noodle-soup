@@ -131,6 +131,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/files",
             get(resources::file::http::get_all).post(resources::file::http::create),
         )
+        .route(
+            "/file/{uid}",
+            get(resources::file::http::get_by_uid)
+                .put(resources::file::http::update)
+                .delete(resources::file::http::delete),
+        )
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary
         .route("/login", post(auth::create_session_handler))
