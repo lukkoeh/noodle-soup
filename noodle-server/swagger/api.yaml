@@ -1702,6 +1702,13 @@ components:
           description: optional content
           items:
             $ref: '#/components/schemas/ContentElementCreationRequest'
+        users:
+          type: array
+          description: Array of User IDs to be added to the course directly (optional)
+          items:
+            type: integer
+            description: User ID
+            example: 420
 
     ContentElement:
       type: object
@@ -1740,7 +1747,7 @@ components:
           description: Encoded content of the content element (Like text in Markdown -> Base64), used by the renderer
         files:
           type: array
-          description: Array of file creationRequests (PDF, IMAGE) to be requested seperately to keep request slim
+          description: Array of file creationRequests (PDF, IMAGE) to be requested with the ContentElement
           items:
             $ref: '#/components/schemas/FileCreationRequest'
     ContentElementCollection:
