@@ -1202,7 +1202,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/File'
+              $ref: '#/components/schemas/FileCreationRequest'
       responses:
         200:
           description: Successful replacement
