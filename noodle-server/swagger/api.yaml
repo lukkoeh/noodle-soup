@@ -1812,12 +1812,9 @@ components:
           type: string
           description: File Data in bytes or base64
     FileCollection:
-      type: object
-      properties:
-        files:
-          type: array
-          items:
-            $ref: '#/components/schemas/File'
+      type: array
+      items:
+        $ref: '#/components/schemas/File'
     Template:
       type: object
       properties:
