@@ -1,7 +1,6 @@
 use std::{
     env::{self, VarError},
     str::FromStr,
-    sync::Arc,
 };
 
 use serde::{Deserialize, Serialize};
@@ -9,6 +8,7 @@ use uuid::Uuid;
 
 pub struct Path(std::path::PathBuf);
 use base64::{Engine, engine::general_purpose::STANDARD_NO_PAD};
+
 impl Path {
     pub fn from_relative_path(base_path: &str, path: &str) -> Self {
         let mut path_buf = std::path::PathBuf::with_capacity(base_path.len() + path.len() + 2);
@@ -18,16 +18,7 @@ impl Path {
     }
 
     pub fn from_file_row(base_path: &str, file_row: &FileRow) -> Self {
-        Self::from_file_location_and_name(base_path, &file_row.location, &file_row.filename)
-    }
-
-    pub fn from_file_location_and_name(base_path: &str, location: &str, name: &str) -> Self {
-        let mut path_buf =
-            std::path::PathBuf::with_capacity(base_path.len() + location.len() + name.len() + 3);
-        path_buf.push(base_path);
-        path_buf.push(location);
-        path_buf.push(name);
-        Self(path_buf)
+        Self::from_relative_path(base_path, &file_row.location)
     }
 }
 
@@ -74,11 +65,10 @@ impl FileRow {
         let path = Path::from_file_row(media_path, self);
 
         let file_contents = tokio::fs::read(&path).await.unwrap();
-        let file_contents_encoded =
-            tokio::task::spawn_blocking(|| STANDARD_NO_PAD.encode(file_contents))
-                .await
-                .unwrap();
-        file_contents_encoded
+
+        tokio::task::spawn_blocking(|| STANDARD_NO_PAD.encode(file_contents))
+            .await
+            .unwrap()
     }
 }
 
@@ -91,8 +81,11 @@ pub struct FileDescription {
 }
 
 pub mod http {
-    //TODO: proper error handling for failed I/O operations
-    use std::{fmt::Write, sync::Arc};
+    // TODO: proper error handling for failed I/O operations
+    // Files are not streamed. They are directly put in memory and written to the file system at once.
+    // This is definetly not optimal (Someone uploads an 1GB file -> Ram usage goes up by 1GB).
+    // If we want to change that, the API spec needs to be adjusted accordingly.
+    use std::sync::Arc;
 
     use super::*;
     use axum::{
@@ -103,6 +96,16 @@ pub mod http {
     };
     use axum_login::AuthSession;
     use sha1::{Digest, Sha1};
+
+    const TEMP_SUFFIX: &'static str = "tmp";
+
+    fn get_temp_file_name(orig_name: &str) -> String {
+        format!("{}.{}", orig_name, TEMP_SUFFIX)
+    }
+
+    fn strip_tmp_suffix(temp_file_name: &str) -> &str {
+        &temp_file_name[..temp_file_name.len() - (TEMP_SUFFIX.len() + 1)]
+    }
 
     pub async fn get_all(State(state): State<crate::AppState>) -> Response {
         match sqlx::query_as::<_, FileRow>("SELECT * FROM \"file\"")
@@ -142,17 +145,15 @@ pub mod http {
         hasher.update(&file.filename);
         hasher.update(&auth_session.user.unwrap().user_id.to_le_bytes());
         let dir_hash = hasher.finalize();
-        let mut path_str = String::with_capacity(2 * dir_hash.len() + 2);
-        write!(
-            &mut path_str,
-            "{}/{}",
-            hex::encode(&dir_hash[..1]),
-            hex::encode(&dir_hash[1..])
-        )
-        .unwrap();
-        let mut path = Path::from_relative_path(&state.media_path, &path_str);
-        std::fs::create_dir_all(&path).unwrap();
-        path.0.push(&file.filename);
+
+        let filename = hex::encode(&dir_hash[1..]);
+        let relative_path = format!("{}/{}", &hex::encode(&dir_hash[..1]), &filename);
+        let mut path = Path::from_relative_path(&state.media_path, &relative_path);
+        tokio::fs::create_dir(&path.0.parent().unwrap())
+            .await
+            .unwrap();
+
+        path.0.set_extension(TEMP_SUFFIX);
 
         let shared_contents = Arc::new(file.data);
         let contents = {
@@ -164,9 +165,10 @@ pub mod http {
             .unwrap()
         };
 
-        if let Err(_) = tokio::fs::write(path, contents).await {
+        if let Err(_) = tokio::fs::write(&path, contents).await {
             return StatusCode::INTERNAL_SERVER_ERROR.into_response();
         }
+
         let file_id = Uuid::new_v4();
         match sqlx::query_scalar::<_, chrono::DateTime<chrono::Utc>>(
             "INSERT INTO \"file\" (uid, filename, \"type\", location) VALUES ($1, $2, $3, $4) RETURNING created_at",
@@ -174,7 +176,7 @@ pub mod http {
         .bind(&file_id)
         .bind(&file.filename)
         .bind(&file.mime_type)
-        .bind(&path_str)
+        .bind(&path.0.strip_prefix(&state.media_path).unwrap().with_extension("").to_str().unwrap())
         .fetch_one(&state.db)
         .await
         {
@@ -183,7 +185,8 @@ pub mod http {
                     Ok(s) => s,
                     Err(arc) => (*arc).clone(),
                 };
-
+                let path_stripped = strip_tmp_suffix(path.0.to_str().unwrap());
+                tokio::fs::rename(&path, path_stripped).await.unwrap();
                 (StatusCode::CREATED, Json(File{
                     uid: file_id,
                     filename: file.filename,
@@ -192,7 +195,10 @@ pub mod http {
                     last_modified: created_at,
                 })).into_response()
             },
-            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            Err(_) => {
+                tokio::fs::remove_file(path).await.unwrap();
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            }
         }
     }
 
@@ -200,6 +206,7 @@ pub mod http {
         UrlPath(uid): UrlPath<Uuid>,
         State(state): State<crate::AppState>,
     ) -> Response {
+        //TODO: Caching - return NOT MODIFIED if file was not changed.
         match sqlx::query_as::<_, FileRow>("SELECT * FROM \"file\" WHERE uid = $1")
             .bind(&uid)
             .fetch_optional(&state.db)
@@ -249,22 +256,69 @@ pub mod http {
             .unwrap()
         };
 
-        tokio::fs::write(
-            &Path::from_file_location_and_name(
-                &state.media_path,
-                &old_file.location,
-                &new_file.filename,
-            ),
-            new_contents,
-        )
-        .await
-        .unwrap();
+        let mut path = Path::from_relative_path(&state.media_path, &old_file.location);
+        path.0.set_extension(TEMP_SUFFIX);
 
-        if old_file.filename != new_file.filename {
-            tokio::fs::remove_file(&Path::from_file_row(&state.media_path, &old_file))
-                .await
-                .unwrap();
+        tokio::fs::write(&path, new_contents).await.unwrap();
+
+        match sqlx::query_scalar::<_, chrono::DateTime<chrono::Utc>>(
+            "UPDATE \"file\" SET filename = $1, \"type\" = $2, updated_at = CURRENT_TIMESTAMP WHERE uid = $3 RETURNING updated_at",
+        )
+        .bind(&new_file.filename)
+        .bind(&new_file.mime_type)
+        .bind(&uid)
+        .fetch_one(&state.db)
+        .await
+        {
+            Ok(last_modified) => {
+                let data = match Arc::try_unwrap(shared_contents) {
+                    Ok(s) => s,
+                    Err(arc) => (*arc).clone(),
+                };
+                tokio::fs::rename(&path, strip_tmp_suffix(path.0.to_str().unwrap())).await.unwrap();
+                Json(File {
+                    uid,
+                    filename: new_file.filename,
+                    mime_type: new_file.mime_type,
+                    data,
+                    last_modified,
+                }).into_response()
+            },
+            Err(_) => {
+                tokio::fs::remove_file(&path).await.unwrap();
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            },
         }
-        //TODO: Update DB, return response
+    }
+
+    pub async fn delete(
+        UrlPath(uid): UrlPath<Uuid>,
+        State(state): State<crate::AppState>,
+    ) -> StatusCode {
+        let file_to_delete =
+            match sqlx::query_as::<_, FileRow>("SELECT * FROM \"file\" WHERE uid = $1")
+                .bind(&uid)
+                .fetch_optional(&state.db)
+                .await
+            {
+                Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+                Ok(None) => return StatusCode::NOT_FOUND,
+                Ok(Some(file)) => file,
+            };
+
+        match sqlx::query("DELETE FROM \"file\" WHERE uid = $1")
+            .bind(&uid)
+            .execute(&state.db)
+            .await
+        {
+            Ok(_) => {
+                let path = Path::from_relative_path(&state.media_path, &file_to_delete.location);
+                match tokio::fs::remove_file(&path).await {
+                    Ok(_) => StatusCode::OK,
+                    Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+                }
+            }
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
     }
 }
