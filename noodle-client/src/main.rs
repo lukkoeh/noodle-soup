@@ -8,14 +8,14 @@ slint::include_modules!();
 fn main() -> Result<(), Box<dyn Error>> {
     let ui = AppWindow::new()?;
 
-    ui.on_request_increase_value({
-        let ui_handle = ui.as_weak();
-        move || {
-            let ui = ui_handle.unwrap();
-            ui.set_counter(ui.get_counter() + 1);
-        }
-    });
+    // Add some dummy test data
+    let user_lastname = "Müller";
+    let user_firstname = "Max";
 
+    ui.set_user_firstname(user_firstname.into());
+    ui.on_search_bar_edited(move |text| {
+        println!("Text changed: {}", text);
+    });
     ui.run()?;
 
     Ok(())

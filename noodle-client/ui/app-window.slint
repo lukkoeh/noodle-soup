@@ -1,18 +1,35 @@
-import { Button, VerticalBox } from "std-widgets.slint";
+import { Button, VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { NoodleText } from "noodle-text.slint";
+import { SearchBar } from "search-bar.slint";
 
 export component AppWindow inherits Window {
     in-out property <int> counter: 42;
+    in-out property <string> user_firstname: "not set";
+    callback search_bar_edited(text: string);
+    width: 1280px;
+    height: 720px;
+    background: white;
     callback request-increase-value();
     VerticalBox {
-        Text {
-            text: "Counter: \{root.counter}";
-        }
-
-        Button {
-            text: "Increase value";
-            clicked => {
-                root.request-increase-value();
+        
+        HorizontalBox {
+            NoodleText {
+                text: "HEADER";
             }
+            NoodleText {
+                text: "Header element";
+            }
+            SearchBar {
+                width: 500px;
+                height: 100px;
+                edited(text) => {
+                    root.search_bar_edited(text);
+                }
+            }
+
+        }
+        NoodleText {
+            text: "Hallo " + user_firstname + "!";
         }
     }
 }
