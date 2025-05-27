@@ -10,6 +10,18 @@ tags:
     description: Operations about permission groups (roles)
   - name: group
     description: Operations about user groups
+  - name: course
+    description: Operations about course rooms, content depends on it
+  - name: content
+    description: Operations about leaning content elements
+  - name: files
+    description: Operations about files
+  - name: templates
+    description: Operations about templates
+  - name: branding
+    description: Operations about branding, like colors and stuff
+  - name: section
+    description: Operations about content sections
 security:
   - cookieAuth: [ ]
 paths:
@@ -153,7 +165,7 @@ paths:
               description: Role IDs
               items:
                 type: integer
-              example: [5,3,2]
+              example: [ 5,3,2 ]
       responses:
         '200':
           description: successful operation
@@ -183,7 +195,7 @@ paths:
               description: Role IDs
               items:
                 type: integer
-              example: [5,3,2]
+              example: [ 5,3,2 ]
       responses:
         '201':
           description: successful operation
@@ -270,7 +282,7 @@ paths:
               description: User group IDs
               items:
                 type: integer
-              example: [6,4,1]
+              example: [ 6,4,1 ]
       responses:
         '200':
           description: successful operation
@@ -300,7 +312,7 @@ paths:
               description: User group IDs
               items:
                 type: integer
-              example: [6,2,3]
+              example: [ 6,2,3 ]
       responses:
         '201':
           description: successful operation
@@ -546,7 +558,7 @@ paths:
               description: User IDs
               items:
                 type: integer
-              example: [6,4,1]
+              example: [ 6,4,1 ]
       responses:
         '200':
           description: successful operation
@@ -779,7 +791,7 @@ paths:
               description: User IDs
               items:
                 type: integer
-              example: [6,4,1]
+              example: [ 6,4,1 ]
       responses:
         '200':
           description: successful operation
@@ -889,6 +901,647 @@ paths:
           description: Access Denied.
         '500':
           description: internal server error
+  /courses:
+    get:
+      tags:
+        - course
+      summary: Get all Courses that you have access to
+      responses:
+        200:
+          description: Returns all courses as JSON Objects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseCollection'
+    post:
+      tags:
+        - course
+      summary: Create a new course, by default empty, optionally with content
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseCreationRequest'
+      responses:
+        200:
+          description: Course was created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        500:
+          description: The server exploded while processing the request
+  /course/{courseId}:
+    get:
+      tags:
+        - course
+      summary: Get details for course
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: Returns the course data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: No course found for this uid
+        500:
+          description: The server exploded while processing the request
+    put:
+      tags:
+        - course
+      summary: Edit course details
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Course'
+      responses:
+        200:
+          description: The course was edited and is now in sync with the client
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: No course found for this uid
+        500:
+          description: The server exploded while processing the request
+    delete:
+      tags:
+        - course
+      summary: Delete a course
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: The course was deleted
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: No course found for this uid
+        500:
+          description: The server exploded while processing the request
+
+  /course/{courseId}/content:
+    get:
+      tags:
+        - content
+      summary: Get all content elements from a course by courseId
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: Returns all the content from a course
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentElementCollection'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Resource not found for this uid
+        500:
+          description: The server exploded while processing the request
+    post:
+      tags:
+        - content
+      summary: Create a new content element inside a course
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentElementCreationRequest'
+      responses:
+        200:
+          description: Returns the newly created content resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentElement'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: No course found for this uid
+        500:
+          description: The server exploded while processing the request
+    put:
+      tags:
+        - content
+      summary: Update a content element
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentElement'
+      responses:
+        200:
+          description: Returns the updated content resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentElement'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: No course found for this uid
+        500:
+          description: The server exploded while processing the request
+    delete:
+      tags:
+        - content
+      summary: Delete a content element from a course
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: Resource deleted successfully
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: No course found for this uid
+        500:
+          description: The server exploded while processing the request
+  /files:
+    get:
+      tags:
+        - files
+      summary: Get all files of the instance with their ids
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileCollection'
+        204:
+          description: No files found, but successful otherwise
+        400:
+          description: Bad Request
+        404:
+          description: Resource not found, something has gone wrong
+        500:
+          description: Internal Server Error
+        401:
+          description: Unauthorized
+    post:
+        tags:
+          - files
+        summary: Upload a new file, and obtain its new uid
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileCreationRequest"
+        responses:
+          200:
+            description: Successful operation
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/File'
+          400:
+            description: Bad Request
+          401:
+            description: No Access Permission to this resource
+          404:
+            description: Something was not found
+          500:
+            description: The server exploded while processing the request
+  /file/{fileUid}:
+    get:
+      tags:
+        - files
+      summary: Get a file by uid and its contents
+      parameters:
+        - in: path
+          name: fileUid
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: No file found for this uid
+        500:
+          description: The server exploded while processing the request
+    put:
+      tags:
+        - files
+      summary: Replace a file, without altering the uid
+      parameters:
+        - in: path
+          name: fileUid
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileCreationRequest'
+      responses:
+        200:
+          description: Successful replacement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/File'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    delete:
+      tags:
+        - files
+      summary: Delete a file by uid, also deletes relations to it
+      parameters:
+        - in: path
+          name: fileUid
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: File deleted
+        400:
+          description: Bad Request
+        404:
+          description: I have never seen this file in my entire life
+        500:
+          description: The server crashed
+  /design:
+    get:
+      tags:
+        - branding
+      description: Returns the asset image data as well as the accent color hex code. Authentication handles the assignment of accounts.
+      responses:
+        200:
+          description: Returns the data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branding'
+        '400':
+          description: Invalid request
+        '401':
+          description: Access Denied.
+        '500':
+          description: internal server error
+  /templates:
+    get:
+      tags:
+        - templates
+      description: Get all templates accesible by the user
+      parameters:
+        - in: query
+          name: owned
+          schema:
+            type: boolean
+          description: Query the owned or all visible templates, owned = true means only owned
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateCollection'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+  /template/{templateId}:
+    get:
+      tags:
+        - templates
+      description: Return a single template
+      parameters:
+        - in: path
+          name: templateId
+          schema:
+            type: integer
+          description: The specific ID of the template to be queried
+          required: true
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    post:
+      tags:
+        - templates
+      description: Creates a template
+      parameters:
+        - in: path
+          name: templateId
+          schema:
+            type: integer
+          description: The specific ID of the template to be queried
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateCreationRequest'
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    put:
+      tags:
+        - templates
+      description: Uploads a single template
+      parameters:
+        - in: path
+          name: templateId
+          schema:
+            type: integer
+          description: The specific ID of the template to be queried
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Template'
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    delete:
+      tags:
+        - templates
+      parameters:
+        - in: path
+          name: templateId
+          schema:
+            type: integer
+          description: The specific ID of the template to be queried
+          required: true
+      responses:
+        200:
+          description: Successful
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+
+  /course/{course_id}/sections:
+    get:
+      tags:
+        - section
+      description: Get all sections of a course
+      parameters:
+        - in: path
+          name: course_id
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentSectionCollection'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    post:
+      tags:
+        - section
+      description: Create a new section for a course
+      parameters:
+        - in: path
+          name: course_id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentSectionCreationRequest'
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentSection'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+  /course/{courseId}/section/{sectionId}:
+    get:
+      tags:
+        - section
+      description: Get a single section of a course
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
+        - in: path
+          name: sectionId
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentSection'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    put:
+      tags:
+        - section
+      description: Update a section of a course
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
+        - in: path
+          name: sectionId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentSection'
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentSection'
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+    delete:
+      tags:
+        - section
+      description: Delete a section of a course
+      parameters:
+        - in: path
+          name: courseId
+          schema:
+            type: integer
+          required: true
+        - in: path
+          name: sectionId
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: Successful
+        400:
+          description: Bad Request
+        401:
+          description: No Access Permission to this resource
+        404:
+          description: Something was not found
+        500:
+          description: The server exploded while processing the request
+
+
 components:
   securitySchemes:
     cookieAuth:
@@ -987,7 +1640,7 @@ components:
         - $ref: '#/components/schemas/RoleDescription'
     Permission:
       type: object
-      required: ["subject", "ops"]
+      required: [ "subject", "ops" ]
       properties:
         subject:
           type: string
@@ -998,7 +1651,7 @@ components:
           items:
             type: integer
           description: ids of resource to be managed
-          example: [1,2,3]
+          example: [ 1,2,3 ]
         ops:
           type: integer
           description: "4 bit integer (0 - 15), 1st (rightmost) bit: create, 2nd bit: read, 3rd bit: update, 4th bit: delete"
@@ -1021,3 +1674,207 @@ components:
               example: 1
         - $ref: '#/components/schemas/UserGroupDescription'
       type: object
+    CourseCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/Course'
+    Course:
+      type: object
+      properties:
+        uid:
+          type: integer
+          description: Unique ID of the course
+        name:
+          type: string
+          description: Name of the course
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentSection'
+    CourseCreationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the course
+        content:
+          type: array
+          description: optional content
+          items:
+            $ref: '#/components/schemas/ContentElementCreationRequest'
+        users:
+          type: array
+          description: Array of User IDs to be added to the course directly (optional)
+          items:
+            type: integer
+            description: User ID
+            example: 420
+
+    ContentElement:
+      type: object
+      properties:
+        uid:
+          type: integer
+          description: Unique ID of the content element
+        courseId:
+          type: integer
+          description: ID of the assigned course
+        parentSectionId:
+          type: integer
+          description: ID of the parent section
+        type:
+          type: string
+          description: content_type as a string which is mapped to a rendering definition on device
+        content:
+          type: string
+          description: Encoded content of the content element (Like text in Markdown -> Base64), used by the renderer
+        files:
+          type: array
+          description: Array of file references (PDF, IMAGE) to be requested seperately to keep request slim
+          items:
+            $ref: '#/components/schemas/FileReference'
+    ContentElementCreationRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          description: content_type as a string which is mapped to a rendering definition on device
+        parentSectionId:
+          type: integer
+          description: ID of the parent section
+        content:
+          type: string
+          description: Encoded content of the content element (Like text in Markdown -> Base64), used by the renderer
+        files:
+          type: array
+          description: Array of file creationRequests (PDF, IMAGE) to be requested with the ContentElement
+          items:
+            $ref: '#/components/schemas/FileCreationRequest'
+    ContentElementCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/ContentElement'
+    FileReference:
+      type: object
+      properties:
+        targetUid:
+          type: integer
+    ContentSection:
+      type: object
+      properties:
+        sectionId:
+          type: integer
+          description: Unique ID of the section
+        parentCourseId:
+          type: integer
+          description: ID of the parent course
+        headline:
+          type: string
+          description: Headline of the section
+        content:
+          $ref: '#/components/schemas/ContentElementCollection'
+    ContentSectionCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/ContentSection'
+    ContentSectionCreationRequest:
+      type: object
+      properties:
+        headline:
+          type: string
+          description: Headline of the section
+        parentCourseId:
+          type: integer
+          description: ID of the parent course
+        content:
+          $ref: '#/components/schemas/ContentElementCollection'
+    File:
+      type: object
+      properties:
+        uid:
+          type: integer
+          description: File Uid to be referenced by FileReference
+        filename:
+          type: string
+          description: filename of the file
+        type:
+          type: string
+          description: The mime type of the file, like image/jpeg
+        data:
+          type: string
+          description: file data in bytes, or in base64...
+        lastModified:
+          type: string
+          description: ISO String of last modification time, used for caching
+    FileCreationRequest:
+      type: object
+      properties:
+        filename:
+          type: string
+          description: filename of the file
+        type:
+          type: string
+          description: The mime type, such as image/jpeg
+        data:
+          type: string
+          description: File Data in bytes or base64
+    FileCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/File'
+    Template:
+      type: object
+      properties:
+        uid:
+          description: Unique ID for templates
+          type: integer
+          example: 1234
+        name:
+          description: the template name
+          type: string
+          example: "Klassischer Kurs"
+        collection:
+          $ref: '#/components/schemas/ContentSectionCollection'
+        owner:
+          description: Owner User ID
+          type: integer
+          example: 69
+        users:
+          type: array
+          description: Array of User IDs capable of READING the element
+          items:
+            type: integer
+            description: User ID
+            example: 420
+    TemplateCreationRequest:
+      type: object
+      properties:
+        name:
+          description: the template name
+          type: string
+          example: "Klassischer Kurs"
+        collection:
+          $ref: '#/components/schemas/ContentSectionCollection'
+        owner:
+          description: Owner User ID
+          type: integer
+          example: 69
+        users:
+          type: array
+          description: Array of User IDs capable of READING the element
+          items:
+            type: integer
+            description: User ID
+            example: 420
+    TemplateCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/Template'
+    Branding:
+      type: object
+      properties:
+        color:
+          type: string
+          example: "#fafafa"
+        image:
+          $ref: '#/components/schemas/FileReference'
