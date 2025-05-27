@@ -16,6 +16,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     ui.on_search_bar_edited(move |text| {
         println!("Text changed: {}", text);
     });
+    ui.on_button_outline_clicked(move || {
+        println!("Button clicked:");
+    });
     ui.run()?;
 
     Ok(())
