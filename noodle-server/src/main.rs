@@ -4,7 +4,7 @@ use axum_login::tower_sessions::{ExpiredDeletion, SessionManagerLayer};
 use axum_login::{AuthManagerLayerBuilder, login_required};
 use dotenv::dotenv;
 use libnoodle::AppState;
-use libnoodle::{auth, user};
+use libnoodle::{auth, resources, user};
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::net::SocketAddr;
@@ -47,6 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let app_state = AppState {
         db: db_pool.clone(),
+        media_path: env::var("MEDIA_PATH").unwrap(),
     };
 
     //for testing only
@@ -125,6 +126,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .put(permission::http::group::replace_users)
                 .post(permission::http::group::add_users)
                 .delete(permission::http::group::delete_users),
+        )
+        .route(
+            "/files",
+            get(resources::file::http::get_all).post(resources::file::http::create),
+        )
+        .route(
+            "/file/{uid}",
+            get(resources::file::http::get_by_uid)
+                .put(resources::file::http::update)
+                .delete(resources::file::http::delete),
         )
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary

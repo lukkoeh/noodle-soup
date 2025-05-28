@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS "file";
 DROP TABLE IF EXISTS "user_permissions";
 DROP TABLE IF EXISTS "role_permissions";
 DROP TABLE IF EXISTS "group_permissions";
@@ -63,4 +64,13 @@ CREATE TABLE IF NOT EXISTS "group_permissions" (-- `user` -> CRUD rights for `gr
     "user_id" BIGSERIAL REFERENCES "user" ON DELETE CASCADE,
     "resource_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
     "permission" SMALLINT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS "file" (
+    "uid" UUID PRIMARY KEY,
+    "filename" VARCHAR(255),
+    "type" VARCHAR(255),
+    "location" VARCHAR(512),
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
