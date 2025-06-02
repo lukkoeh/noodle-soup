@@ -1,0 +1,14 @@
+export component NoodleText inherits Text {
+    in property <int> h-level: 0; // 0 = p, 1 = h1, ..., 5 = h5
+
+    color: black;
+    font-size: {
+        if (h-level == 1) { 32px }
+        else if (h-level == 2) { 26px }
+        else if (h-level == 3) { 22px }
+        else if (h-level == 4) { 18px }
+        else if (h-level == 5) { 15px }
+        else { 14px } // Default für p
+    }
+    font-weight: h-level > 0 ? 700 : 400;
+}
