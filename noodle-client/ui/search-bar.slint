@@ -1,0 +1,23 @@
+export component SearchBar inherits Rectangle {
+    callback edited(text: string);
+    background: #f0f0f0;
+    width: 768px;
+    height: 40px;
+    border-radius: 12px;
+    border-width: 1.5px;
+    border-color: #888888;
+    padding: 6px;
+
+    TextInput {
+        width: parent.width - 2 * parent.padding;
+        height: parent.height - 2 * parent.padding;
+        x: parent.padding;
+        y: parent.padding;
+        color: #222222;
+        single-line: true;
+        input-type: text;
+        vertical-alignment: center;
+        font-size: 20px;
+        edited => { root.edited(self.text); }
+    }
+}

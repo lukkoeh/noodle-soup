@@ -1,0 +1,31 @@
+import { Button } from "std-widgets.slint";
+
+export component ButtonOutline inherits Rectangle {
+    in property <color> outline-color: #0078d4; // Standardfarbe (z.B. Blau)
+    in-out property <string> text <=> label.text;
+
+    background: touch.has-hover ? #ff4444 : white; // Rot bei Hover, sonst weiß
+    border-color: outline-color;
+    border-width: 2px;
+    border-radius: 10px;
+
+    // Button-Logik
+    callback clicked();
+
+    // TouchArea für Interaktion
+    touch := TouchArea {
+        width: parent.width;
+        height: parent.height;
+        clicked => { root.clicked(); }
+    }
+
+    // Text mittig anzeigen
+    label := Text {
+        text: "Button";
+        color: touch.has-hover ? white : outline-color;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        width: parent.width;
+        height: parent.height;
+    }
+}
