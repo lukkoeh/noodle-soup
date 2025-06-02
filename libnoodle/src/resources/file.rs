@@ -6,7 +6,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-pub struct Path(std::path::PathBuf);
+pub struct Path(pub std::path::PathBuf);
 use base64::{Engine, engine::general_purpose::STANDARD_NO_PAD};
 
 impl Path {
@@ -19,6 +19,12 @@ impl Path {
 
     pub fn from_file_row(base_path: &str, file_row: &FileRow) -> Self {
         Self::from_relative_path(base_path, &file_row.location)
+    }
+
+    pub fn from_hash(base_path: &str, dir_hash: &[u8]) -> Self {
+        let filename = hex::encode(&dir_hash[1..]);
+        let relative_path = format!("{}/{}", &hex::encode(&dir_hash[..1]), &filename);
+        Path::from_relative_path(base_path, &relative_path)
     }
 }
 
@@ -146,9 +152,7 @@ pub mod http {
         hasher.update(&auth_session.user.unwrap().user_id.to_le_bytes());
         let dir_hash = hasher.finalize();
 
-        let filename = hex::encode(&dir_hash[1..]);
-        let relative_path = format!("{}/{}", &hex::encode(&dir_hash[..1]), &filename);
-        let mut path = Path::from_relative_path(&state.media_path, &relative_path);
+        let mut path = Path::from_hash(&state.media_path, &dir_hash);
         tokio::fs::create_dir(&path.0.parent().unwrap())
             .await
             .unwrap();
