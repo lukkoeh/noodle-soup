@@ -1,13 +1,30 @@
 DROP TABLE IF EXISTS "file";
+
 DROP TABLE IF EXISTS "user_permissions";
+
 DROP TABLE IF EXISTS "role_permissions";
+
 DROP TABLE IF EXISTS "group_permissions";
+
 DROP TABLE IF EXISTS "user_has_role";
+
 DROP TABLE IF EXISTS "role";
+
 DROP TABLE IF EXISTS "user_in_group";
+
 DROP TABLE IF EXISTS "group";
+
 DROP TABLE IF EXISTS "user";
+
 DROP TYPE IF EXISTS "group_kind";
+
+DROP TABLE IF EXISTS "course";
+
+DROP TABLE IF EXISTS "content_section";
+
+DROP TABLE IF EXISTS "content_element";
+
+DROP TABLE IF EXISTS "file_in_content_element";
 
 CREATE TABLE IF NOT EXISTS "user" (
     "id" BIGSERIAL PRIMARY KEY,
@@ -16,17 +33,22 @@ CREATE TABLE IF NOT EXISTS "user" (
     "email" VARCHAR(255) UNIQUE,
     "password" CHARACTER(60)
 );
+
 CREATE INDEX ON "user" ("firstname");
+
 CREATE INDEX ON "user" ("lastname");
+
 CREATE INDEX ON "user" ("email");
 
 CREATE TYPE "group_kind" AS ENUM ('organization', 'learning', 'contact', 'role');
+
 CREATE TABLE IF NOT EXISTS "group" (
     "id" BIGSERIAL PRIMARY KEY,
     "kind" "group_kind",
     "name" VARCHAR(255) UNIQUE,
-    "parent" BIGINT REFERENCES "group"(id) ON DELETE SET NULL
+    "parent" BIGINT REFERENCES "group" (id) ON DELETE SET NULL
 );
+
 CREATE INDEX ON "group" ("kind");
 
 CREATE TABLE IF NOT EXISTS "role" (
@@ -48,7 +70,7 @@ CREATE TABLE IF NOT EXISTS "user_in_group" (
     PRIMARY KEY ("user_id", "group_id")
 );
 
-CREATE TABLE IF NOT EXISTS "user_permissions" (-- `user` -> CRUD rights for `user`
+CREATE TABLE IF NOT EXISTS "user_permissions" ( -- `user` -> CRUD rights for `user`
     "user_id" BIGSERIAL REFERENCES "user" ON DELETE CASCADE,
     "resource_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
     "permission" SMALLINT DEFAULT 0
@@ -60,7 +82,7 @@ CREATE TABLE IF NOT EXISTS "role_permissions" ( -- `user` -> CRUD rights for `ro
     "permission" SMALLINT DEFAULT 0
 );
 
-CREATE TABLE IF NOT EXISTS "group_permissions" (-- `user` -> CRUD rights for `group`
+CREATE TABLE IF NOT EXISTS "group_permissions" ( -- `user` -> CRUD rights for `group`
     "user_id" BIGSERIAL REFERENCES "user" ON DELETE CASCADE,
     "resource_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
     "permission" SMALLINT DEFAULT 0
@@ -71,6 +93,40 @@ CREATE TABLE IF NOT EXISTS "file" (
     "filename" VARCHAR(255),
     "type" VARCHAR(255),
     "location" VARCHAR(512),
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "course" (
+    "id" BIGSERIAL PRIMARY KEY,
+    "name" VARCHAR(255),
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "content_section" (
+    "id" BIGSERIAL PRIMARY KEY,
+    "course_id" BIGSERIAL REFERENCES "course" ON DELETE CASCADE,
+    "headline" VARCHAR(255),
+    "order_index" INTEGER DEFAULT 0,
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "content_element" (
+    "id" BIGSERIAL PRIMARY KEY,
+    "section_id" BIGSERIAL REFERENCES "content_section" ON DELETE CASCADE,
+    "order_index" INTEGER DEFAULT 0,
+    "type" VARCHAR(255),
+    "content" TEXT,
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "file_in_content_element" (
+    "content_id" BIGSERIAL REFERENCES "content_element" ON DELETE CASCADE,
+    "file_id" BIGSERIAL REFERENCES "file" ON DELETE CASCADE,
+    "order_index" INTEGER DEFAULT 0,
     "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
