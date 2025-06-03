@@ -1,0 +1,11 @@
+import "../fonts/font-awesome-4.7.0/FontAwesome.otf";
+
+export component IconFA inherits Text{
+    // requires unicode string to work. like this \u{f002}
+    in property <string> unicode: "";
+    in property <length> icon-size: 16px;
+    padding: 0;
+    font-weight: 400;
+    font-family: "FontAwesome";
+    text: "\{unicode}";
+}

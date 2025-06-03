@@ -1,0 +1,24 @@
+export struct Theme {
+    // contains all colors used throughout the whole app
+    // fs -> fontsize c -> color
+    fs-h1: length, // 28px
+    fs-h2: length, // 22pxls
+    fs-h3: length, // 18px
+    fs-l: length, // 16px icons-groß
+    fs-m: length, // 14px normaler text
+    fs-s: length, // 12px tags
+
+    c-txt-0: brush, // #000 normaler text
+    c-txt-1: brush, // #898989 suchfeld Text
+    c-bg-0: brush, // #FFF - Hintergrund
+    c-bg-1: brush, // #FFF - Kachel Hintergrund
+    c-bg-2: brush, // #F6F6F6 hintergrund suche, Dropdown
+
+    // misc colors
+    c-m-1: brush, // #CACACA Trennlinie
+
+    // suposed to contain accent color and a brighter variant of color
+    c-a-0: brush, // Custom Color in darkmode HSL -20 L
+    c-a-1: brush, // Custom Color 20% transparency
+    c-a-2: brush, // Custom Color + or - 20 HSL brightnes
+}
