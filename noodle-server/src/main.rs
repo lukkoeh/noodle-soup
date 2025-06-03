@@ -137,6 +137,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .put(resources::file::http::update)
                 .delete(resources::file::http::delete),
         )
+        .route(
+            "/design",
+            get(resources::branding::http::get).post(resources::branding::http::create_default),
+        )
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary
         .route("/login", post(auth::create_session_handler))

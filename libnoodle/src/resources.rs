@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+pub mod branding;
 pub mod file;
 
 #[derive(Serialize, Deserialize, sqlx::Type)]
