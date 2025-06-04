@@ -97,16 +97,11 @@ CREATE TABLE IF NOT EXISTS "file" (
     "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS "course" (
-    "id" BIGSERIAL PRIMARY KEY,
-    "name" VARCHAR(255),
-    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
+CREATE TABLE IF NOT EXISTS "course" ("uid" BIGSERIAL PRIMARY KEY, "name" VARCHAR(255));
 
 --- 1 course -> n content sections
 CREATE TABLE IF NOT EXISTS "content_section" (
-    "id" BIGSERIAL PRIMARY KEY,
+    "uid" BIGSERIAL PRIMARY KEY,
     "course_id" BIGSERIAL REFERENCES "course" ON DELETE CASCADE,
     "headline" VARCHAR(255),
     "order_index" INTEGER DEFAULT 0,
@@ -116,7 +111,7 @@ CREATE TABLE IF NOT EXISTS "content_section" (
 
 --- Content Element = Daughter Element of Content Section
 CREATE TABLE IF NOT EXISTS "content_element" (
-    "id" BIGSERIAL PRIMARY KEY,
+    "uid" BIGSERIAL PRIMARY KEY,
     "section_id" BIGSERIAL REFERENCES "content_section" ON DELETE CASCADE,
     "order_index" INTEGER DEFAULT 0,
     "type" VARCHAR(255),
@@ -133,14 +128,3 @@ CREATE TABLE IF NOT EXISTS "file_in_content_element" (
     "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-
---- Assign Users to Courses
-CREATE TABLE IF NOT EXISTS "user_in_course" (
-    "user_id" BIGSERIAL REFERENCES "user",
-    "course_id" BIGSERIAL REFERENCES "course",
-    "role" VARCHAR(255),
-    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-e

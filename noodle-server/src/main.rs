@@ -141,6 +141,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/design",
             get(resources::branding::http::get).post(resources::branding::http::create_default),
         )
+        .route(
+            "/courses",
+            get(resources::course::http::get_all).post(resources::course::http::create),
+        )
+        .route(
+            "/course/{id}",
+            get(resources::course::http::get_by_uid)
+                .put(resources::course::http::update)
+                .delete(resources::course::http::delete),
+        )
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary
         .route("/login", post(auth::create_session_handler))
