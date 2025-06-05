@@ -8,7 +8,7 @@ export struct Theme {
     fs-m: length, // 14px normaler text
     fs-s: length, // 12px tags
 
-    c-txt-0: brush, // #000 normaler text
+    c-txt-0: brush, //#000 normaler text
     c-txt-1: brush, // #898989 suchfeld Text
     c-bg-0: brush, // #FFF - Hintergrund
     c-bg-1: brush, // #FFF - Kachel Hintergrund
@@ -22,3 +22,30 @@ export struct Theme {
     c-a-1: brush, // Custom Color 20% transparency
     c-a-2: brush, // Custom Color + or - 20 HSL brightnes
 }
+
+/*Example structure
+
+in property <Theme> theme: {
+        // only for default fallback
+        fs-h1: 28px,
+        fs-h2: 22px,
+        fs-h3: 18px,
+        fs-l: 16px, // icons-groß
+        fs-m: 14px, // normaler text
+        fs-s: 12px, // tags
+
+        c-txt-0: #000000, // normaler text
+        c-txt-1: #898989, // suchfeld Text
+        c-bg-0: #FFFFFF, // Hintergrund
+        c-bg-1: #FFFFFF, // Kachel Hintergrund
+        c-bg-2: #F6F6F6, // suche, Dropdown
+
+        // misc colors
+        c-m-1: #CACACA, // Trennlinie
+
+        // suposed to contain accent color and a brighter variant of color
+        c-a-0: #ff0000, // Custom Color in darkmode HSL -20 L
+        c-a-1: #ff0000aa, // Custom Color 20% transparency
+        c-a-2: #ff0000, // Custom Color + or - 20 HSL brightnes
+    };
+*/

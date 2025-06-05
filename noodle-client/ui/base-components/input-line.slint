@@ -1,0 +1,65 @@
+import { Theme } from "./theme-struct.slint";
+import {IconFA} from "./fa-icon.slint";
+import {UiButton} from "./ui-button.slint";
+export component InputLine inherits Rectangle{
+    //TODO inputfield that can display placeholder and extra icon like search if needed
+    in property <Theme> theme: {
+        // only for default fallback
+        fs-h1: 28px,
+        fs-h2: 22px,
+        fs-h3: 18px,
+        fs-l: 16px, // icons-groß
+        fs-m: 14px, // normaler text
+        fs-s: 12px, // tags
+
+        c-txt-0: #000000, // normaler text
+        c-txt-1: #898989, // suchfeld Text
+        c-bg-0: #FFFFFF, // Hintergrund
+        c-bg-1: #FFFFFF, // Kachel Hintergrund
+        c-bg-2: #F6F6F6, // suche, Dropdown
+
+        // misc colors
+        c-m-1: #CACACA, // Trennlinie
+
+        // suposed to contain accent color and a brighter variant of color
+        c-a-0: #ff0000, // Custom Color in darkmode HSL -20 L
+        c-a-1: #ff0000aa, // Custom Color 20% transparency
+        c-a-2: #ff0000, // Custom Color + or - 20 HSL brightnes
+    };
+    property <string> text: "";
+    property <string> placeholder: "Edit Me";
+    property <string> icon: "\u{f002}";
+    property <length> font_size: 26px;
+    private property <length> pad: 5px;
+
+    callback on-action();
+
+    border-radius: 20px;
+    background: grey;
+    border-width: 0px;
+    preferred-height: theme.fs-m + 2 * pad;
+    min-width: 80px;
+
+    HorizontalLayout {
+        padding: pad;
+        padding-left: 10px;
+        padding-right: 10px;
+        alignment: space-between;
+
+        //border-width: 0px;
+        TextInput {
+            if root.text == "" : Text {text: root.placeholder; color: #eee; padding: 0px; x: 0;}
+            vertical-alignment: center;
+            min-width: 60px; 
+            text: root.text;
+            accessible-placeholder-text: "Edit Me";
+            edited => {root.text = self.text}
+        }
+        if root.icon != "": UiButton{
+            theme: root.theme;
+            type: simple;
+            text: "";
+            icon: root.icon;
+        }
+    }
+}
