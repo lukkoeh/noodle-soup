@@ -1,30 +1,32 @@
-DROP TABLE IF EXISTS "file";
+DROP TABLE IF EXISTS "file" CASCADE;
 
-DROP TABLE IF EXISTS "user_permissions";
+DROP TABLE IF EXISTS "user_permissions" CASCADE;
 
-DROP TABLE IF EXISTS "role_permissions";
+DROP TABLE IF EXISTS "role_permissions" CASCADE;
 
-DROP TABLE IF EXISTS "group_permissions";
+DROP TABLE IF EXISTS "group_permissions" CASCADE;
 
-DROP TABLE IF EXISTS "user_has_role";
+DROP TABLE IF EXISTS "user_has_role" CASCADE;
 
-DROP TABLE IF EXISTS "role";
+DROP TABLE IF EXISTS "role" CASCADE;
 
-DROP TABLE IF EXISTS "user_in_group";
+DROP TABLE IF EXISTS "user_in_group" CASCADE;
 
-DROP TABLE IF EXISTS "group";
+DROP TABLE IF EXISTS "group" CASCADE;
 
-DROP TABLE IF EXISTS "user";
+DROP TABLE IF EXISTS "user" CASCADE;
 
-DROP TYPE IF EXISTS "group_kind";
+DROP TYPE IF EXISTS "group_kind" CASCADE;
 
-DROP TABLE IF EXISTS "course";
+DROP TABLE IF EXISTS "course" CASCADE;
 
-DROP TABLE IF EXISTS "content_section";
+DROP TABLE IF EXISTS "content_section" CASCADE;
 
-DROP TABLE IF EXISTS "content_element";
+DROP TABLE IF EXISTS "content_element" CASCADE;
 
-DROP TABLE IF EXISTS "file_in_content_element";
+DROP TABLE IF EXISTS "file_in_content_element" CASCADE;
+
+DROP TABLE IF EXISTS "template" CASCADE;
 
 CREATE TABLE IF NOT EXISTS "user" (
     "id" BIGSERIAL PRIMARY KEY,
@@ -97,12 +99,21 @@ CREATE TABLE IF NOT EXISTS "file" (
     "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS "course" ("uid" BIGSERIAL PRIMARY KEY, "name" VARCHAR(255));
+CREATE TABLE IF NOT EXISTS "course" (
+    "uid" BIGSERIAL PRIMARY KEY,
+    "name" VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS "template" (
+    "uid" BIGSERIAL PRIMARY KEY,
+    "name" VARCHAR(255)
+);
 
 --- 1 course -> n content sections
 CREATE TABLE IF NOT EXISTS "content_section" (
     "uid" BIGSERIAL PRIMARY KEY,
     "course_id" BIGSERIAL REFERENCES "course" ON DELETE CASCADE,
+    "template_id" BIGINT NULL REFERENCES "template" ON DELETE CASCADE,
     "headline" VARCHAR(255),
     "order_index" INTEGER DEFAULT 0,
     "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
@@ -123,7 +134,7 @@ CREATE TABLE IF NOT EXISTS "content_element" (
 --- 1:n multiple files, one content element
 CREATE TABLE IF NOT EXISTS "file_in_content_element" (
     "content_id" BIGSERIAL REFERENCES "content_element" ON DELETE CASCADE,
-    "file_id" BIGSERIAL REFERENCES "file" ON DELETE CASCADE,
+    "file_id" UUID REFERENCES "file" ON DELETE CASCADE,
     "order_index" INTEGER DEFAULT 0,
     "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP

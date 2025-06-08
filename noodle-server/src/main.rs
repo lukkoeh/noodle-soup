@@ -151,6 +151,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .put(resources::course::http::update)
                 .delete(resources::course::http::delete),
         )
+        .route(
+            "/course/{courseId}/sections",
+            get(resources::content_section::http::get_sections)
+                .post(resources::content_section::http::create_section),
+        )
+        .route(
+            "/course/{courseId}/section/{sectionId}",
+            get(resources::content_section::http::get_section)
+                .put(resources::content_section::http::update_section)
+                .delete(resources::content_section::http::delete_section),
+        )
+        .route(
+            "/course/{courseId}/section/{sectionId}/content",
+            get(resources::content_section::http::get_content)
+                .post(resources::content_section::http::create_content)
+                .put(resources::content_section::http::update_content)
+                .delete(resources::content_section::http::delete_content),
+        )
+        .route(
+            "/templates",
+            get(resources::template::http::get_all).post(resources::template::http::create),
+        )
+        .route(
+            "/template/{id}",
+            get(resources::template::http::get_by_uid)
+                .put(resources::template::http::update)
+                .delete(resources::template::http::delete),
+        )
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary
         .route("/login", post(auth::create_session_handler))

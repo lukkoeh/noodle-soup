@@ -16,6 +16,37 @@ const adminLastname = "Istrator"
 const adminMail = "admin@noodle.de"
 const adminPassword = "12345678"
 
+// Kurs- und Template-Testdaten müssen VOR ihrer ersten Verwendung definiert sein
+const courses = [
+  {
+    courseId: 1,
+    name: "Course 1"
+  },
+  {
+    courseId: 1,
+    name: "Course 1 updated"
+  }
+]
+
+const templatesData = [
+  {
+    templateId: 1,
+    name: "Template 1"
+  },
+  {
+    templateId: 1,
+    name: "Template 1 updated"
+  }
+]
+
+const sections = [
+  {
+    sectionId: 1,
+    headline: "Section 1",
+    orderIndex: 0,
+    parentCourseId: courses[0].courseId
+  }
+]
 
 const nologinTests = [
   Test(method.get, "/user", null, 401, null),
@@ -83,6 +114,16 @@ const nologinTests = [
   Test(method.put, "/login", {}, 405, null),
   Test(method.post, "/login", {}, 400, DONT_CARE),
   Test(method.delete, "/login", {}, 405, null),
+  Test(method.get, "/courses", null, 401, null),
+  Test(method.post, "/courses", { name: courses[0].name }, 401, null),
+  Test(method.get, "/course/1", null, 401, null),
+  Test(method.put, "/course/1", { name: courses[1].name }, 401, null),
+  Test(method.delete, "/course/1", null, 401, null),
+  Test(method.get, "/templates", null, 401, null),
+  Test(method.post, "/templates", { name: templatesData[0].name }, 401, null),
+  Test(method.get, "/template/1", null, 401, null),
+  Test(method.put, "/template/1", { name: templatesData[1].name }, 401, null),
+  Test(method.delete, "/template/1", null, 401, null)
 ]
 
 const users = [
@@ -364,6 +405,55 @@ const loggedinTests = [
     kind: groups[4].kind,
     parent: null
   }]),
+  Test(method.get, "/courses", null, 200, []),
+  Test(method.post, "/courses", { name: courses[0].name }, 200, {
+    courseId: courses[0].courseId,
+    name: courses[0].name
+  }),
+  Test(method.get, "/courses", null, 200, [{
+    courseId: courses[0].courseId,
+    name: courses[0].name
+  }]),
+  Test(method.get, `/course/${courses[0].courseId}`, null, 200, {
+    courseId: courses[0].courseId,
+    name: courses[0].name
+  }),
+  Test(method.put, `/course/${courses[1].courseId}`, { name: courses[1].name }, 200, {
+    courseId: courses[1].courseId,
+    name: courses[1].name
+  }),
+  Test(method.get, `/course/${courses[1].courseId}`, null, 200, {
+    courseId: courses[1].courseId,
+    name: courses[1].name
+  }),
+  Test(method.get, `/course/${courses[1].courseId}/section/${sections[0].sectionId}/content`, null, 200, []),
+  Test(method.delete, `/course/${courses[1].courseId}`, null, 200, null),
+  Test(method.get, `/course/${courses[1].courseId}`, null, 404, null),
+  Test(method.get, "/courses", null, 200, []),
+  Test(method.get, "/templates", null, 200, []),
+  Test(method.post, "/templates", { name: templatesData[0].name }, 200, {
+    templateId: templatesData[0].templateId,
+    name: templatesData[0].name
+  }),
+  Test(method.get, "/templates", null, 200, [{
+    templateId: templatesData[0].templateId,
+    name: templatesData[0].name
+  }]),
+  Test(method.get, `/template/${templatesData[0].templateId}`, null, 200, {
+    templateId: templatesData[0].templateId,
+    name: templatesData[0].name
+  }),
+  Test(method.put, `/template/${templatesData[1].templateId}`, { name: templatesData[1].name }, 200, {
+    templateId: templatesData[1].templateId,
+    name: templatesData[1].name
+  }),
+  Test(method.get, `/template/${templatesData[1].templateId}`, null, 200, {
+    templateId: templatesData[1].templateId,
+    name: templatesData[1].name
+  }),
+  Test(method.delete, `/template/${templatesData[1].templateId}`, null, 200, null),
+  Test(method.get, `/template/${templatesData[1].templateId}`, null, 404, null),
+  Test(method.get, "/templates", null, 200, [])
 ]
 
 async function runTests() {
