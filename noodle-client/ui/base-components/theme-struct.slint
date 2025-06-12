@@ -1,51 +1,27 @@
-export struct Theme {
-    // contains all colors used throughout the whole app
-    // fs -> fontsize c -> color
-    fs-h1: length, // 28px
-    fs-h2: length, // 22pxls
-    fs-h3: length, // 18px
-    fs-l: length, // 16px icons-groß
-    fs-m: length, // 14px normaler text
-    fs-s: length, // 12px tags
+export global Theme {
+    // contains all colors used in the app
+    // fs -> fontsize
+    // c -> color
+    in-out property <length> fs-h1: 28px;
+    in-out property <length> fs-h2: 22px;
+    in-out property <length> fs-l: 16px; // icons large
+    in-out property <length> fs-m: 14px; // normal text
+    in-out property <length> fs-s: 12px; // tags
 
-    c-txt-0: brush, //#000 normaler text
-    c-txt-1: brush, // #898989 suchfeld Text
-    c-bg-0: brush, // #FFF - Hintergrund
-    c-bg-1: brush, // #FFF - Kachel Hintergrund
-    c-bg-2: brush, // #F6F6F6 hintergrund suche, Dropdown
+    in-out property <brush> c-txt-norm: #000; // normal text
+    in-out property <brush> c-txt-search: #898989; //  searchfield text
+    in-out property <brush> c-bg-main: #FFF; // regular background
+    in-out property <brush> c-bg-widget: #FFF; // widget background
+    in-out property <brush> c-bg-input: #E0E0E0; // search and dropdown background
 
     // misc colors
-    c-m-1: brush, // #CACACA Trennlinie
+    in-out property <brush> c-m-1: #CACACA; // #CACACA Trennlinie
 
     // suposed to contain accent color and a brighter variant of color
-    c-a-0: brush, // Custom Color in darkmode HSL -20 L
-    c-a-1: brush, // Custom Color 20% transparency
-    c-a-2: brush, // Custom Color + or - 20 HSL brightnes
+    in-out property <brush> c-ac: #ff0000; // Custom color in darkmode HSL -20 L
+    in-out property <brush> c-ac-trans: #ff0000aa; // Custom color 20% transparency
+    in-out property <brush> c-ac-light: #ff0000; // Custom color + or - 20 HSL brightnes
+
+    // comon lengths
+    in-out property <length> pad: 5px; // padding  for text and button elements
 }
-
-/*Example structure
-
-in property <Theme> theme: {
-        // only for default fallback
-        fs-h1: 28px,
-        fs-h2: 22px,
-        fs-h3: 18px,
-        fs-l: 16px, // icons-groß
-        fs-m: 14px, // normaler text
-        fs-s: 12px, // tags
-
-        c-txt-0: #000000, // normaler text
-        c-txt-1: #898989, // suchfeld Text
-        c-bg-0: #FFFFFF, // Hintergrund
-        c-bg-1: #FFFFFF, // Kachel Hintergrund
-        c-bg-2: #F6F6F6, // suche, Dropdown
-
-        // misc colors
-        c-m-1: #CACACA, // Trennlinie
-
-        // suposed to contain accent color and a brighter variant of color
-        c-a-0: #ff0000, // Custom Color in darkmode HSL -20 L
-        c-a-1: #ff0000aa, // Custom Color 20% transparency
-        c-a-2: #ff0000, // Custom Color + or - 20 HSL brightnes
-    };
-*/

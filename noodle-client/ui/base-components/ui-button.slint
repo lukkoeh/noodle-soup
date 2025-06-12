@@ -5,44 +5,21 @@ enum ButtonTypes {primary, secondary, round, simple}
 export component UiButton inherits Rectangle{
     out property <bool> has-hover: toucharea.has-hover;
     in property <ButtonTypes> type: primary;
-    in property <string> text: "ui-button";
+    in property <string> text: "";
     in property <string> icon: "";
-    in property <Theme> theme: {
-        // only for default fallback
-        fs-h1: 28px,
-        fs-h2: 22px,
-        fs-h3: 18px,
-        fs-l: 16px, // icons-groß
-        fs-m: 14px, // normaler text
-        fs-s: 12px, // tags
-
-        c-txt-0: #000000, // normaler text
-        c-txt-1: #898989, // suchfeld Text
-        c-bg-0: #FFFFFF, // Hintergrund
-        c-bg-1: #FFFFFF, // Kachel Hintergrund
-        c-bg-2: #F6F6F6, // suche, Dropdown
-
-        // misc colors
-        c-m-1: #CACACA, // Trennlinie
-
-        // suposed to contain accent color and a brighter variant of color
-        c-a-0: #ff0000, // Custom Color in darkmode HSL -20 L
-        c-a-1: #ff0000aa, // Custom Color 20% transparency
-        c-a-2: #ff0000, // Custom Color + or - 20 HSL brightnes
-    };
 
     callback clicked <=> toucharea.clicked;
 
-    border-radius: theme.fs-m;
-    background: theme.c-a-0;
-    height: theme.fs-m + 10px;
-    padding: root.type == ButtonTypes.simple ? 0px : 5px;
-    Text {
+    border-radius: Theme.fs-m;
+    background: Theme.c-ac;
+    height: Theme.fs-m + 2 * Theme.pad;
+    padding: root.type == ButtonTypes.simple ? 0px : Theme.pad;
+    if root.text != "" :Text {
         padding-right: 5px;
         text: root.text;
     }
     if root.icon != "" : IconFA {
-        icon-size: root.theme.fs-m;
+        icon-size: Theme.fs-m;
         icon: root.icon;
     }
     toucharea := TouchArea {
