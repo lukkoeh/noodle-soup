@@ -1009,7 +1009,7 @@ paths:
         500:
           description: The server exploded while processing the request
 
-  /course/{courseId}/content:
+  /course/{courseId}/section/{sectionId}/content:
     get:
       tags:
         - content
@@ -1017,6 +1017,11 @@ paths:
       parameters:
         - in: path
           name: courseId
+          schema:
+            type: integer
+          required: true
+        - in: path
+          name: sectionId
           schema:
             type: integer
           required: true
@@ -1042,6 +1047,11 @@ paths:
       parameters:
         - in: path
           name: courseId
+          schema:
+            type: integer
+          required: true
+        - in: path
+          name: sectionId
           schema:
             type: integer
           required: true
@@ -1075,6 +1085,11 @@ paths:
           schema:
             type: integer
           required: true
+        - in: path
+          name: sectionId
+          schema:
+            type: integer
+          required: true
       requestBody:
         content:
           application/json:
@@ -1102,6 +1117,11 @@ paths:
       parameters:
         - in: path
           name: courseId
+          schema:
+            type: integer
+          required: true
+        - in: path
+          name: sectionId
           schema:
             type: integer
           required: true
