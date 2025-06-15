@@ -112,8 +112,8 @@ CREATE TABLE IF NOT EXISTS "template" (
 --- 1 course -> n content sections
 CREATE TABLE IF NOT EXISTS "content_section" (
     "uid" BIGSERIAL PRIMARY KEY,
-    "course_id" BIGSERIAL REFERENCES "course" ON DELETE CASCADE,
-    "template_id" BIGINT NULL REFERENCES "template" ON DELETE CASCADE,
+    "course_id" BIGINT NULL REFERENCES "course" ON DELETE CASCADE DEFAULT NULL,
+    "template_id" BIGINT NULL REFERENCES "template" ON DELETE CASCADE DEFAULT NULL,
     "headline" VARCHAR(255),
     "order_index" INTEGER DEFAULT 0,
     "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
