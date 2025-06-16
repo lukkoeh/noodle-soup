@@ -141,6 +141,62 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/design",
             get(resources::branding::http::get).post(resources::branding::http::create_default),
         )
+        .route(
+            "/courses",
+            get(resources::course::http::get_all).post(resources::course::http::create),
+        )
+        .route(
+            "/course/{id}",
+            get(resources::course::http::get_by_uid)
+                .put(resources::course::http::update)
+                .delete(resources::course::http::delete),
+        )
+        .route(
+            "/course/{courseId}/sections",
+            get(resources::content_section::http::get_all_for_course)
+                .post(resources::content_section::http::create_for_course),
+        )
+        .route(
+            "/course/{courseId}/section/{sectionId}",
+            get(resources::content_section::http::get_for_course)
+                .put(resources::content_section::http::update_for_course)
+                .delete(resources::content_section::http::delete_for_course),
+        )
+        .route(
+            "/course/{courseId}/section/{sectionId}/content",
+            get(resources::content_section::http::get_course_content)
+                .post(resources::content_section::http::create_course_content)
+                .put(resources::content_section::http::update_course_content)
+                .delete(resources::content_section::http::delete_course_content),
+        )
+        .route(
+            "/templates",
+            get(resources::template::http::get_all).post(resources::template::http::create),
+        )
+        .route(
+            "/template/{id}",
+            get(resources::template::http::get_by_uid)
+                .put(resources::template::http::update)
+                .delete(resources::template::http::delete),
+        )
+        .route(
+            "/template/{templateId}/sections",
+            get(resources::content_section::http::get_all_for_template)
+                .post(resources::content_section::http::create_for_template),
+        )
+        .route(
+            "/template/{templateId}/section/{sectionId}",
+            get(resources::content_section::http::get_for_template)
+                .put(resources::content_section::http::update_for_template)
+                .delete(resources::content_section::http::delete_for_template),
+        )
+        .route(
+            "/template/{templateId}/section/{sectionId}/content",
+            get(resources::content_section::http::get_template_content)
+                .post(resources::content_section::http::create_template_content)
+                .put(resources::content_section::http::update_template_content)
+                .delete(resources::content_section::http::delete_template_content),
+        )
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary
         .route("/login", post(auth::create_session_handler))
