@@ -1,0 +1,132 @@
+// T7 Noodle UX Dashboard - Grid-Layout
+// Mit festen Pixelwerten für AppWindow und relativen Werten für innere Elemente
+
+export component AppWindow inherits Window {
+    preferred-width: 100%;
+    preferred-height: 100%;
+    background: white;
+    
+    VerticalLayout {
+        // Header-Bereich
+        Rectangle {
+            height: 10%;
+            width: 100%;
+            background: #e6f2f5;
+            
+            // Grid für Header-Elemente
+            GridLayout {
+                width: 100%;
+                height: 100%;
+                padding: 10px;
+                spacing: 10px;
+                
+                // Definiere ein 3x1 Grid für den Header
+                Row {
+                    Rectangle { width: 30%; }
+                    Rectangle { width: 40%; }
+                    Rectangle { width: 30%; }
+                }
+            }
+        }
+        
+        // Hauptinhalt
+        VerticalLayout {
+            width: 100%;
+            height: 90%;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-top: 15px;
+            padding-bottom: 15px;
+            spacing: 20px;
+            
+            // Begrüßungsbereich
+            GridLayout {
+                height: 8%;
+                width: 100%;
+                spacing: 10px;
+                
+                // Definiere ein 2x1 Grid für die Begrüßung
+                Row {
+                    Rectangle { width: 50%; }
+                    Rectangle { width: 50%; }
+                }
+            }
+            
+            // Kurse-Bereich
+            GridLayout {
+                width: 100%;
+                height: 30%;
+                spacing: 10px;
+                
+                // Definiere ein 1x2 Grid für Überschrift und Suchleiste
+                Row {
+                    Rectangle { 
+                        width: 30%;
+                    }
+                    Rectangle { 
+                        width: 70%;
+                    }
+                }
+                
+                // Definiere ein 3x1 Grid für Kurskarten
+                Row {
+                    Rectangle { 
+                        width: 32%;
+                    }
+                    Rectangle { 
+                        width: 32%;
+                    }
+                    Rectangle { 
+                        width: 32%;
+                    }
+                }
+            }
+            
+            // Trennlinie
+            Rectangle {
+                width: 100%;
+                height: 1px;
+                background: #cccccc;
+            }
+            
+            // Kontakte-Bereich
+            GridLayout {
+                width: 100%;
+                height: 25%;
+                spacing: 10px;
+                
+                // Definiere ein 1x2 Grid für Überschrift und Suchleiste
+                Row {
+                    Rectangle { 
+                        width: 30%;
+                    }
+                    Rectangle { 
+                        width: 70%;
+                    }
+                }
+                
+                // Definiere ein flexibles Grid für Kontakt-Avatare
+                Row {
+                    Rectangle { width: 13%; }
+                    Rectangle { width: 13%; }
+                    Rectangle { width: 13%; }
+                    Rectangle { width: 13%; }
+                    Rectangle { width: 13%; }
+                    Rectangle { width: 13%; }
+                    Rectangle { width: 13%; }
+                }
+            }
+            
+            // Hinweistext-Bereich
+            GridLayout {
+                width: 100%;
+                height: 15%;
+                
+                Row {
+                    Rectangle { width: 75%; }
+                    Rectangle { width: 25%; }
+                }
+            }
+        }
+    }
+}

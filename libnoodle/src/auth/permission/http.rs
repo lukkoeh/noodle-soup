@@ -58,11 +58,11 @@ RETURNING id",
         .fetch_one(&state.db)
         .await
         {
-            Ok(id) => Json(Role {
-                id,
+            Ok(id) => (StatusCode::CREATED, Json(Role {
+                role_id: id,
                 name: role.name,
                 permissions: role.permissions,
-            })
+            }))
             .into_response(),
             Err(e) => match e {
                 sqlx::Error::Database(e) => {
@@ -146,7 +146,7 @@ UPDATE \"group\" SET \"name\" = $1 WHERE id = (SELECT \"group\" FROM updated_rol
         .await
         {
             Ok(g) => Json(RoleRow {
-                id: role_id,
+                role_id,
                 name: role.name,
                 permissions: sqlx::types::Json(role.permissions),
                 group: g,
@@ -462,13 +462,16 @@ pub mod group {
                 return StatusCode::INTERNAL_SERVER_ERROR.into_response();
             }
             Ok(id) => {
-                return Json(GroupRow {
-                    id: id.0,
-                    name: group.name,
-                    kind: group.kind,
-                    parent: group.parent,
-                })
-                .into_response();
+                return (
+                    StatusCode::CREATED,
+                    Json(GroupRow {
+                        group_id: id.0,
+                        name: group.name,
+                        kind: group.kind,
+                        parent: group.parent,
+                    }),
+                )
+                    .into_response();
             }
         }
     }
@@ -481,7 +484,10 @@ pub mod group {
         {
             Ok(Some(g)) => Json(g).into_response(),
             Ok(None) => StatusCode::NOT_FOUND.into_response(),
-            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Err(e) => {
+                println!("{}", e);
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            }
         }
     }
 
@@ -543,7 +549,10 @@ WHERE group_id = $1",
         .await
         {
             Ok(u) => Json(u).into_response(),
-            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Err(e) => {
+                println!("{}", e);
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            }
         }
     }
 
@@ -635,8 +644,7 @@ WHERE group_id = $1",
                     return StatusCode::CREATED;
                 }
 
-                let mut group_ids = Vec::with_capacity(user_ids.len());
-                group_ids.fill(group_id);
+                let group_ids = vec![group_id; user_ids.len()];
                 if let Err(_) = add_users_to_groups_query()
                     .bind(&user_ids)
                     .bind(group_ids)

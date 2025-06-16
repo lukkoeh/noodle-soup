@@ -3,8 +3,14 @@ import {UiButton} from "./custom-widgets.slint";
 import { Theme } from "base-components/theme-struct.slint";
 export { Theme } from "./base-components/theme-struct.slint";
 
-
+export global CurrentView {
+    
+}
 export component AppWindow inherits Window {
+
+    callback on_resize(new_width: length, new_height: length);
+    
+
     preferred-width: 400px;
     preferred-height: 400px;
 
@@ -13,6 +19,23 @@ export component AppWindow inherits Window {
     VerticalBox {
         UiButton {
             text: self.has-hover ? "has hover" : "hover me";
+        }
+    }
+
+    // Timer for custom on resize implementation
+    Timer {
+        // Detect size changes
+        private property <length> previous_width: 0px;
+        private property <length> previous_height: 0px;
+        interval: 100ms;
+        running: true;
+
+        triggered() => {
+            if (root.width != self.previous_width || root.height != self.previous_height) {
+                root.on_resize(root.width, root.height);
+                self.previous_width = root.width;
+                self.previous_height = root.height;
+            }
         }
     }
 }
