@@ -6,7 +6,6 @@ use sqlx::FromRow;
 pub struct ContentSection {
     #[sqlx(rename = "uid")]
     pub section_id: i64,
-    #[sqlx(rename = "course_id")]
     #[serde(rename = "parentCourseId")]
     pub course_id: Option<i64>,
     pub template_id: Option<i64>,
@@ -30,6 +29,7 @@ pub struct ContentElement {
     #[serde(rename = "parentSectionId")]
     pub section_id: i64,
     pub order_index: i32,
+    #[sqlx(rename = "type")]
     #[serde(rename = "type")]
     pub element_type: String,
     pub content: Option<String>,
@@ -275,7 +275,7 @@ pub mod http {
         UrlPath(template_id): UrlPath<i64>,
         State(state): State<crate::AppState>,
     ) -> Response {
-        match sqlx::query_as::<_, ContentSection>("SELECT uid, template_id, headline, order_index FROM content_section WHERE template_id = $1 ORDER BY order_index")
+        match sqlx::query_as::<_, ContentSection>("SELECT uid, course_id, template_id, headline, order_index FROM content_section WHERE template_id = $1 ORDER BY order_index")
             .bind(template_id)
             .fetch_all(&state.db)
             .await
@@ -314,7 +314,7 @@ pub mod http {
         UrlPath((template_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
     ) -> Response {
-        match sqlx::query_as::<_, ContentSection>("SELECT uid, template_id, headline, order_index FROM content_section WHERE uid = $1 AND template_id = $2")
+        match sqlx::query_as::<_, ContentSection>("SELECT uid, course_id, template_id, headline, order_index FROM content_section WHERE uid = $1 AND template_id = $2")
             .bind(section_id)
             .bind(template_id)
             .fetch_optional(&state.db)
