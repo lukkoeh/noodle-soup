@@ -4,16 +4,16 @@ use thiserror::Error;
 
 use crate::resources;
 
-#[derive(Serialize, Deserialize, sqlx::Type)]
+#[derive(Serialize, Deserialize, sqlx::Type, Hash, PartialEq, Eq)]
 pub struct Permission {
-    subject: resources::Type,
-    ops: Operations,
-    ids: Option<Vec<i64>>,
+    pub(super) subject: resources::Type,
+    pub(super) ops: Operations,
+    pub(super) ids: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Deserialize, sqlx::Type)]
+#[derive(Serialize, Deserialize, sqlx::Type, Hash, PartialEq, Eq, Clone, Copy)]
 #[serde(transparent)]
-struct Operations(i8);
+pub struct Operations(i8);
 
 impl From<i8> for Operations {
     fn from(value: i8) -> Self {
@@ -23,21 +23,26 @@ impl From<i8> for Operations {
 
 #[allow(dead_code)]
 impl Operations {
+    pub const CREATE_ONLY: Operations = Self(0b00000001);
+    pub const READ_ONLY: Operations = Self(0b00000010);
+    pub const UPDATE_ONLY: Operations = Self(0b00000100);
+    pub const DELETE_ONLY: Operations = Self(0b00001000);
+
     pub fn new(create: bool, read: bool, update: bool, delete: bool) -> Self {
         Self(create as i8 | (read as i8) << 1 | (update as i8) << 2 | (delete as i8) << 3)
     }
 
     pub fn can_create(&self) -> bool {
-        (0b00000001 & self.0) != 0
+        (Self::CREATE_ONLY.0 & self.0) != 0
     }
     pub fn can_read(&self) -> bool {
-        (0b00000010 & self.0) != 0
+        (Self::READ_ONLY.0 & self.0) != 0
     }
     pub fn can_update(&self) -> bool {
-        (0b00000100 & self.0) != 0
+        (Self::UPDATE_ONLY.0 & self.0) != 0
     }
     pub fn can_delete(&self) -> bool {
-        (0b00001000 & self.0) != 0
+        (Self::DELETE_ONLY.0 & self.0) != 0
     }
 }
 

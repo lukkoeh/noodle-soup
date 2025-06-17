@@ -1,12 +1,22 @@
-use std::{error, fmt::Display};
+use std::{error, fmt::Display, str::FromStr};
 
 use async_trait::async_trait;
 use axum::{Json, http::StatusCode};
-use axum_login::{AuthSession, AuthUser, AuthnBackend, UserId};
-use sqlx::PgPool;
+use axum_login::{AuthSession, AuthUser, AuthnBackend, AuthzBackend, UserId};
+use sqlx::{
+    PgPool, Postgres,
+    postgres::{PgArguments, PgRow},
+    query::QueryScalar,
+};
 use tokio::task;
 
-use crate::user;
+use crate::{
+    resources::Type as ResourceType,
+    user::{self, User},
+};
+
+pub mod permission;
+use permission::{Operations, Permission};
 
 impl AuthUser for user::User {
     type Id = i64;
@@ -133,4 +143,74 @@ pub async fn create_session_handler(
     }
 }
 
-pub mod permission;
+pub async fn get_permitted_ids<'a, T>(
+    resource_type: ResourceType,
+    operations: Operations,
+    user: &User,
+    db: &PgPool,
+) -> Result<Vec<T>, sqlx::Error>
+where
+    for<'r> (T,): sqlx::FromRow<'r, PgRow>,
+    for<'r> T: sqlx::Decode<'r, Postgres> + sqlx::Type<Postgres>,
+    T: Send + Unpin,
+{
+    sqlx::query_scalar::<_, T>(&format!(
+            "SELECT resource_id FROM {}_permissions WHERE user_id = $1 AND ($2::bit(16) & permission) <> B'0'::bit(16)",
+            resource_type.table_name()
+        ))
+        .bind(user.user_id)
+        .bind(operations)
+        .fetch_all(db)
+        .await
+}
+
+pub async fn can_create(
+    resource_type: ResourceType,
+    user_id: i64,
+    db: &PgPool,
+) -> Result<bool, sqlx::Error> {
+    user_has_permissions_all(resource_type, Operations::CREATE_ONLY, user_id, db).await
+}
+
+pub async fn user_has_permissions_all(
+    resource_type: ResourceType,
+    operations: Operations,
+    user_id: i64,
+    db: &PgPool,
+) -> Result<bool, sqlx::Error> {
+    match sqlx::query_scalar::<_, i64>(&format!(
+            "SELECT 1 FROM {}_permissions WHERE user_id = $1 AND ($2::bit(16) & permission) <> B'0'::bit(16) AND resource_id IS NULL",
+            resource_type.table_name()
+        ))
+        .bind(user_id)
+        .bind(operations)
+        .fetch_optional(db)
+        .await {
+            Ok(Some(_)) => Ok(true),
+            Ok(None) => Ok(false),
+            Err(e) => Err(e),
+        }
+}
+
+pub async fn user_has_permissions_id<
+    'a,
+    T: sqlx::Type<sqlx::Postgres> + sqlx::Encode<'a, sqlx::Postgres>,
+>(
+    resource_type: ResourceType,
+    resource_id: &'a T,
+    operations: Operations,
+    user_id: i64,
+    db: &PgPool,
+) -> Result<bool, sqlx::Error> {
+    match sqlx::query_scalar::<_, i64>(resource_type.permission_id_query())
+        .bind(user_id)
+        .bind(operations)
+        .bind(resource_id)
+        .fetch_optional(db)
+        .await
+    {
+        Ok(Some(_)) => Ok(true),
+        Ok(None) => Ok(false),
+        Err(e) => Err(e),
+    }
+}
