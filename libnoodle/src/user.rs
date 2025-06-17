@@ -45,9 +45,16 @@ pub struct New {
 }
 
 pub mod http {
-    use crate::auth::permission::{
-        GroupRow, RoleRow, add_user_to_role_groups_query, add_users_to_groups_query,
-        add_users_to_roles_query, remove_user_from_role_groups_query,
+    use crate::{
+        auth::{
+            self,
+            permission::{
+                GroupRow, Operations, RoleRow, add_user_to_role_groups_query,
+                add_users_to_groups_query, add_users_to_roles_query,
+                remove_user_from_role_groups_query,
+            },
+        },
+        resources,
     };
 
     use super::{New, Profile, validation};
@@ -69,7 +76,18 @@ pub mod http {
         ))
     }
 
-    pub async fn create(State(state): State<crate::AppState>, Json(user): Json<New>) -> Response {
+    pub async fn create(
+        auth_session: AuthSession<crate::auth::Backend>,
+        State(state): State<crate::AppState>,
+        Json(user): Json<New>,
+    ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::can_create(resources::Type::User, s_user.user_id, &state.db).await {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        }
+
         let result = sqlx::query("SELECT 1 FROM \"user\" WHERE email = $1")
             .bind(&user.email)
             .fetch_optional(&state.db)
@@ -149,7 +167,37 @@ pub mod http {
         }
     }
 
-    pub async fn get(Path(id): Path<i64>, State(state): State<crate::AppState>) -> Response {
+    pub async fn get(
+        auth_session: AuthSession<crate::auth::Backend>,
+        Path(id): Path<i64>,
+        State(state): State<crate::AppState>,
+    ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_all(
+            resources::Type::User,
+            Operations::READ_ONLY,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => match auth::user_has_permissions_id(
+                resources::Type::User,
+                &id,
+                Operations::READ_ONLY,
+                s_user.user_id,
+                &state.db,
+            )
+            .await
+            {
+                Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                Ok(false) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                Ok(true) => {}
+            },
+            Ok(true) => {}
+        }
+
         let user: Result<Option<(i64, String, String, String)>, _> =
             sqlx::query_as("SELECT id, firstname, lastname, email FROM \"user\" WHERE id = $1")
                 .bind(id)
