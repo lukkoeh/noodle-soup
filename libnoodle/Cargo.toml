@@ -10,6 +10,7 @@ axum-login = "0.17.0"
 base64 = "0.22.1"
 bcrypt = "0.17.0"
 chrono = { version = "0.4.41", features = ["serde"] }
+const-concat = "0.1.0"
 dotenv = "0.15.0"
 hex = { version = "0.4.3", features = ["serde"] }
 mime = "0.3.17"

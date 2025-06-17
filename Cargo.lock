@@ -1017,6 +1017,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "const-concat"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "82cc4ae166af6b369f8985fb412b0764edcd257058fa59354dbeb63915767714"
+
+[[package]]
 name = "const-field-offset"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3174,6 +3180,7 @@ dependencies = [
  "base64",
  "bcrypt",
  "chrono",
+ "const-concat",
  "dotenv",
  "hex",
  "mime",
