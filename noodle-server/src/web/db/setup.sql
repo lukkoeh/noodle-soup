@@ -28,6 +28,12 @@ DROP TABLE IF EXISTS "file_in_content_element" CASCADE;
 
 DROP TABLE IF EXISTS "template" CASCADE;
 
+DROP TABLE IF EXISTS "file_permissions" CASCADE;
+
+DROP TABLE IF EXISTS "course_permissions" CASCADE;
+
+DROP TABLE IF EXISTS "template_permissions" CASCADE;
+
 CREATE TABLE IF NOT EXISTS "user" (
     "id" BIGSERIAL PRIMARY KEY,
     "firstname" VARCHAR(255),
@@ -73,21 +79,24 @@ CREATE TABLE IF NOT EXISTS "user_in_group" (
 );
 
 CREATE TABLE IF NOT EXISTS "user_permissions" ( -- `user` -> CRUD rights for `user`
-    "user_id" BIGSERIAL REFERENCES "user" ON DELETE CASCADE,
+    "user_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
+    "group_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
     "resource_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
-    "permission" SMALLINT DEFAULT 0
+    "permission" BIT(16) DEFAULT B'0'
 );
 
 CREATE TABLE IF NOT EXISTS "role_permissions" ( -- `user` -> CRUD rights for `role`
-    "user_id" BIGSERIAL REFERENCES "user" ON DELETE CASCADE,
+    "user_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
+    "group_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
     "resource_id" BIGINT REFERENCES "role" ON DELETE CASCADE DEFAULT NULL,
-    "permission" SMALLINT DEFAULT 0
+    "permission" BIT(16) DEFAULT B'0'
 );
 
 CREATE TABLE IF NOT EXISTS "group_permissions" ( -- `user` -> CRUD rights for `group`
-    "user_id" BIGSERIAL REFERENCES "user" ON DELETE CASCADE,
+    "user_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
+    "group_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
     "resource_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
-    "permission" SMALLINT DEFAULT 0
+    "permission" BIT(16) DEFAULT B'0'
 );
 
 CREATE TABLE IF NOT EXISTS "file" (
@@ -138,4 +147,25 @@ CREATE TABLE IF NOT EXISTS "file_in_content_element" (
     "order_index" INTEGER DEFAULT 0,
     "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "file_permissions" ( -- `user` -> CRUD rights for `group`
+    "user_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
+    "group_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
+    "resource_id" UUID REFERENCES "file" ON DELETE CASCADE DEFAULT NULL,
+    "permission" BIT(16) DEFAULT B'0'
+);
+
+CREATE TABLE IF NOT EXISTS "course_permissions" ( -- `user` -> CRUD rights for `group`
+    "user_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
+    "group_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
+    "resource_id" BIGINT REFERENCES "course" ON DELETE CASCADE DEFAULT NULL,
+    "permission" BIT(16) DEFAULT B'0'
+);
+
+CREATE TABLE IF NOT EXISTS "template_permissions" ( -- `user` -> CRUD rights for `group`
+    "user_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
+    "group_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
+    "resource_id" BIGINT REFERENCES "template" ON DELETE CASCADE DEFAULT NULL,
+    "permission" BIT(16) DEFAULT B'0'
 );
