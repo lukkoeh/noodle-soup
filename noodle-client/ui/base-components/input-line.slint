@@ -10,22 +10,23 @@ export component InputLine inherits Rectangle{
 
     callback input-action();
 
-    border-radius: font_size / 2 + Theme.pad;
+    border-radius: font_size / 2 + Theme.pad-s;
     background: Theme.c-bg-input;
     border-width: 0px;
-    height: font_size + 2 * Theme.pad;
+    height: font_size + 2 * Theme.pad-s;
     min-width: 80px;
 
     HorizontalLayout {
-        padding: Theme.pad;
-        padding-left: Theme.pad * 2;
-        padding-right: Theme.pad * 2;
+        padding: Theme.pad-s;
+        padding-left: Theme.pad-s * 2;
+        padding-right: Theme.pad-s * 2;
         alignment: space-between;
 
         //border-width: 0px;
         TextInput {
             if root.input_text == "" : Text {text: root.placeholder; color: Theme.c-txt-search; padding: 0px; x: 0; height: 100%;}
             height: 100%;
+            wrap: no-wrap;
             vertical-alignment: center;
             min-width: 60px; 
             text: root.input_text;

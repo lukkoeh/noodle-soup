@@ -1,12 +1,16 @@
 export global Theme {
     // contains all colors used in the app
     // fs -> fontsize
+    // fw -> fontweight
     // c -> color
     in-out property <length> fs-h1: 28px;
     in-out property <length> fs-h2: 22px;
     in-out property <length> fs-l: 16px; // icons large
     in-out property <length> fs-m: 14px; // normal text
     in-out property <length> fs-s: 12px; // tags
+    in-out property <int> fw-l: 200; // fontweight light
+    in-out property <int> fw-m: 400; // fontweight medium
+    in-out property <int> fw-b: 700; // fontweight bold
 
     in-out property <brush> c-txt-norm: #000; // normal text
     in-out property <brush> c-txt-search: #898989; //  searchfield text
@@ -23,5 +27,8 @@ export global Theme {
     in-out property <brush> c-ac-light: #ff0000; // Custom color + or - 20 HSL brightnes
 
     // comon lengths
-    in-out property <length> pad: 5px; // padding  for text and button elements
+    in-out property <length> pad-s: 5px; // padding  for text and button elements
+    in-out property <length> pad-m: 10px;
+    in-out property <length> pad-l: 20px;
+    in-out property <length> b-rad: 15px; // border radiusfor buttons popovers widgets etc
 }

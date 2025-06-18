@@ -7,11 +7,11 @@ export component TagBubble inherits Rectangle {
     in property <brush> font_color: Theme.c-ac;
 
     background: root.bg_color;
-    border-radius: font_height + 2 * Theme.pad;
+    border-radius: font_height + 2 * Theme.pad-s;
     Text {
         horizontal-alignment: center;
-        width: parent.width + 2 * Theme.pad;
-        padding: Theme.pad;
+        width: parent.width + 2 * Theme.pad-s;
+        padding: Theme.pad-s;
         color: root.font_color;
         text: root.text_content;
     }

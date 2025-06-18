@@ -83,3 +83,5 @@ This file is meant to provide an overview on our *custom components* and their *
 
 
 ## Basic Widgets
+
+### Popover
