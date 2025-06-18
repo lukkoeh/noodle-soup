@@ -410,11 +410,15 @@ WHERE role_id = $1",
 
 pub mod group {
     use axum::extract::Path;
+    use axum_login::AuthSession;
 
     use super::*;
     use crate::{
-        auth::permission::{GroupDescription, GroupRow, add_users_to_groups_query},
-        user,
+        auth::{
+            self,
+            permission::{GroupDescription, GroupRow, Operations, add_users_to_groups_query},
+        },
+        resources, user,
     };
 
     pub async fn get_all(State(state): State<crate::AppState>) -> Response {
@@ -429,9 +433,17 @@ pub mod group {
     }
 
     pub async fn create(
+        auth_session: AuthSession<auth::Backend>,
         State(state): State<crate::AppState>,
         Json(group): Json<GroupDescription>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::can_create(resources::Type::Group, s_user.user_id, &state.db).await {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        }
+
         let existing_group =
             sqlx::query_as::<_, (i32,)>("SELECT 1 FROM \"group\" WHERE \"name\" = $1")
                 .bind(&group.name)
@@ -476,7 +488,26 @@ pub mod group {
         }
     }
 
-    pub async fn get_by_id(Path(id): Path<i64>, State(state): State<crate::AppState>) -> Response {
+    pub async fn get_by_id(
+        auth_session: AuthSession<auth::Backend>,
+        Path(id): Path<i64>,
+        State(state): State<crate::AppState>,
+    ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Group,
+            &id,
+            Operations::READ,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        }
+
         match sqlx::query_as::<_, GroupRow>("SELECT * FROM \"group\" WHERE id = $1")
             .bind(id)
             .fetch_optional(&state.db)
@@ -484,14 +515,12 @@ pub mod group {
         {
             Ok(Some(g)) => Json(g).into_response(),
             Ok(None) => StatusCode::NOT_FOUND.into_response(),
-            Err(e) => {
-                println!("{}", e);
-                StatusCode::INTERNAL_SERVER_ERROR.into_response()
-            }
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
     }
 
     pub async fn update(
+        auth_session: AuthSession<auth::Backend>,
         Path(group_id): Path<i64>,
         State(state): State<crate::AppState>,
         Json(group): Json<GroupDescription>,
@@ -505,6 +534,21 @@ pub mod group {
             Ok(None) => return StatusCode::BAD_REQUEST.into_response(),
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Group,
+            &group_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        }
+
         match sqlx::query(
             "UPDATE \"group\" SET \"name\" = $1, kind = $2, parent = $3 WHERE id = $4",
         )
@@ -525,9 +569,17 @@ pub mod group {
     }
 
     pub async fn delete(
+        auth_session: AuthSession<auth::Backend>,
         Path(group_id): Path<i64>,
         State(state): State<crate::AppState>,
     ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::can_delete(resources::Type::Group, s_user.user_id, &state.db).await {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        }
+
         match sqlx::query("DELETE FROM \"group\" WHERE id = $1")
             .bind(group_id)
             .execute(&state.db)
@@ -549,14 +601,12 @@ WHERE group_id = $1",
         .await
         {
             Ok(u) => Json(u).into_response(),
-            Err(e) => {
-                println!("{}", e);
-                StatusCode::INTERNAL_SERVER_ERROR.into_response()
-            }
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
     }
 
     pub async fn replace_users(
+        auth_session: AuthSession<auth::Backend>,
         Path(group_id): Path<i64>,
         State(state): State<crate::AppState>,
         Json(user_ids): Json<Vec<i64>>,
@@ -570,6 +620,21 @@ WHERE group_id = $1",
                 if user_ids.len() == 0 {
                     return StatusCode::BAD_REQUEST.into_response();
                 } else {
+                    let s_user = auth_session.user.unwrap();
+                    match auth::user_has_permissions_id(
+                        resources::Type::Group,
+                        &group_id,
+                        Operations::UPDATE,
+                        s_user.user_id,
+                        &state.db,
+                    )
+                    .await
+                    {
+                        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                        Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+                        Ok(true) => {}
+                    }
+
                     let Ok(mut transaction) = state.db.begin().await else {
                         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
                     };
@@ -617,6 +682,7 @@ WHERE group_id = $1",
     }
 
     pub async fn add_users(
+        auth_session: AuthSession<auth::Backend>,
         Path(group_id): Path<i64>,
         State(state): State<crate::AppState>,
         Json(user_ids): Json<Vec<i64>>,
@@ -624,6 +690,22 @@ WHERE group_id = $1",
         if user_ids.len() < 1 {
             return StatusCode::BAD_REQUEST;
         }
+
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Group,
+            &group_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        };
+
         match sqlx::query_scalar::<_, i32>("SELECT 1 FROM \"group\" WHERE id = $1")
             .bind(group_id)
             .fetch_optional(&state.db)

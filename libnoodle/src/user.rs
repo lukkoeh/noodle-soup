@@ -146,11 +146,11 @@ pub mod http {
     }
 
     pub async fn get_self_groups(
-        State(state): State<crate::AppState>,
         auth_session: AuthSession<crate::auth::Backend>,
+        State(state): State<crate::AppState>,
     ) -> Response {
         let user = auth_session.user.unwrap();
-        match GroupRow::from_user_id(&state.db, user.user_id).await {
+        match GroupRow::from_user_id(&state.db, user.user_id, user.user_id).await {
             Ok(g) => Json(g).into_response(),
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
@@ -161,7 +161,7 @@ pub mod http {
         auth_session: AuthSession<crate::auth::Backend>,
     ) -> Response {
         let user = auth_session.user.unwrap();
-        match RoleRow::from_user_id(&state.db, user.user_id).await {
+        match RoleRow::from_user_id(&state.db, user.user_id, user.user_id).await {
             Ok(r) => Json(r).into_response(),
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
@@ -175,7 +175,7 @@ pub mod http {
         let s_user = auth_session.user.unwrap();
         match auth::user_has_permissions_all(
             resources::Type::User,
-            Operations::READ_ONLY,
+            Operations::READ,
             s_user.user_id,
             &state.db,
         )
@@ -185,14 +185,16 @@ pub mod http {
             Ok(false) => match auth::user_has_permissions_id(
                 resources::Type::User,
                 &id,
-                Operations::READ_ONLY,
+                Operations::READ,
                 s_user.user_id,
                 &state.db,
             )
             .await
             {
-                Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-                Ok(false) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                Err(_) => {
+                    return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                }
+                Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
                 Ok(true) => {}
             },
             Ok(true) => {}
@@ -215,6 +217,7 @@ pub mod http {
     }
 
     pub async fn update(
+        auth_session: AuthSession<crate::auth::Backend>,
         Path(id): Path<i64>,
         State(state): State<crate::AppState>,
         Json(profile): Json<Profile>,
@@ -223,6 +226,21 @@ pub mod http {
         if !mail_validation.is_valid() {
             return (StatusCode::BAD_REQUEST, Json(mail_validation)).into_response();
         }
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::User,
+            &id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        }
+
         match sqlx::query_as::<_, (i64,)>("SELECT id FROM \"user\" WHERE email = $1")
             .bind(&profile.email)
             .fetch_optional(&state.db)
@@ -257,7 +275,18 @@ pub mod http {
         .into_response();
     }
 
-    pub async fn delete(Path(id): Path<i64>, State(state): State<crate::AppState>) -> StatusCode {
+    pub async fn delete(
+        auth_session: AuthSession<crate::auth::Backend>,
+        Path(id): Path<i64>,
+        State(state): State<crate::AppState>,
+    ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::can_delete(resources::Type::User, s_user.user_id, &state.db).await {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        }
+
         match sqlx::query("DELETE FROM \"user\" WHERE id = $1")
             .bind(id)
             .execute(&state.db)
@@ -275,6 +304,7 @@ pub mod http {
     }
 
     pub async fn get_groups(
+        auth_session: AuthSession<crate::auth::Backend>,
         Path(user_id): Path<i64>,
         State(state): State<crate::AppState>,
     ) -> Response {
@@ -288,13 +318,15 @@ pub mod http {
             _ => {}
         }
 
-        match GroupRow::from_user_id(&state.db, user_id).await {
+        let s_user = auth_session.user.unwrap();
+        match GroupRow::from_user_id(&state.db, s_user.user_id, user_id).await {
             Ok(g) => Json(g).into_response(),
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
     }
 
     pub async fn replace_groups(
+        auth_session: AuthSession<crate::auth::Backend>,
         Path(user_id): Path<i64>,
         State(state): State<crate::AppState>,
         Json(group_ids): Json<Vec<i64>>,
@@ -308,6 +340,21 @@ pub mod http {
                 if group_ids.len() == 0 {
                     return StatusCode::BAD_REQUEST.into_response();
                 } else {
+                    let s_user = auth_session.user.unwrap();
+                    match auth::user_has_permissions_id(
+                        resources::Type::User,
+                        &user_id,
+                        Operations::UPDATE,
+                        s_user.user_id,
+                        &state.db,
+                    )
+                    .await
+                    {
+                        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                        Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+                        Ok(true) => {}
+                    }
+
                     let Ok(mut transaction) = state.db.begin().await else {
                         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
                     };
@@ -353,6 +400,7 @@ pub mod http {
     }
 
     pub async fn add_to_groups(
+        auth_session: AuthSession<crate::auth::Backend>,
         Path(user_id): Path<i64>,
         State(state): State<crate::AppState>,
         Json(group_ids): Json<Vec<i64>>,
@@ -369,15 +417,28 @@ pub mod http {
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
             Ok(Some(_)) => {}
         };
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::User,
+            &user_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        }
         if group_ids.len() == 1 {
-            if let Err(e) =
+            if let Err(_) =
                 sqlx::query("INSERT INTO \"user_in_group\"(user_id, group_id) VALUES ($1, $2)")
                     .bind(user_id)
                     .bind(group_ids[0])
                     .execute(&state.db)
                     .await
             {
-                println!("{}", e);
                 return StatusCode::INTERNAL_SERVER_ERROR;
             }
             return StatusCode::CREATED;
@@ -412,6 +473,7 @@ pub mod http {
     }
 
     pub async fn get_roles(
+        auth_session: AuthSession<crate::auth::Backend>,
         Path(user_id): Path<i64>,
         State(state): State<crate::AppState>,
     ) -> Response {
@@ -421,24 +483,18 @@ pub mod http {
             .await
         {
             Ok(None) => return StatusCode::NOT_FOUND.into_response(),
-            Err(e) => {
-                return {
-                    println!("{}", e);
-                    StatusCode::INTERNAL_SERVER_ERROR.into_response()
-                };
-            }
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
             _ => {}
         }
-        match RoleRow::from_user_id(&state.db, user_id).await {
+        let s_user = auth_session.user.unwrap();
+        match RoleRow::from_user_id(&state.db, s_user.user_id, user_id).await {
             Ok(r) => Json(r).into_response(),
-            Err(e) => {
-                println!("{}", e);
-                StatusCode::INTERNAL_SERVER_ERROR.into_response()
-            }
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
     }
 
     pub async fn replace_roles(
+        auth_session: AuthSession<crate::auth::Backend>,
         Path(user_id): Path<i64>,
         State(state): State<crate::AppState>,
         Json(role_ids): Json<Vec<i64>>,
@@ -452,6 +508,20 @@ pub mod http {
                 if role_ids.len() == 0 {
                     return StatusCode::BAD_REQUEST.into_response();
                 } else {
+                    let s_user = auth_session.user.unwrap();
+                    match auth::user_has_permissions_id(
+                        resources::Type::User,
+                        &user_id,
+                        Operations::UPDATE,
+                        s_user.user_id,
+                        &state.db,
+                    )
+                    .await
+                    {
+                        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                        Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+                        Ok(true) => {}
+                    }
                     let Ok(mut transaction) = state.db.begin().await else {
                         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
                     };
@@ -512,6 +582,7 @@ pub mod http {
     }
 
     pub async fn assign_roles(
+        auth_session: AuthSession<crate::auth::Backend>,
         Path(user_id): Path<i64>,
         State(state): State<crate::AppState>,
         Json(role_ids): Json<Vec<i64>>,
@@ -519,6 +590,21 @@ pub mod http {
         if role_ids.len() < 1 {
             return StatusCode::BAD_REQUEST;
         }
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::User,
+            &user_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        }
+
         match sqlx::query("SELECT 1 FROM \"user\" WHERE id = $1")
             .bind(user_id)
             .fetch_optional(&state.db)
@@ -584,10 +670,26 @@ pub mod http {
     }
 
     pub async fn unassign_roles(
+        auth_session: AuthSession<crate::auth::Backend>,
         Path(user_id): Path<i64>,
         State(state): State<crate::AppState>,
         Json(role_ids): Json<Vec<i64>>,
     ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::User,
+            &user_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        }
+
         let Ok(mut transaction) = state.db.begin().await else {
             return StatusCode::INTERNAL_SERVER_ERROR;
         };

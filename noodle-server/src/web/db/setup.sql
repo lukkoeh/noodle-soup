@@ -80,21 +80,21 @@ CREATE TABLE IF NOT EXISTS "user_in_group" (
 
 CREATE TABLE IF NOT EXISTS "user_permissions" ( -- `user` -> CRUD rights for `user`
     "user_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
-    "group_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
+    "role_id" BIGINT REFERENCES "role" ON DELETE CASCADE DEFAULT NULL,
     "resource_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
     "permission" BIT(16) DEFAULT B'0'
 );
 
 CREATE TABLE IF NOT EXISTS "role_permissions" ( -- `user` -> CRUD rights for `role`
     "user_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
-    "group_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
+    "role_id" BIGINT REFERENCES "role" ON DELETE CASCADE DEFAULT NULL,
     "resource_id" BIGINT REFERENCES "role" ON DELETE CASCADE DEFAULT NULL,
     "permission" BIT(16) DEFAULT B'0'
 );
 
 CREATE TABLE IF NOT EXISTS "group_permissions" ( -- `user` -> CRUD rights for `group`
     "user_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
-    "group_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
+    "role_id" BIGINT REFERENCES "role" ON DELETE CASCADE DEFAULT NULL,
     "resource_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
     "permission" BIT(16) DEFAULT B'0'
 );
@@ -151,21 +151,21 @@ CREATE TABLE IF NOT EXISTS "file_in_content_element" (
 
 CREATE TABLE IF NOT EXISTS "file_permissions" ( -- `user` -> CRUD rights for `group`
     "user_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
-    "group_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
+    "role_id" BIGINT REFERENCES "role" ON DELETE CASCADE DEFAULT NULL,
     "resource_id" UUID REFERENCES "file" ON DELETE CASCADE DEFAULT NULL,
     "permission" BIT(16) DEFAULT B'0'
 );
 
 CREATE TABLE IF NOT EXISTS "course_permissions" ( -- `user` -> CRUD rights for `group`
     "user_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
-    "group_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
+    "role_id" BIGINT REFERENCES "role" ON DELETE CASCADE DEFAULT NULL,
     "resource_id" BIGINT REFERENCES "course" ON DELETE CASCADE DEFAULT NULL,
     "permission" BIT(16) DEFAULT B'0'
 );
 
 CREATE TABLE IF NOT EXISTS "template_permissions" ( -- `user` -> CRUD rights for `group`
     "user_id" BIGINT REFERENCES "user" ON DELETE CASCADE DEFAULT NULL,
-    "group_id" BIGINT REFERENCES "group" ON DELETE CASCADE DEFAULT NULL,
+    "role_id" BIGINT REFERENCES "role" ON DELETE CASCADE DEFAULT NULL,
     "resource_id" BIGINT REFERENCES "template" ON DELETE CASCADE DEFAULT NULL,
     "permission" BIT(16) DEFAULT B'0'
 );

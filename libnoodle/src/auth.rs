@@ -1,13 +1,9 @@
-use std::{error, fmt::Display, str::FromStr};
+use std::{error, fmt::Display};
 
 use async_trait::async_trait;
 use axum::{Json, http::StatusCode};
-use axum_login::{AuthSession, AuthUser, AuthnBackend, AuthzBackend, UserId};
-use sqlx::{
-    PgPool, Postgres,
-    postgres::{PgArguments, PgRow},
-    query::QueryScalar,
-};
+use axum_login::{AuthSession, AuthUser, AuthnBackend, UserId};
+use sqlx::{PgPool, Postgres, postgres::PgRow};
 use tokio::task;
 
 use crate::{
@@ -16,7 +12,7 @@ use crate::{
 };
 
 pub mod permission;
-use permission::{Operations, Permission};
+use permission::Operations;
 
 impl AuthUser for user::User {
     type Id = i64;
@@ -154,14 +150,17 @@ where
     for<'r> T: sqlx::Decode<'r, Postgres> + sqlx::Type<Postgres>,
     T: Send + Unpin,
 {
+    let table_name = resource_type.table_name();
     sqlx::query_scalar::<_, T>(&format!(
-            "SELECT resource_id FROM {}_permissions WHERE user_id = $1 AND ($2::bit(16) & permission) <> B'0'::bit(16)",
-            resource_type.table_name()
-        ))
-        .bind(user.user_id)
-        .bind(operations)
-        .fetch_all(db)
-        .await
+        "SELECT DISTINCT resource_id FROM {table_name}_permissions \
+LEFT JOIN user_has_role on user_has_role.role_id = {table_name}_permissions.role_id \
+WHERE (user_has_role.user_id = $1 OR {table_name}_permissions.user_id = $1) \
+AND ($2::bit(16) & permission) <> B'0'::bit(16)",
+    ))
+    .bind(user.user_id)
+    .bind(operations)
+    .fetch_all(db)
+    .await
 }
 
 pub async fn can_create(
@@ -169,7 +168,23 @@ pub async fn can_create(
     user_id: i64,
     db: &PgPool,
 ) -> Result<bool, sqlx::Error> {
-    user_has_permissions_all(resource_type, Operations::CREATE_ONLY, user_id, db).await
+    user_has_permissions_all(resource_type, Operations::CREATE, user_id, db).await
+}
+
+pub async fn can_delete(
+    resource_type: ResourceType,
+    user_id: i64,
+    db: &PgPool,
+) -> Result<bool, sqlx::Error> {
+    user_has_permissions_all(resource_type, Operations::DELETE, user_id, db).await
+}
+
+pub async fn can_update(
+    resource_type: ResourceType,
+    user_id: i64,
+    db: &PgPool,
+) -> Result<bool, sqlx::Error> {
+    user_has_permissions_all(resource_type, Operations::UPDATE, user_id, db).await
 }
 
 pub async fn user_has_permissions_all(
@@ -178,18 +193,22 @@ pub async fn user_has_permissions_all(
     user_id: i64,
     db: &PgPool,
 ) -> Result<bool, sqlx::Error> {
+    let table_name = resource_type.table_name();
     match sqlx::query_scalar::<_, i64>(&format!(
-            "SELECT 1 FROM {}_permissions WHERE user_id = $1 AND ($2::bit(16) & permission) <> B'0'::bit(16) AND resource_id IS NULL",
-            resource_type.table_name()
-        ))
-        .bind(user_id)
-        .bind(operations)
-        .fetch_optional(db)
-        .await {
-            Ok(Some(_)) => Ok(true),
-            Ok(None) => Ok(false),
-            Err(e) => Err(e),
-        }
+        "SELECT 1 FROM {table_name}_permissions \
+LEFT JOIN user_has_role ON user_has_role.role_id = {table_name}_permissions.role_id \
+WHERE (user_has_role.user_id = $1 OR {table_name}_permissions.user_id = $1) \
+AND ($2::int::bit(16) & permission) <> B'0'::bit(16) AND resource_id IS NULL",
+    ))
+    .bind(user_id)
+    .bind(operations)
+    .fetch_optional(db)
+    .await
+    {
+        Ok(Some(_)) => Ok(true),
+        Ok(None) => Ok(false),
+        Err(e) => Err(e),
+    }
 }
 
 pub async fn user_has_permissions_id<
