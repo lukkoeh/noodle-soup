@@ -1,52 +1,69 @@
-/* color palette from <https://github.com/vuejs/theme> */
-:root {
-  --vt-c-white: #ffffff;
-  --vt-c-white-soft: #f8f8f8;
-  --vt-c-white-mute: #f2f2f2;
+@import "tailwindcss";
 
-  --vt-c-black: #181818;
-  --vt-c-black-soft: #222222;
-  --vt-c-black-mute: #282828;
+@theme {
+  --color-norm: var(--txt-norm);
+  --color-light: var(--txt-light);
 
-  --vt-c-indigo: #2c3e50;
+  --color-main: var(--main);
+  --color-widget: var(--widget);
+  --color-input: var(--input);
 
-  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
+  --color-misc: var(--c-misc-1);
 
-  --vt-c-text-light-1: var(--vt-c-indigo);
-  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
-  --vt-c-text-dark-1: var(--vt-c-white);
-  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+  --color-accent: var(--accent-hsl);
+  --color-accent-t: var(--accent-trans);
+  --color-accent-l: var(--accent-light);
 }
 
-/* semantic color variables for this project */
 :root {
-  --color-background: var(--vt-c-white);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-background-mute: var(--vt-c-white-mute);
+  --txt-norm: #000;
+  /* normal text*/
+  --txt-light: #898989;
+  /*  searchfield text*/
+  --main: #FFF;
+  /* regular background*/
+  --widget: #FFF;
+  /* widget background*/
+  --input: #E0E0E0;
+  /* search and dropdown background*/
 
-  --color-border: var(--vt-c-divider-light-2);
-  --color-border-hover: var(--vt-c-divider-light-1);
+  /* misc colors*/
+  --c-misc-1: #CACACA;
+  /* #CACACA Trennlinie*/
 
-  --color-heading: var(--vt-c-text-light-1);
-  --color-text: var(--vt-c-text-light-1);
-
-  --section-gap: 160px;
+  /* suposed to contain accent color and a brighter variant of color*/
+  --accent-hsl: hsl(5 100 50);
+  /* Custom color in darkmode HSL -20 L*/
+  --accent-trans: hsl(5 100 50 / 20);
+  /* Custom color 20% transparency*/
+  --accent-light-hsl: hsl(5 100 70);
+  /*Custom color + or - 20 HSL brightnes*/
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-background: var(--vt-c-black);
-    --color-background-soft: var(--vt-c-black-soft);
-    --color-background-mute: var(--vt-c-black-mute);
+    --txt-norm: #fff;
+    /* normal text*/
+    --txt-light: #898989;
+    /*  searchfield text*/
+    --main: #2D2D2D;
+    /* regular background*/
+    --widget: #242424;
+    /* widget background*/
+    --input: #313131;
+    /* search and dropdown background*/
 
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
+    /* misc colors*/
+    --c-misc-1: #494949;
+    /* #CACACA Trennlinie*/
 
-    --color-heading: var(--vt-c-text-dark-1);
-    --color-text: var(--vt-c-text-dark-2);
+    /* suposed to contain accent color and a brighter variant of color*/
+    --accent-hsl: hsl(5 100 50);
+    /* Custom color in darkmode HSL -20 L*/
+    --accent-trans: hsl(5 100 50 / 20);
+    /* Custom color 20% transparency*/
+    --accent-light-hsl: hsl(5 100 30);
+    /*Custom color + or - 20 HSL brightnes*/
   }
 }
 
@@ -79,7 +96,7 @@ body {
     'Droid Sans',
     'Helvetica Neue',
     sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

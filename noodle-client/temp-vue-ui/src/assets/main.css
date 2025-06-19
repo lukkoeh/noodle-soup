@@ -2,8 +2,8 @@
 @import "tailwindcss";
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+  width: 100%;
+
+  min-height: 100vh;
+  max-height: 100vh;
 }
