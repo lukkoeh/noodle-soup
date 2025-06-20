@@ -34,7 +34,7 @@
   /* suposed to contain accent color and a brighter variant of color*/
   --accent-hsl: hsl(5 100 50);
   /* Custom color in darkmode HSL -20 L*/
-  --accent-trans: hsl(5 100 50 / 20);
+  --accent-trans: hsla(5 100 50 / 0.2);
   /* Custom color 20% transparency*/
   --accent-light-hsl: hsl(5 100 70);
   /*Custom color + or - 20 HSL brightnes*/
@@ -60,7 +60,7 @@
     /* suposed to contain accent color and a brighter variant of color*/
     --accent-hsl: hsl(5 100 50);
     /* Custom color in darkmode HSL -20 L*/
-    --accent-trans: hsl(5 100 50 / 20);
+    --accent-trans: hsl(5 100 50 / 0.2);
     /* Custom color 20% transparency*/
     --accent-light-hsl: hsl(5 100 30);
     /*Custom color + or - 20 HSL brightnes*/
