@@ -29,7 +29,7 @@
   >
     <!-- Popup Container -->
     <div
-      class="bg-input rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-hidden"
+      class="bg-widget rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-hidden"
       @click.stop
     >
       <!-- Header -->
