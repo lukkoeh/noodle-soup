@@ -1,5 +1,6 @@
 @import './base.css';
 @import "tailwindcss";
+@import '../fonts/css/all.min.css';
 
 #app {
   width: 100%;
