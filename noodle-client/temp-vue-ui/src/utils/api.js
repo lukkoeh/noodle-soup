@@ -1,13 +1,17 @@
-// src/services/api.js
-import axios from 'axios';
+const baseUrl = "/api"
 
+/**
+* @return if login was successful `true` else `false`.
+*/
+export async function login(email, password) {
+  const r = await fetch(`${baseUrl}/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify( {email, password} )
+  })
 
-const api = axios.create({
-  baseURL: process.env.VUE_APP_API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+  return r.status === 201
+}
 
-export default api;
