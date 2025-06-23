@@ -22,3 +22,6 @@ noodle-server/target/
 
 # Added by cargo
 /target
+
+# Add nix gitignore for direnv
+.direnv/

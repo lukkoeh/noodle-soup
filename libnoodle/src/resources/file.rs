@@ -93,6 +93,11 @@ pub mod http {
     // If we want to change that, the API spec needs to be adjusted accordingly.
     use std::sync::Arc;
 
+    use crate::{
+        auth::{self, permission::Operations},
+        resources,
+    };
+
     use super::*;
     use axum::{
         Json,
@@ -113,28 +118,59 @@ pub mod http {
         &temp_file_name[..temp_file_name.len() - (TEMP_SUFFIX.len() + 1)]
     }
 
-    pub async fn get_all(State(state): State<crate::AppState>) -> Response {
-        match sqlx::query_as::<_, FileRow>("SELECT * FROM \"file\"")
-            .fetch_all(&state.db)
-            .await
+    pub async fn get_all(
+        State(state): State<crate::AppState>,
+        auth_session: AuthSession<crate::auth::Backend>,
+    ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        let files_result = match auth::user_has_permissions_all(
+            resources::Type::File,
+            Operations::READ,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
         {
-            Ok(file_rows) => {
-                let mut files = Vec::with_capacity(file_rows.len());
-                for file in file_rows {
-                    let file_contents_encoded = file.get_contents_b64(&state.media_path).await;
-
-                    files.push(File {
-                        uid: file.uid,
-                        mime_type: file.mime_type,
-                        filename: file.filename,
-                        data: file_contents_encoded,
-                        last_modified: file.updated_at,
-                    })
+            Ok(true) => match sqlx::query_as::<_, FileRow>("SELECT * FROM \"file\"")
+                .fetch_all(&state.db)
+                .await
+            {
+                Ok(f) => f,
+                Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            },
+            Ok(false) => {
+                match sqlx::query_as::<_, FileRow>(
+                    "SELECT f.uid, f.filename, f.type, f.location, f.created_at, f.updated_at \
+FROM \"file\" f \
+JOIN file_permissions fp ON f.id = fp.resource_id \
+WHERE (fp.user_id = $1 OR EXISTS(\
+SELECT 1 FROM user_has_role ur \
+WHERE ur.user_id = $1 AND ur.role_id = fp.role_id)) \
+AND (fp.permission & $2::bit(16)) <> B'0'::bit(16)",
+                )
+                .fetch_all(&state.db)
+                .await
+                {
+                    Ok(f) => f,
+                    Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
                 }
-                Json(files).into_response()
             }
-            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        };
+
+        let mut files = Vec::with_capacity(files_result.len());
+        for file in files_result {
+            let file_contents_encoded = file.get_contents_b64(&state.media_path).await;
+
+            files.push(File {
+                uid: file.uid,
+                mime_type: file.mime_type,
+                filename: file.filename,
+                data: file_contents_encoded,
+                last_modified: file.updated_at,
+            })
         }
+        Json(files).into_response()
     }
 
     pub async fn create(
@@ -142,6 +178,13 @@ pub mod http {
         auth_session: AuthSession<crate::auth::Backend>,
         Json(file): Json<FileDescription>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::can_create(resources::Type::File, s_user.user_id, &state.db).await {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        }
+
         if file.filename.len() < 1 {
             return StatusCode::BAD_REQUEST.into_response();
         }
@@ -149,7 +192,7 @@ pub mod http {
         let mut hasher = Sha1::new();
         hasher.update(current_time.to_rfc2822());
         hasher.update(&file.filename);
-        hasher.update(&auth_session.user.unwrap().user_id.to_le_bytes());
+        hasher.update(&s_user.user_id.to_le_bytes());
         let dir_hash = hasher.finalize();
 
         let mut path = Path::from_hash(&state.media_path, &dir_hash);
@@ -209,8 +252,23 @@ pub mod http {
     pub async fn get_by_uid(
         UrlPath(uid): UrlPath<Uuid>,
         State(state): State<crate::AppState>,
+        auth_session: AuthSession<crate::auth::Backend>,
     ) -> Response {
-        //TODO: Caching - return NOT MODIFIED if file was not changed.
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::File,
+            &uid,
+            Operations::READ,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         match sqlx::query_as::<_, FileRow>("SELECT * FROM \"file\" WHERE uid = $1")
             .bind(&uid)
             .fetch_optional(&state.db)
@@ -233,13 +291,29 @@ pub mod http {
     }
 
     pub async fn update(
+        auth_session: AuthSession<crate::auth::Backend>,
         UrlPath(uid): UrlPath<Uuid>,
         State(state): State<crate::AppState>,
         Json(new_file): Json<FileDescription>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
         if new_file.filename.len() < 1 {
             return StatusCode::BAD_REQUEST.into_response();
         }
+        match auth::user_has_permissions_id(
+            resources::Type::File,
+            &uid,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        }
+
         let old_file = match sqlx::query_as::<_, FileRow>("SELECT * FROM \"file\" WHERE uid = $1")
             .bind(&uid)
             .fetch_optional(&state.db)
@@ -298,7 +372,23 @@ pub mod http {
     pub async fn delete(
         UrlPath(uid): UrlPath<Uuid>,
         State(state): State<crate::AppState>,
+        auth_session: AuthSession<crate::auth::Backend>,
     ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::File,
+            &uid,
+            Operations::DELETE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        }
+
         let file_to_delete =
             match sqlx::query_as::<_, FileRow>("SELECT * FROM \"file\" WHERE uid = $1")
                 .bind(&uid)
