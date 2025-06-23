@@ -9,6 +9,7 @@ use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::net::SocketAddr;
 use tokio::task::AbortHandle;
+use tower_http::cors::{Any, CorsLayer};
 use tower_sessions_sqlx_store::PostgresStore;
 
 #[tokio::main]
@@ -200,7 +201,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary
         .route("/login", post(auth::create_session_handler))
-        .layer(auth_layer)
+        .layer(
+            tower::ServiceBuilder::new().layer(auth_layer).layer(
+                CorsLayer::new()
+                    .allow_methods(Any)
+                    .allow_origin(Any)
+                    .allow_headers(Any),
+            ),
+        )
         .with_state(app_state);
 
     axum::serve(listener, app)
