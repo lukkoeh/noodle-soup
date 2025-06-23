@@ -45,6 +45,12 @@ pub struct ContentElementCreationRequest {
 }
 
 pub mod http {
+    //NOTE: evtl. einzelne Content Sections -/ Elements versteckbar machen -> Permissions anpassen
+    use crate::{
+        auth::{self, permission::Operations},
+        resources,
+    };
+
     use super::*;
     use axum::{
         Json,
@@ -52,14 +58,31 @@ pub mod http {
         http::StatusCode,
         response::{IntoResponse, Response},
     };
+    use axum_login::AuthSession;
 
     /* -------- Sections ---------- */
 
     //GET /course/{courseId}/sections
     pub async fn get_all_for_course(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath(course_id): UrlPath<i64>,
         State(state): State<crate::AppState>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &course_id,
+            Operations::READ,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         match sqlx::query_as::<_, ContentSection>("SELECT uid, course_id, headline, order_index FROM content_section WHERE course_id = $1 ORDER BY order_index")
             .bind(course_id)
             .fetch_all(&state.db)
@@ -72,10 +95,26 @@ pub mod http {
 
     //POST /course/{courseId}/sections
     pub async fn create_for_course(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath(course_id): UrlPath<i64>,
         State(state): State<crate::AppState>,
         Json(req): Json<ContentSectionCreationRequest>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &course_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         if req.headline.trim().is_empty() {
             return StatusCode::BAD_REQUEST.into_response();
         }
@@ -96,9 +135,25 @@ pub mod http {
 
     //GET /course/{courseId}/section/{sectionId}
     pub async fn get_for_course(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath((course_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &course_id,
+            Operations::READ,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         match sqlx::query_as::<_, ContentSection>("SELECT uid, course_id, headline, order_index FROM content_section WHERE uid = $1 AND course_id = $2")
             .bind(section_id)
             .bind(course_id)
@@ -113,10 +168,26 @@ pub mod http {
 
     //PUT /course/{courseId}/section/{sectionId}
     pub async fn update_for_course(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath((course_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
         Json(req): Json<ContentSectionCreationRequest>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &course_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         if req.headline.trim().is_empty() {
             return StatusCode::BAD_REQUEST.into_response();
         }
@@ -138,9 +209,25 @@ pub mod http {
 
     //DELETE /course/{courseId}/section/{sectionId}
     pub async fn delete_for_course(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath((course_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
     ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &course_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        };
+
         match sqlx::query("DELETE FROM content_section WHERE uid = $1 AND course_id = $2")
             .bind(section_id)
             .bind(course_id)
@@ -162,9 +249,25 @@ pub mod http {
 
     //GET /course/{courseId}/section/{sectionId}/content
     pub async fn get_course_content(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath((course_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &course_id,
+            Operations::READ,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         let query = "SELECT uid, section_id, order_index, type, content FROM content_element WHERE section_id = $1 AND section_id IN (SELECT uid FROM content_section WHERE course_id = $2) ORDER BY order_index";
         match sqlx::query_as::<_, ContentElement>(query)
             .bind(section_id)
@@ -179,10 +282,26 @@ pub mod http {
 
     //POST /course/{courseId}/section/{sectionId}/content
     pub async fn create_course_content(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath((course_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
         Json(req): Json<ContentElementCreationRequest>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &course_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         // verify section
         match sqlx::query_scalar::<_, i32>(
             "SELECT 1 FROM content_section WHERE uid=$1 AND course_id=$2",
@@ -212,10 +331,26 @@ pub mod http {
 
     //PUT /course/{courseId}/section/{sectionId}/content
     pub async fn update_course_content(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath((course_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
         Json(elem): Json<ContentElement>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &course_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         // sanity checks
         if elem.section_id != section_id {
             return StatusCode::BAD_REQUEST.into_response();
@@ -255,9 +390,25 @@ pub mod http {
 
     //DELETE /course/{courseId}/section/{sectionId}/content
     pub async fn delete_course_content(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath((course_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
     ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &course_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        };
+
         let query = "DELETE FROM content_element WHERE section_id=$1 AND section_id IN (SELECT uid FROM content_section WHERE course_id=$2)";
         match sqlx::query(query)
             .bind(section_id)
@@ -272,9 +423,25 @@ pub mod http {
 
     //GET /template/{templateId}/sections
     pub async fn get_all_for_template(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath(template_id): UrlPath<i64>,
         State(state): State<crate::AppState>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Template,
+            &template_id,
+            Operations::READ,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         match sqlx::query_as::<_, ContentSection>("SELECT uid, course_id, template_id, headline, order_index FROM content_section WHERE template_id = $1 ORDER BY order_index")
             .bind(template_id)
             .fetch_all(&state.db)
@@ -287,10 +454,26 @@ pub mod http {
 
     //POST /template/{templateId}/sections
     pub async fn create_for_template(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath(template_id): UrlPath<i64>,
         State(state): State<crate::AppState>,
         Json(req): Json<ContentSectionCreationRequest>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Template,
+            &template_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         if req.headline.trim().is_empty() {
             return StatusCode::BAD_REQUEST.into_response();
         }
@@ -311,9 +494,25 @@ pub mod http {
 
     //GET /template/{templateId}/section/{sectionId}
     pub async fn get_for_template(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath((template_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Template,
+            &template_id,
+            Operations::READ,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         match sqlx::query_as::<_, ContentSection>("SELECT uid, course_id, template_id, headline, order_index FROM content_section WHERE uid = $1 AND template_id = $2")
             .bind(section_id)
             .bind(template_id)
@@ -328,10 +527,26 @@ pub mod http {
 
     //PUT /template/{templateId}/section/{sectionId}
     pub async fn update_for_template(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath((template_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
         Json(req): Json<ContentSectionCreationRequest>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Template,
+            &template_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         if req.headline.trim().is_empty() {
             return StatusCode::BAD_REQUEST.into_response();
         }
@@ -353,9 +568,25 @@ pub mod http {
 
     //DELETE /template/{templateId}/section/{sectionId}
     pub async fn delete_for_template(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath((template_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
     ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Template,
+            &template_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        };
+
         match sqlx::query("DELETE FROM content_section WHERE uid = $1 AND template_id = $2")
             .bind(section_id)
             .bind(template_id)
@@ -374,9 +605,25 @@ pub mod http {
     }
     //GET /template/{templateId}/section/{sectionId}/content
     pub async fn get_template_content(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath((template_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Template,
+            &template_id,
+            Operations::READ,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         let query = "SELECT uid, section_id, order_index, type, content FROM content_element WHERE section_id = $1 AND section_id IN (SELECT uid FROM content_section WHERE template_id = $2) ORDER BY order_index";
         match sqlx::query_as::<_, ContentElement>(query)
             .bind(section_id)
@@ -391,10 +638,26 @@ pub mod http {
 
     //POST /template/{templateId}/section/{sectionId}/content
     pub async fn create_template_content(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath((template_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
         Json(req): Json<ContentElementCreationRequest>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Template,
+            &template_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         // verify section
         match sqlx::query_scalar::<_, i32>(
             "SELECT 1 FROM content_section WHERE uid=$1 AND template_id=$2",
@@ -424,10 +687,25 @@ pub mod http {
 
     //PUT /template/{templateId}/section/{sectionId}/content
     pub async fn update_template_content(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath((template_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
         Json(elem): Json<ContentElement>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Template,
+            &template_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
         // sanity checks
         if elem.section_id != section_id {
             return StatusCode::BAD_REQUEST.into_response();
@@ -467,9 +745,25 @@ pub mod http {
 
     //DELETE /template/{templateId}/section/{sectionId}/content
     pub async fn delete_template_content(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath((template_id, section_id)): UrlPath<(i64, i64)>,
         State(state): State<crate::AppState>,
     ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Template,
+            &template_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        };
+
         let query = "DELETE FROM content_element WHERE section_id=$1 AND section_id IN (SELECT uid FROM content_section WHERE template_id=$2)";
         match sqlx::query(query)
             .bind(section_id)

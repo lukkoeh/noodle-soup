@@ -16,20 +16,82 @@ pub struct TemplateDescription {
 }
 
 pub mod http {
-    use super::{Template, TemplateDescription};
-    use axum::{extract::{Path as UrlPath, State}, Json, http::StatusCode, response::{IntoResponse, Response}};
+    use crate::{
+        auth::{self, permission::Operations},
+        resources,
+    };
 
-    pub async fn get_all(State(state): State<crate::AppState>) -> Response {
-        match sqlx::query_as::<_, Template>("SELECT uid, name FROM \"template\"")
+    use super::{Template, TemplateDescription};
+    use axum::{
+        Json,
+        extract::{Path as UrlPath, State},
+        http::StatusCode,
+        response::{IntoResponse, Response},
+    };
+    use axum_login::AuthSession;
+
+    pub async fn get_all(
+        auth_session: AuthSession<auth::Backend>,
+        State(state): State<crate::AppState>,
+    ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        let templates = match auth::user_has_permissions_all(
+            resources::Type::Template,
+            Operations::READ,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Ok(true) => match sqlx::query_as::<_, Template>("SELECT uid, name FROM \"template\"")
+                .fetch_all(&state.db)
+                .await
+            {
+                Ok(templates) => templates,
+                Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            },
+            Ok(false) => match sqlx::query_as::<_, Template>(
+                "SELECT t.uid, t.name \
+FROM template t \
+JOIN template_permissions tp ON t.uid = tp.resource_id \
+WHERE (tp.user_id = $1 OR EXISTS(\
+SELECT 1 FROM user_has_role ur \
+WHERE ur.user_id = $1 AND ur.role_id = tp.role_id)) \
+AND (tp.permission & $2::int::bit(16)) <> B'0'::bit(16)",
+            )
+            .bind(s_user.user_id)
+            .bind(Operations::READ)
             .fetch_all(&state.db)
             .await
-        {
-            Ok(templates) => Json(templates).into_response(),
-            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-        }
+            {
+                Ok(templates) => templates,
+                Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            },
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        };
+        Json(templates).into_response()
     }
 
-    pub async fn get_by_uid(UrlPath(id): UrlPath<i64>, State(state): State<crate::AppState>) -> Response {
+    pub async fn get_by_uid(
+        auth_session: AuthSession<auth::Backend>,
+        UrlPath(id): UrlPath<i64>,
+        State(state): State<crate::AppState>,
+    ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Template,
+            &id,
+            Operations::READ,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        };
+
         match sqlx::query_as::<_, Template>("SELECT uid, name FROM \"template\" WHERE uid = $1")
             .bind(id)
             .fetch_optional(&state.db)
@@ -41,25 +103,58 @@ pub mod http {
         }
     }
 
-    pub async fn create(State(state): State<crate::AppState>, Json(desc): Json<TemplateDescription>) -> Response {
+    pub async fn create(
+        auth_session: AuthSession<auth::Backend>,
+        State(state): State<crate::AppState>,
+        Json(desc): Json<TemplateDescription>,
+    ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::can_create(resources::Type::Template, s_user.user_id, &state.db).await {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        }
+
         if desc.name.trim().is_empty() {
             return StatusCode::BAD_REQUEST.into_response();
         }
-        match sqlx::query_scalar::<_, i64>("INSERT INTO \"template\"(name) VALUES ($1) RETURNING uid")
-            .bind(&desc.name)
-            .fetch_one(&state.db)
-            .await
+        match sqlx::query_scalar::<_, i64>(
+            "INSERT INTO \"template\"(name) VALUES ($1) RETURNING uid",
+        )
+        .bind(&desc.name)
+        .fetch_one(&state.db)
+        .await
         {
-            Ok(id) => Json(Template { template_id: id, name: desc.name }).into_response(),
+            Ok(id) => Json(Template {
+                template_id: id,
+                name: desc.name,
+            })
+            .into_response(),
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
     }
 
     pub async fn update(
+        auth_session: AuthSession<auth::Backend>,
         UrlPath(id): UrlPath<i64>,
         State(state): State<crate::AppState>,
         Json(desc): Json<TemplateDescription>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Template,
+            &id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        }
+
         if desc.name.trim().is_empty() {
             return StatusCode::BAD_REQUEST.into_response();
         }
@@ -73,20 +168,41 @@ pub mod http {
                 if res.rows_affected() == 0 {
                     StatusCode::NOT_FOUND.into_response()
                 } else {
-                    Json(Template { template_id: id, name: desc.name }).into_response()
+                    Json(Template {
+                        template_id: id,
+                        name: desc.name,
+                    })
+                    .into_response()
                 }
-            },
+            }
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
     }
 
-    pub async fn delete(UrlPath(id): UrlPath<i64>, State(state): State<crate::AppState>) -> StatusCode {
+    pub async fn delete(
+        auth_session: AuthSession<auth::Backend>,
+        UrlPath(id): UrlPath<i64>,
+        State(state): State<crate::AppState>,
+    ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::can_delete(resources::Type::Template, s_user.user_id, &state.db).await {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        }
+
         match sqlx::query("DELETE FROM \"template\" WHERE uid = $1")
             .bind(id)
             .execute(&state.db)
             .await
         {
-            Ok(r) => if r.rows_affected() == 0 { StatusCode::NOT_FOUND } else { StatusCode::OK },
+            Ok(r) => {
+                if r.rows_affected() == 0 {
+                    StatusCode::NOT_FOUND
+                } else {
+                    StatusCode::OK
+                }
+            }
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

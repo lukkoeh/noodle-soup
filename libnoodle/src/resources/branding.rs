@@ -1,4 +1,4 @@
-use std::os::unix::ffi::OsStrExt;
+// use std::os::unix::ffi::OsStrExt;
 
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -65,7 +65,7 @@ impl Branding {
 
         let current_time = Utc::now();
         let mut hasher = Sha1::new();
-        hasher.update(&logo.file_name().unwrap().as_bytes());
+        hasher.update(&logo.file_name().unwrap().as_encoded_bytes());
         hasher.update(current_time.to_rfc2822());
         let dir_hash = hasher.finalize();
         let dest_path = Path::from_hash(dest_base_path, &dir_hash);

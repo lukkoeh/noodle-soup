@@ -89,7 +89,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route(
             "/users/{id}/roles",
             get(user::http::get_roles)
-                .put(user::http::replace_roles) //TODO: Auch in entsprechender Gruppe
+                .put(user::http::replace_roles)
                 .post(user::http::assign_roles)
                 .delete(user::http::unassign_roles),
         )

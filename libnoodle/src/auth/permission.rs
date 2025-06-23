@@ -4,40 +4,46 @@ use thiserror::Error;
 
 use crate::resources;
 
-#[derive(Serialize, Deserialize, sqlx::Type)]
+#[derive(Serialize, Deserialize, sqlx::Type, Hash, PartialEq, Eq)]
 pub struct Permission {
-    subject: resources::Type,
-    ops: Operations,
-    ids: Option<Vec<i64>>,
+    pub(super) subject: resources::Type,
+    pub(super) ops: Operations,
+    pub(super) ids: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Deserialize, sqlx::Type)]
+#[derive(Serialize, Deserialize, sqlx::Type, Hash, PartialEq, Eq, Clone, Copy)]
+#[sqlx(transparent)]
 #[serde(transparent)]
-struct Operations(i8);
+pub struct Operations(i16);
 
-impl From<i8> for Operations {
-    fn from(value: i8) -> Self {
+impl From<i16> for Operations {
+    fn from(value: i16) -> Self {
         Self(value)
     }
 }
 
 #[allow(dead_code)]
 impl Operations {
+    pub const CREATE: Operations = Self(0b00000001);
+    pub const READ: Operations = Self(0b00000010);
+    pub const UPDATE: Operations = Self(0b00000100);
+    pub const DELETE: Operations = Self(0b00001000);
+
     pub fn new(create: bool, read: bool, update: bool, delete: bool) -> Self {
-        Self(create as i8 | (read as i8) << 1 | (update as i8) << 2 | (delete as i8) << 3)
+        Self(create as i16 | (read as i16) << 1 | (update as i16) << 2 | (delete as i16) << 3)
     }
 
     pub fn can_create(&self) -> bool {
-        (0b00000001 & self.0) != 0
+        (Self::CREATE.0 & self.0) != 0
     }
     pub fn can_read(&self) -> bool {
-        (0b00000010 & self.0) != 0
+        (Self::READ.0 & self.0) != 0
     }
     pub fn can_update(&self) -> bool {
-        (0b00000100 & self.0) != 0
+        (Self::UPDATE.0 & self.0) != 0
     }
     pub fn can_delete(&self) -> bool {
-        (0b00001000 & self.0) != 0
+        (Self::DELETE.0 & self.0) != 0
     }
 }
 
@@ -49,6 +55,8 @@ pub enum ResourceCreateError {
     Conflict,
     #[error("malformed parameters")]
     BadParam,
+    #[error("access denied")]
+    AccessDenied,
 }
 
 #[derive(Serialize, Deserialize, Decode, sqlx::FromRow)]
@@ -72,10 +80,28 @@ pub struct RoleRow {
 }
 
 impl RoleRow {
-    pub async fn from_user_id(db: &PgPool, user_id: i64) -> Result<Vec<Self>, sqlx::Error> {
-        match sqlx::query_as::<_, RoleRow>("SELECT id, \"name\", permissions, \"group\" FROM \"role\" LEFT JOIN user_has_role ON role_id = id WHERE user_id = $1").bind(user_id).fetch_all(db).await {
+    pub async fn from_user_id(
+        db: &PgPool,
+        requesting_user_id: i64,
+        target_user_id: i64,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        match sqlx::query_as::<_, RoleRow>(
+            "SELECT id, \"name\", permissions, \"group\" FROM \"role\" r \
+JOIN user_has_role ON role_id = r.id \
+WHERE EXISTS (\
+SELECT 1 FROM role_permissions rp \
+WHERE rp.resource_id = r.id
+AND (rp.permission & $3::int::bit(16)) <> B'0'::bit(16) \
+AND (rp.user_id = $2 OR rp.role_id IN (SELECT role_id FROM user_has_role WHERE user_id = $2)))",
+        )
+        .bind(target_user_id)
+        .bind(requesting_user_id)
+        .bind(Operations::READ)
+        .fetch_all(db)
+        .await
+        {
             Ok(r) => Ok(r),
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 
@@ -84,8 +110,15 @@ impl RoleRow {
         name: &str,
         permissions: &[Permission],
         group: Option<i64>,
+        user_id: i64,
     ) -> Result<i64, ResourceCreateError> {
-        match sqlx::query_as::<_, (i64,)>(
+        match super::can_create(resources::Type::Role, user_id, db).await {
+            Err(e) => return Err(ResourceCreateError::Sqlx(e)),
+            Ok(false) => return Err(ResourceCreateError::AccessDenied),
+            Ok(true) => {}
+        };
+
+        match sqlx::query_scalar::<_, i64>(
             "INSERT INTO role (\"name\", permissions, \"group\") VALUES ($1, $2, $3) RETURNING id",
         )
         .bind(name)
@@ -94,7 +127,7 @@ impl RoleRow {
         .fetch_one(db)
         .await
         {
-            Ok(id) => Ok(id.0),
+            Ok(id) => Ok(id),
             Err(e) => match e {
                 sqlx::Error::Database(e) => {
                     if e.kind() == ErrorKind::UniqueViolation {
@@ -155,10 +188,28 @@ pub struct GroupRow {
 }
 
 impl GroupRow {
-    pub async fn from_user_id(db: &PgPool, user_id: i64) -> Result<Vec<Self>, sqlx::Error> {
-        match sqlx::query_as::<_, GroupRow>("SELECT id, \"name\", kind, parent FROM \"group\" LEFT JOIN user_in_group ON group_id = id WHERE user_id = $1").bind(user_id).fetch_all(db).await {
+    pub async fn from_user_id(
+        db: &PgPool,
+        requesting_user_id: i64,
+        target_user_id: i64,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        match sqlx::query_as::<_, GroupRow>(
+            "SELECT g.id, g.\"name\", g.kind, g.parent FROM \"group\" g \
+JOIN user_in_group uig ON uig.group_id = g.id \
+WHERE EXISTS (\
+SELECT 1 FROM group_permissions gp \
+WHERE gp.resource_id = g.id \
+AND (gp.permission & $3::int::bit(16)) <> B'0'::bit(16) \
+AND (gp.user_id = $2 OR gp.role_id IN (SELECT role_id FROM user_has_role WHERE user_id = $2)))",
+        )
+        .bind(target_user_id)
+        .bind(requesting_user_id)
+        .bind(Operations::READ)
+        .fetch_all(db)
+        .await
+        {
             Ok(g) => Ok(g),
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 
@@ -167,8 +218,15 @@ impl GroupRow {
         name: &str,
         kind: &GroupKind,
         parent: Option<i64>,
+        user_id: i64,
     ) -> Result<i64, ResourceCreateError> {
-        match sqlx::query_as::<_, (i64,)>(
+        match super::can_create(resources::Type::Group, user_id, db).await {
+            Err(e) => return Err(ResourceCreateError::Sqlx(e)),
+            Ok(false) => return Err(ResourceCreateError::AccessDenied),
+            Ok(true) => {}
+        };
+
+        match sqlx::query_scalar::<_, i64>(
             "INSERT INTO \"group\"(\"name\", kind, parent) VALUES ($1, $2, $3) RETURNING id",
         )
         .bind(name)
@@ -177,7 +235,7 @@ impl GroupRow {
         .fetch_one(db)
         .await
         {
-            Ok(id) => Ok(id.0),
+            Ok(id) => Ok(id),
             Err(e) => match e {
                 sqlx::Error::Database(e) => {
                     if e.kind() == ErrorKind::UniqueViolation {
