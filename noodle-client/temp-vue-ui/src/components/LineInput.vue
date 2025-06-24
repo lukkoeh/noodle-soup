@@ -5,10 +5,6 @@ const props = defineProps(
             type: String,
             default: ''
         },
-        modelValue: {
-            type: String,
-            default: ''
-        },
         password: {
             type: Boolean,
             default: false,
@@ -20,6 +16,7 @@ const props = defineProps(
     }
 )
 const type = props.password ? "password" : "text"
+const model = defineModel();
 
 const emit = defineEmits(['update:modelValue', 'changed'])
 
@@ -37,7 +34,7 @@ function handleInput(event) {
         <input 
         :type="type"
         :placeholder="placeholder"
-        :value="modelValue"
+        :value="model"
         @input="handleInput"
         class="rounded-2xl outline-0" />
         <input v-if="icon != ''" type="button" class="bg-accent" value="Hello"/>

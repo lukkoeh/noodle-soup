@@ -18,14 +18,14 @@
         <div class="login-widget flex-col flex gap-2 bg-widget shadow-xl p-4 rounded-lg">
             <LineInput
                 placeholder="Email"
-                @changed="(value) => email=value"
+                v-model="email"
             />
             <LineInput
                 placeholder="Passwort"
                 :password=true
-                @changed="(value)=>password=value"
+                v-model="password"
             />
-            <Button class="bg-accent rounded-2xl" @click="login_submit" text="Login"/>
+            <Button class="bg-accent rounded-2xl" @click="login_submit">Login</Button>
         </div>
         
     </div>
