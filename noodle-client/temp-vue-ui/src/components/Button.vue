@@ -34,7 +34,7 @@ export default {
   methods: {
     handleClick(event) {
       if (!this.disabled) {
-        this.$emit('click', event);
+        //this.$emit('clicked', event);
       }
     }
   }

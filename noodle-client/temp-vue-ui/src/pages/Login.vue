@@ -22,8 +22,8 @@
             />
             <LineInput
                 placeholder="Passwort"
-                :password=true
                 v-model="password"
+                intype="password"
             />
             <Button class="bg-accent rounded-2xl" @click="login_submit">Login</Button>
         </div>
