@@ -7,11 +7,12 @@ use axum::{
 
 pub mod role {
     use axum::extract::Path;
+    use axum_login::AuthSession;
     use sqlx::error::ErrorKind;
 
     use crate::auth::permission::{Role, RoleDescription, RoleRow, add_users_to_role_group_query};
     use crate::auth::permission::{add_users_to_groups_query, add_users_to_roles_query};
-    use crate::user;
+    use crate::{auth, resources, user};
 
     use super::*;
 
@@ -27,9 +28,17 @@ pub mod role {
     }
 
     pub async fn create(
+        auth_session: AuthSession<crate::auth::Backend>,
         State(state): State<crate::AppState>,
         Json(role): Json<RoleDescription>,
     ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::can_create(resources::Type::Role, s_user.user_id, &state.db).await {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        }
+
         let existing_role = sqlx::query_as::<_, (i32,)>("SELECT 1 FROM role WHERE \"name\" = $1")
             .bind(&role.name)
             .fetch_optional(&state.db)

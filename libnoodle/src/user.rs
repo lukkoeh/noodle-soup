@@ -457,10 +457,26 @@ pub mod http {
     }
 
     pub async fn remove_from_groups(
+        auth_session: AuthSession<crate::auth::Backend>,
         Path(user_id): Path<i64>,
         State(state): State<crate::AppState>,
         Json(group_ids): Json<Vec<i64>>,
     ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::User,
+            &user_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        }
+
         match sqlx::query("DELETE FROM \"user_in_group\" WHERE group_id = ANY($1) AND user_id = $2")
             .bind(group_ids)
             .bind(user_id)
