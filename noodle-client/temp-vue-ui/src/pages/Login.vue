@@ -2,6 +2,7 @@
     import LineInput from '@/components/LineInput.vue';
     import { ref } from 'vue';
     import { login } from '@/utils/api.js'
+    import Button from '@/components/Button.vue'
 
     const email = ref("");
     const password = ref("");
@@ -24,7 +25,7 @@
                 :password=true
                 @changed="(value)=>password=value"
             />
-            <input class="bg-accent rounded-2xl" type="button" @click="login_submit" value="Login"/>
+            <Button class="bg-accent rounded-2xl" @click="login_submit" text="Login"/>
         </div>
         
     </div>

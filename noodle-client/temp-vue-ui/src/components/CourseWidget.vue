@@ -24,7 +24,7 @@ function updateBookmark(newValue){
 </script>
 
 <template>
-  <div class="w-80 bg-widget rounded-3xl shadow-lg relative">
+  <div class="w-80 bg-widget rounded-3xl shadow-lg relative flex-shrink-0">
 
     <div class="rounded-t-3xl h-20 w-full bg-accent-t"></div>
     <span class="absolute top-16 right-8 text-3xl">

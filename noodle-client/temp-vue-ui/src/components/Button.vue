@@ -1,10 +1,7 @@
 <template>
-  <button 
-    :class="['btn', `btn--${variant}`, `btn--${size}`, { 'btn--disabled': disabled }]"
-    :disabled="disabled"
-    @click="handleClick"
-  >
-    <slot>{{ text }}</slot>
+  <button :class="['btn', `btn--${variant}`, `btn--${size}`, { 'btn--disabled': disabled }]" :disabled="disabled"
+    @click="handleClick">
+    {{ text }}
   </button>
 </template>
 
