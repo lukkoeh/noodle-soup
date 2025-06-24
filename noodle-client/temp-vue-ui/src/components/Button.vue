@@ -4,7 +4,7 @@
     :disabled="disabled"
     @click="handleClick"
   >
-    <slot>{{ text }}</slot>
+    <slot></slot>
   </button>
 </template>
 
