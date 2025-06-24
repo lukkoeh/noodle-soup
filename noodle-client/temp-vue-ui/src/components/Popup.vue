@@ -1,4 +1,6 @@
 <script setup>
+import Icon from './Icon.vue';
+
   defineProps({
     isOpen: {
       type: Boolean,
@@ -10,7 +12,7 @@
     },
     closeOnBackdrop: {
       type: Boolean,
-      default: true
+      default: false
     }
   })
   const emit = defineEmits(["close"]);
@@ -29,7 +31,7 @@
   >
     <!-- Popup Container -->
     <div
-      class="bg-widget rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-hidden"
+      class="bg-widget rounded-lg shadow-xl max-w-[75vw] min-w-[30vw] mx-4 max-h-[90vh] flex flex-col"
       @click.stop
     >
       <!-- Header -->
@@ -41,14 +43,12 @@
           @click="closePopup"
           class="text-normal hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
+          <Icon icon="fa-x" icon-style="fa-solid"></Icon>
         </button>
       </div>
 
       <!-- Content Area -->
-      <div class="p-4 overflow-y-auto">
+      <div class="p-4">
         <slot></slot>
       </div>
     </div>

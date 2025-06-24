@@ -5,7 +5,7 @@
   const props = defineProps({
     icon:{
       type: Array,
-      default: ['fa-square', 'fa-square-check'],
+      default: ['fa-square-check', 'fa-square'],
     },
     iconStyle: {
       type: Array,
@@ -25,9 +25,9 @@
   const styleEval = computed(() => !model.value && (1 in props.iconStyle)? props.iconStyle[1] :  props.iconStyle[0]);
   const iconEval = computed(() => !model.value && (1 in props.icon) ? props.icon[1] : props.icon[0]);
 
-  function toggled(){
+  function toggled(event){
     model.value = !model.value;
-    emit('toggled', model.value);
+    emit('toggled', event);
   }
 </script>
 
