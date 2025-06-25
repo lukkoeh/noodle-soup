@@ -1,5 +1,7 @@
 <script setup>
 import { ref } from 'vue';
+import LineInput from './LineInput.vue';
+import Button from './Button.vue';
 
 const props = defineProps({
     title: {
@@ -8,7 +10,7 @@ const props = defineProps({
     },
     placeholder: {
         type: String,
-        default: "Search..."
+        default: "Suchen..."
     }
 });
 
@@ -18,33 +20,56 @@ const emit = defineEmits(['search']);
 const handleSearch = () => {
     emit('search', searchQuery.value);
 };
+
+const handleScroll = (event) => {
+    // Only handle wheel events with vertical movement
+    if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+        event.preventDefault();
+        
+        const container = event.currentTarget;
+        const scrollAmount = event.deltaY * 1.5
+        
+        if (props.smoothScroll) {
+            // Smooth scroll implementation
+            container.scrollBy({
+                left: scrollAmount,
+                behavior: 'smooth'
+            });
+        } else {
+            // Direct scroll for better performance with large amounts of content
+            container.scrollLeft += scrollAmount;
+        }
+    }
+};
 </script>
 
 <template>
-    <div class="w-full h flex flex-col bg-white">
+    <div class="w-full h flex flex-col bg-white px-2">
         <!-- Header with Title and Search -->
-        <div class="flex-shrink-0 p-6 border-b border-gray-200">
+        <div class="flex-shrink-0 flex justify-between">
             <div class="flex items-center justify-between mb-4">
                 <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
             </div>
-
-            <!-- Search Bar -->
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </div>
-                <input v-model="searchQuery" @input="handleSearch" type="text" :placeholder="placeholder"
-                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" />
+            <!-- search and show all button-->
+            <div class="flex gap-2 items-center">
+                <LineInput
+                :placeholder="placeholder"
+                v-model="searchQuery"
+                intype="search"
+                @changed="handleSearch"
+                />
+                <Button
+                @click="handleShowAll"
+                type="secondary"
+                >Alles Anzeigen</Button>
             </div>
+
         </div>
 
         <!-- Horizontally Scrollable Content Area -->
         <div class="flex-1 overflow-hidden">
-            <div class="h-full overflow-x-scroll overflow-y-hidden py-3">
-                <div class="flex justify-items-start items-center gap-10 h-full min-w-full">
+            <div @wheel="(event) => handleScroll(event)" class="h-full overflow-x-scroll overflow-y-hidden py-3">
+                <div class="flex justify-items-start items-center gap-10 h-full min-w-max">
                     <slot />
                 </div>
             </div>
