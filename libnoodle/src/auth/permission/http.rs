@@ -202,7 +202,7 @@ UPDATE \"group\" SET \"name\" = $1 WHERE id = (SELECT \"group\" FROM updated_rol
         State(state): State<crate::AppState>,
     ) -> Response {
         match sqlx::query_as::<_, user::Profile>(
-            "SELECT \"user\".id, firstname, lastname, email FROM \"user\" \
+            "SELECT \"user\".id, firstname, lastname, title, email FROM \"user\" \
 LEFT JOIN \"user_has_role\" ON id = user_id \
 WHERE role_id = $1",
         )
@@ -488,6 +488,7 @@ pub mod group {
                     Json(GroupRow {
                         group_id: id.0,
                         name: group.name,
+                        shortname: group.shortname,
                         kind: group.kind,
                         parent: group.parent,
                     }),
@@ -601,7 +602,7 @@ pub mod group {
 
     pub async fn get_users(Path(id): Path<i64>, State(state): State<crate::AppState>) -> Response {
         match sqlx::query_as::<_, user::Profile>(
-            "SELECT \"user\".id, firstname, lastname, email \
+            "SELECT \"user\".id, firstname, lastname, title, email \
 FROM \"user\" LEFT JOIN \"user_in_group\" ON id = user_id
 WHERE group_id = $1",
         )

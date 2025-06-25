@@ -20,10 +20,11 @@ async fn migrate_test(db_pool: &PgPool) {
         .unwrap();
 
     let main_user_id = sqlx::query_scalar::<_, i64>(
-        "INSERT INTO \"user\" (firstname, lastname, email, password) VALUES ($1, $2, $3, $4) RETURNING id",
+        "INSERT INTO \"user\" (firstname, lastname, title, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING id",
     )
     .bind(&env::var("ADMIN_FIRSTNAME").unwrap())
     .bind(&env::var("ADMIN_LASTNAME").unwrap())
+    .bind(&env::var("ADMIN_TITLE").unwrap())
     .bind(&env::var("ADMIN_MAIL").unwrap())
     .bind(&bcrypt::hash(&env::var("ADMIN_PASSWORD").unwrap(), bcrypt::DEFAULT_COST).unwrap())
     .fetch_one(db_pool)

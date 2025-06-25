@@ -69,7 +69,7 @@ impl AuthnBackend for Backend {
         &self,
         credentials: Self::Credentials,
     ) -> Result<Option<Self::User>, Self::Error> {
-        let user: Result<Option<(i64, String, String, String, String)>, _> =
+        let user: Result<Option<(i64, String, String, String, String, String)>, _> =
             sqlx::query_as("SELECT * FROM \"user\" WHERE email = $1")
                 .bind(credentials.email)
                 .fetch_optional(&self.db)
@@ -94,15 +94,16 @@ impl AuthnBackend for Backend {
                 user_id: u.0,
                 firstname: u.1,
                 lastname: u.2,
-                email: u.3,
-                password: u.4.into(),
+                title: u.3,
+                email: u.4,
+                password: u.5.into(),
             })),
             _ => Ok(None),
         }
     }
 
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
-        let user: Result<Option<(i64, String, String, String, String)>, _> =
+        let user: Result<Option<(i64, String, String, String, String, String)>, _> =
             sqlx::query_as("SELECT * FROM \"user\" WHERE id = $1")
                 .bind(user_id)
                 .fetch_optional(&self.db)
@@ -116,8 +117,9 @@ impl AuthnBackend for Backend {
                 user_id: u.0,
                 firstname: u.1,
                 lastname: u.2,
-                email: u.3,
-                password: u.4.into(),
+                title: u.3,
+                email: u.4,
+                password: u.5.into(),
             }))
         } else {
             Ok(None)

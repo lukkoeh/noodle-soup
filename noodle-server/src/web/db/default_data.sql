@@ -1,4 +1,4 @@
-WITH inserted_group AS (INSERT INTO "group" ("name", kind, parent) VALUES ('admin', 'role', null) RETURNING id)
+WITH inserted_group AS (INSERT INTO "group" ("name", shortname, kind, parent) VALUES ('admin', 'A', 'role', null) RETURNING id)
 INSERT INTO "role"(name, permissions, "group")
 VALUES ('admin',
 ('[
