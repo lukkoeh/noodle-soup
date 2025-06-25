@@ -1,141 +1,54 @@
 <template>
   <button 
-    :class="['btn', `btn--${variant}`, `btn--${size}`, { 'btn--disabled': disabled }]"
+    :class="buttonClasses"
     :disabled="disabled"
-    @click="handleClick"
   >
-    <slot></slot>
+    <slot>{{ text }}</slot>
   </button>
 </template>
 
-<script>
-export default {
-  name: 'SimpleButton',
-  props: {
-    text: {
-      type: String,
-      default: 'Button'
-    },
-    variant: {
-      type: String,
-      default: 'primary',
-      validator: value => ['primary', 'secondary', 'accent', 'outline'].includes(value)
-    },
-    size: {
-      type: String,
-      default: 'medium',
-      validator: value => ['small', 'medium', 'large'].includes(value)
-    },
-    disabled: {
-      type: Boolean,
-      default: false
-    }
+<script setup>
+import { computed } from 'vue'
+
+const props = defineProps({
+  text: {
+    type: String,
+    default: 'Button'
   },
-  methods: {
-    handleClick(event) {
-      if (!this.disabled) {
-        //this.$emit('clicked', event);
-      }
-    }
+  variant: {
+    type: String,
+    default: 'primary',
+    validator: value => ['primary', 'secondary', 'accent', 'outline'].includes(value)
+  },
+  size: {
+    type: String,
+    default: 'medium',
+    validator: value => ['small', 'medium', 'large'].includes(value)
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
-}
+})
+
+const buttonClasses = computed(() => {
+  const base = "inline-flex items-center justify-center border font-medium rounded-lg cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 active:translate-y-px"
+  
+  const variants = {
+    primary: "bg-widget text-norm border-misc hover:bg-input hover:border-accent focus:ring-accent-t",
+    secondary: "bg-input text-norm border-misc hover:bg-misc focus:ring-accent-t",
+    accent: "bg-accent text-white border-accent hover:bg-accent-l hover:border-accent-l focus:ring-accent-t",
+    outline: "bg-transparent text-accent border-accent hover:bg-accent-t focus:ring-accent-t"
+  }
+  
+  const sizes = {
+    small: "px-3 py-1.5 text-xs min-h-7",
+    medium: "px-4 py-2 text-sm min-h-9",
+    large: "px-6 py-3 text-base min-h-11"
+  }
+  
+  const disabled = props.disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
+  
+  return `${base} ${variants[props.variant]} ${sizes[props.size]} ${disabled}`.trim()
+})
 </script>
-
-<style scoped>
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 8px;
-  font-family: inherit;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  outline: none;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn:focus {
-  box-shadow: 0 0 0 2px var(--color-accent-t);
-}
-
-.btn:active {
-  transform: translateY(1px);
-}
-
-/* Sizes */
-.btn--small {
-  padding: 6px 12px;
-  font-size: 12px;
-  min-height: 28px;
-}
-
-.btn--medium {
-  padding: 8px 16px;
-  font-size: 14px;
-  min-height: 36px;
-}
-
-.btn--large {
-  padding: 12px 24px;
-  font-size: 16px;
-  min-height: 44px;
-}
-
-/* Variants */
-.btn--primary {
-  background-color: var(--color-widget);
-  color: var(--color-norm);
-  border: 1px solid var(--color-misc);
-}
-
-.btn--primary:hover:not(.btn--disabled) {
-  background-color: var(--color-input);
-  border-color: var(--color-accent);
-}
-
-.btn--secondary {
-  background-color: var(--color-input);
-  color: var(--color-norm);
-  border: 1px solid var(--color-misc);
-}
-
-.btn--secondary:hover:not(.btn--disabled) {
-  background-color: var(--color-misc);
-}
-
-.btn--accent {
-  background-color: var(--color-accent);
-  color: white;
-  border: 1px solid var(--color-accent);
-}
-
-.btn--accent:hover:not(.btn--disabled) {
-  background-color: var(--color-accent-l);
-  border-color: var(--color-accent-l);
-}
-
-.btn--outline {
-  background-color: transparent;
-  color: var(--color-accent);
-  border: 1px solid var(--color-accent);
-}
-
-.btn--outline:hover:not(.btn--disabled) {
-  background-color: var(--color-accent-t);
-}
-
-/* Disabled state */
-.btn--disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.btn--disabled:hover {
-  transform: none;
-}
-</style>
