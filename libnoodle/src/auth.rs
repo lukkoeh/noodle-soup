@@ -80,7 +80,7 @@ impl AuthnBackend for Backend {
         let user = user.unwrap();
         match task::spawn_blocking(|| {
             user.filter(|u| {
-                if let Ok(true) = bcrypt::verify(credentials.password, &u.4) {
+                if let Ok(true) = bcrypt::verify(credentials.password, &u.5) {
                     true
                 } else {
                     false
