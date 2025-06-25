@@ -20,8 +20,8 @@ const filteredUsers = computed(() => {
 
   const query = searchQuery.value.toLowerCase()
   return users.value.filter(user =>
-    user.vorname.toLowerCase().includes(query) ||
-    user.nachname.toLowerCase().includes(query)
+    user.firstname.toLowerCase().includes(query) ||
+    user.lastname.toLowerCase().includes(query)
   )
 })
 
@@ -44,7 +44,7 @@ const handleAddUser = (userId) => {
     />
     <div class="overflow-y-auto h-[50vh]">
       <div v-for="user in users" class="flex justify-between gap-2">
-        <p>{{ user.Vorname + " " + user.Nachname }}</p>
+        <p>{{ user.firstname + " " + user.lastname }}</p>
         <Button type="simple" @click="() => handleAddUser(user.userId)">
           <Icon icon="fa-plus" icon-style="fa-solid"/>
         </Button>

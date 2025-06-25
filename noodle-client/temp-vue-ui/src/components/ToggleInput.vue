@@ -35,7 +35,7 @@
   <label :class="classes">
     <input
       type="checkbox"
-      :checked="model.value"
+      :checked="model"
       @change="toggled"
       class="hidden"
     />

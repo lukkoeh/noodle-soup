@@ -7,8 +7,8 @@
     const email = ref("");
     const password = ref("");
 
-    function login_submit(){
-        if (login(email.value, password.value))
+    async function loginSubmit() {
+        if (await login(email.value, password.value) === 201)
             window.location.href = '/'
     }
 </script>
@@ -25,7 +25,7 @@
                 v-model="password"
                 intype="password"
             />
-            <Button class="bg-accent rounded-2xl" @click="login_submit">Login</Button>
+            <Button class="bg-accent rounded-2xl" @click="loginSubmit">Login</Button>
         </div>
         
     </div>

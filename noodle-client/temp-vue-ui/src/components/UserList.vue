@@ -100,12 +100,12 @@ const deleteUser = (user) => {
         <div class="col-span-2 flex items-center space-x-1">
           <span class="text-sm font-medium text-gray-700">Vorname</span>
           <button 
-            @click="sortBy('Vorname')"
+            @click="sortBy('firstname')"
             class="flex items-center justify-center w-4 h-4 hover:bg-gray-200 rounded transition-colors"
           >
             <svg 
               class="w-3 h-3 text-gray-500" 
-              :class="getSortIconClass('Vorname')"
+              :class="getSortIconClass('lastname')"
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
@@ -183,16 +183,16 @@ const deleteUser = (user) => {
           />
         </div>
         <div class="col-span-2 flex items-center">
-          <span class="text-sm text-gray-900">{{ user.Vorname }}</span>
+          <span class="text-sm text-gray-900">{{ user.firstname }}</span>
         </div>
         <div class="col-span-2 flex items-center">
-          <span class="text-sm text-gray-900">{{ user.Nachname }}</span>
+          <span class="text-sm text-gray-900">{{ user.lastname }}</span>
         </div>
         <div class="col-span-3 flex items-center">
-          <span class="text-sm text-gray-600">{{ user.eMail }}</span>
+          <span class="text-sm text-gray-600">{{ user.email }}</span>
         </div>
         <div class="col-span-3 flex items-center">
-          <span class="text-sm text-gray-900">{{ user.Position }}</span>
+          <span class="text-sm text-gray-900">{{ user.userId }}</span>
         </div>
         <div class="col-span-1 flex items-center justify-end space-x-2">
           <button 

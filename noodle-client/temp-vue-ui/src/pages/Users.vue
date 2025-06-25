@@ -1,27 +1,14 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { fetchAllUsers } from '@/utils/api.js'
 import UserList from '@/components/UserList.vue'
 
-const userList = ref(
-    [
-        {
-            selected: false,
-            userId: 'abcdef123',
-            Vorname: 'Miriam',
-            Nachname: 'Anders',
-            eMail: 'm.anders@mail.de',
-            Position: 'Sachbearbeiter'
-        },
-        {
-            selected: false,
-            userId: 'ghijkl456',
-            Vorname: 'Max',
-            Nachname: 'Bertram',
-            eMail: 'm.b@mail.de',
-            Position: 'Depp vom Dienst'
-        },
-    ]
-)
+const userList = ref([])
+
+onMounted(async () => {
+    await loadAllUsers()
+})
+
 function handleSelectionChange(data) {
     console.log('Ausgewählte Benutzer:', data.selectedUsers)
 }
@@ -31,6 +18,15 @@ function handleEditUser(user) {
 function handleDeleteUser(user) {
     console.log('Lösche Benutzer:', user)
 }
+
+async function loadAllUsers() {
+    const r = await fetchAllUsers()
+    if (r.status === 401)
+        window.location.href = "/login"
+
+    userList.value = r.body
+}
+
 </script>
 
 <template>

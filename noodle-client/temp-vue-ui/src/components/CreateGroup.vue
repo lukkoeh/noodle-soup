@@ -144,12 +144,12 @@ const data = ref({
         </div>
 
         <!-- User Rows -->
-        <div v-for="user in filteredUsers" :key="user.id"
+        <div v-for="user in filteredUsers" :key="user.userId"
           class="px-4 py-3 grid grid-cols-12 gap-4 text-sm border-b border-gray-200 last:border-b-0 hover:bg-gray-50">
           <div class="col-span-1 flex items-center">
             <ToggleInput v-model="user.selected" />
           </div>
-          <div class="col-span-3 text-gray-900">{{ user.vorname }}</div>
+          <div class="col-span-3 text-gray-900">{{ user.firstname }}</div>
           <div class="col-span-3 text-gray-900">
             {{ user.nachname }}
           </div>

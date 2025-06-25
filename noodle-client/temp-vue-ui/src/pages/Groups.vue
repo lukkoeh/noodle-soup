@@ -131,10 +131,10 @@ const filteredUsers = computed(() => {
 
   const query = userSearchQuery.value.toLowerCase()
   return users.value.filter(user =>
-    user.Vorname.toLowerCase().includes(query) ||
-    user.Nachname.toLowerCase().includes(query) ||
-    user.eMail.toLowerCase().includes(query) ||
-    user.Position.toLowerCase().includes(query)
+    user.firstname.toLowerCase().includes(query) ||
+    user.lastname.toLowerCase().includes(query) ||
+    user.email.toLowerCase().includes(query) ||
+    user.userId.toLowerCase().includes(query)
   )
 })
 
