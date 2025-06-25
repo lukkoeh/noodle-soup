@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, defineProps, defineModel } from 'vue'
 import Button from './Button.vue'
 import ToggleInput from './ToggleInput.vue'
 import LineInput from './LineInput.vue'
@@ -7,7 +7,9 @@ import LineInput from './LineInput.vue'
 // Reactive data
 const searchQuery = ref('')
 
-const users = ref([
+const users = defineModel()
+
+const users_old = ref([
   {
     id: 1,
     vorname: 'Hänsel',
@@ -74,8 +76,9 @@ const filteredUsers = computed(() => {
 
   const query = searchQuery.value.toLowerCase()
   return users.value.filter(user =>
-    user.vorname.toLowerCase().includes(query) ||
-    user.nachname.toLowerCase().includes(query) ||
+    user.firstname.toLowerCase().includes(query) ||
+    user.lastname.toLowerCase().includes(query) ||
+    user.title.toLowerCase().includes(query) ||
     user.email.toLowerCase().includes(query)
   )
 })
@@ -97,10 +100,10 @@ const emitCreate = () => {
 }
 
 const data = ref({
-  gname: '',
-  bereich: '',
-  kuerzel: '',
+  name: '',
+  shortname: '',
 })
+
 </script>
 
 <template>
@@ -108,18 +111,18 @@ const data = ref({
     <!-- Header -->
     <div class="mb-6">
       <h2>Titel</h2>
-      <LineInput v-model="data.gname" placeholder="Gruppen-Name" />
+      <LineInput v-model="data.name" placeholder="Gruppenname" />
     </div>
 
     <!-- Bereich und Kürzel -->
     <div class="flex justify-between gap-4 mb-6">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Bereich</label>
-        <LineInput placeholder="Bereich" v-model="data.bereich" />
-      </div>
+      <!-- <div> -->
+        <!-- <label class="block text-sm font-medium text-gray-700 mb-1">Bereich</label> -->
+        <!-- <LineInput placeholder="Bereich" v-model="data.bereich" /> -->
+      <!-- </div> -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Kürzel</label>
-        <LineInput placeholder="Kürzel" v-model="data.kuerzel" />
+        <LineInput placeholder="Kürzel" v-model="data.shortname" />
       </div>
     </div>
 
@@ -151,7 +154,7 @@ const data = ref({
           </div>
           <div class="col-span-3 text-gray-900">{{ user.firstname }}</div>
           <div class="col-span-3 text-gray-900">
-            {{ user.nachname }}
+            {{ user.lastname}}
           </div>
           <div class="col-span-5 text-gray-600">{{ user.email }}</div>
         </div>

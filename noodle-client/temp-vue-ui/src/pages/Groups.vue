@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { fetchGroups, fetchAllUsers } from '@/utils/api.js';
 import UserList from '@/components/UserList.vue';
 import CreateGroup from '@/components/CreateGroup.vue';
 import Popup from '@/components/Popup.vue';
@@ -120,9 +121,8 @@ const filteredGroups = computed(() => {
 
   const query = groupSearchQuery.value.toLowerCase()
   return groups.value.filter(group =>
-    group.titel.toLowerCase().includes(query) ||
-    group.bereich.toLowerCase().includes(query) ||
-    group.kuerzel.toLowerCase().includes(query)
+    group.name.toLowerCase().includes(query) ||
+    group.shortname.toLowerCase().includes(query)
   )
 })
 
@@ -133,8 +133,7 @@ const filteredUsers = computed(() => {
   return users.value.filter(user =>
     user.firstname.toLowerCase().includes(query) ||
     user.lastname.toLowerCase().includes(query) ||
-    user.email.toLowerCase().includes(query) ||
-    user.userId.toLowerCase().includes(query)
+    user.email.toLowerCase().includes(query)
   )
 })
 
@@ -190,6 +189,17 @@ const saveChanges = () => {
   // Hier würden die Änderungen gespeichert werden
 }
 
+onMounted(async () => {
+  const rg = await fetchGroups()
+
+  if (rg.status === 200) 
+    groups.value = rg.body
+
+  const ru = await fetchAllUsers()
+
+  if (ru.status === 200) 
+    users.value = ru.body
+})
 
 </script>
 
@@ -224,22 +234,22 @@ const saveChanges = () => {
       <!-- Groups List -->
       <div class="flex-1 overflow-y-auto">
         <div class="p-2">
-          <div v-for="group in filteredGroups" :key="group.id" @click="selectGroup(group)" :class="[
+          <div v-for="group in filteredGroups" :key="group.groupId" @click="selectGroup(group)" :class="[
             'flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors mb-1',
-            selectedGroup?.id === group.id
+            selectedGroup?.groupId === group.groupId
               ? 'bg-blue-50 border border-blue-200'
               : 'hover:bg-gray-50'
           ]">
             <div class="flex items-center space-x-3">
               <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                <span class="text-xs font-medium text-gray-600">{{ group.kuerzel }}</span>
+                <span class="text-xs font-medium text-gray-600">{{ group.shortname}}</span>
               </div>
               <div>
-                <div class="text-sm font-medium text-gray-900">{{ group.titel }}</div>
-                <div class="text-xs text-gray-500">{{ group.bereich }}</div>
+                <div class="text-sm font-medium text-gray-900">{{ group.name}}</div>
+                <!-- <div class="text-xs text-gray-500">{{ group.name}}</div> -->
               </div>
             </div>
-            <div class="text-xs text-gray-400">{{ group.kuerzel }}</div>
+            <div class="text-xs text-gray-400">{{ group.name}}</div>
           </div>
         </div>
       </div>
@@ -251,15 +261,15 @@ const saveChanges = () => {
       <div v-if="selectedGroup" class="bg-white border-b border-gray-200 p-6">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-xl font-semibold text-gray-900">{{ selectedGroup.titel }}</h1>
+            <h1 class="text-xl font-semibold text-gray-900">{{ selectedGroup.name}}</h1>
             <div class="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+              <!-- <div> -->
+                <!-- <span class="font-medium">Bereich:</span> -->
+                <!-- <span class="ml-1">{{ selectedGroup.bereich }}</span> -->
+              <!-- </div> -->
               <div>
-                <span class="font-medium">Bereich:</span>
-                <span class="ml-1">{{ selectedGroup.bereich }}</span>
-              </div>
-              <div>
-                <span class="font-medium">Kürzel:</span>
-                <span class="ml-1">{{ selectedGroup.kuerzel }}</span>
+                <span class="font-medium">Kürzel: </span>
+                <span class="ml-1">{{ selectedGroup.shortname }}</span>
               </div>
             </div>
           </div>
@@ -308,11 +318,11 @@ const saveChanges = () => {
               <div class="flex space-x-3">
                 <button @click="removeSelectedUsers"
                   class="px-4 py-2 text-sm font-medium text-red-600 bg-white border border-red-300 rounded-md hover:bg-red-50 transition-colors">
-                  Usergruppe löschen
+                  User aus Gruppe entfernen
                 </button>
                 <button @click="saveChanges"
                   class="px-4 py-2 text-sm font-medium text-white bg-red-500 border border-transparent rounded-md hover:bg-red-600 transition-colors">
-                  speichern
+                  Speichern
                 </button>
               </div>
             </div>
@@ -336,9 +346,9 @@ const saveChanges = () => {
     // collect all popups here
 
     <Popup title="Neue Usergruppe" :is-open="showCreateGroupModal" @close="showCreateGroupModal = false">
-      <CreateGroup></CreateGroup>
+      <CreateGroup v-model="users"></CreateGroup>
     </Popup>
-    <Popup title="Neue Usergruppe" :is-open="showAddUserModal" @close="showAddUserModal = false">
+    <Popup title="Neuer User" :is-open="showAddUserModal" @close="showAddUserModal = false">
       <AddUser
       v-model="users"
       @add-user="(data)=>addUserToGroup(data)"
