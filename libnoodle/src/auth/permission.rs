@@ -90,7 +90,7 @@ impl RoleRow {
 JOIN user_has_role ON role_id = r.id \
 WHERE EXISTS (\
 SELECT 1 FROM role_permissions rp \
-WHERE rp.resource_id = r.id
+WHERE (rp.resource_id = r.id OR rp.resource_id IS NULL) \
 AND (rp.permission & $3::int::bit(16)) <> B'0'::bit(16) \
 AND (rp.user_id = $2 OR rp.role_id IN (SELECT role_id FROM user_has_role WHERE user_id = $2)))",
         )
@@ -198,7 +198,7 @@ impl GroupRow {
 JOIN user_in_group uig ON uig.group_id = g.id \
 WHERE EXISTS (\
 SELECT 1 FROM group_permissions gp \
-WHERE gp.resource_id = g.id \
+WHERE (gp.resource_id = g.id OR gp.resource_id IS NULL) \
 AND (gp.permission & $3::int::bit(16)) <> B'0'::bit(16) \
 AND (gp.user_id = $2 OR gp.role_id IN (SELECT role_id FROM user_has_role WHERE user_id = $2)))",
         )

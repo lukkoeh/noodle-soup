@@ -1,4 +1,7 @@
 use serde::Deserialize;
+use sqlx::PgPool;
+
+use crate::auth::permission::Operations;
 
 #[derive(serde::Serialize, serde::Deserialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -11,6 +14,28 @@ pub struct Profile {
 }
 
 impl Profile {
+    pub async fn fetch_all(
+        db: &PgPool,
+        requesting_user_id: i64,
+    ) -> Result<Vec<Profile>, sqlx::Error> {
+        match sqlx::query_as::<_, Self>(
+            "SELECT u.id, u.firstname, u.lastname, u.email FROM \"user\" u \
+WHERE EXISTS (\
+SELECT 1 FROM user_permissions up \
+WHERE (up.resource_id = u.id OR up.resource_id IS NULL) \
+AND (up.permission & $2::int::bit(16)) <> B'0'::bit(16) \
+AND (up.user_id = $1 OR up.role_id IN (SELECT role_id FROM user_has_role WHERE user_id = $1)))",
+        )
+        .bind(requesting_user_id)
+        .bind(Operations::READ)
+        .fetch_all(db)
+        .await
+        {
+            Ok(u) => Ok(u),
+            Err(e) => Err(e),
+        }
+    }
+
     pub fn new(user_id: i64, firstname: String, lastname: String, email: String) -> Self {
         Profile {
             user_id,
@@ -157,12 +182,23 @@ pub mod http {
     }
 
     pub async fn get_self_roles(
-        State(state): State<crate::AppState>,
         auth_session: AuthSession<crate::auth::Backend>,
+        State(state): State<crate::AppState>,
     ) -> Response {
         let user = auth_session.user.unwrap();
         match RoleRow::from_user_id(&state.db, user.user_id, user.user_id).await {
             Ok(r) => Json(r).into_response(),
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        }
+    }
+
+    pub async fn get_all(
+        auth_session: AuthSession<crate::auth::Backend>,
+        State(state): State<crate::AppState>,
+    ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match Profile::fetch_all(&state.db, s_user.user_id).await {
+            Ok(u) => Json(u).into_response(),
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
     }
