@@ -297,14 +297,14 @@ export async function fetchGroups() {
   return Response(r.status, null)
 }
 
-export async function createGroup(name, kind, parent) {
-  const r = await fetch(`${baseUrl}/roles`, {
+export async function createGroup(name, shortname, kind, parent) {
+  const r = await fetch(`${baseUrl}/groups`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      name, kind, parent
+      name, shortname, kind, parent
     })
   })
 

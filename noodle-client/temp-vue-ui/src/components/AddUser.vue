@@ -45,7 +45,7 @@ const handleAddUser = (userId) => {
     <div class="overflow-y-auto h-[50vh]">
       <div v-for="user in users" class="flex justify-between gap-2">
         <p>{{ user.firstname + " " + user.lastname }}</p>
-        <Button type="simple" @click="() => handleAddUser(user.userId)">
+        <Button type="simple" @click="() => handleAddUser(user)">
           <Icon icon="fa-plus" icon-style="fa-solid"/>
         </Button>
       </div>

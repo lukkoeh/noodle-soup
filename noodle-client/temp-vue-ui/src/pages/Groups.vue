@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { fetchGroups, fetchAllUsers } from '@/utils/api.js';
+import { fetchGroups, fetchAllUsers, fetchUsersOfGroup, addUsersToGroup, removeUsersFromGroup } from '@/utils/api.js';
 import UserList from '@/components/UserList.vue';
 import CreateGroup from '@/components/CreateGroup.vue';
 import Popup from '@/components/Popup.vue';
@@ -18,6 +18,7 @@ const showCreateGroupModal = ref(false)
 const showAddUserModal = ref(false)
 
 // Sample data - Groups
+// TODO: turn this into an empty array
 const groups = ref([
   {
     id: 1,
@@ -64,13 +65,14 @@ const groups = ref([
 ])
 
 // Sample data - Users (wird normalerweise basierend auf ausgewählter Gruppe geladen)
-const users = ref([
+// TODO: turn this into an empty array
+const usersInGroup = ref([
   {
     selected: false,
     userId: 'user1',
     Vorname: 'Maja',
     Nachname: 'Biene',
-    eMail: 'm.b@mail.de',
+    email: 'm.b@mail.de',
     Position: 'Studiengangsleiter'
   },
   {
@@ -78,7 +80,7 @@ const users = ref([
     userId: 'user2',
     Vorname: 'Maja',
     Nachname: 'Biene',
-    eMail: 'm.b@mail.de',
+    email: 'm.b@mail.de',
     Position: 'Studiengangsleiter'
   },
   {
@@ -86,7 +88,7 @@ const users = ref([
     userId: 'user3',
     Vorname: 'Maja',
     Nachname: 'Biene',
-    eMail: 'm.b@mail.de',
+    email: 'm.b@mail.de',
     Position: 'Studiengangsleiter'
   },
   {
@@ -94,7 +96,7 @@ const users = ref([
     userId: 'user4',
     Vorname: 'Maja',
     Nachname: 'Biene',
-    eMail: 'm.b@mail.de',
+    email: 'm.b@mail.de',
     Position: 'Studiengangsleiter'
   },
   {
@@ -102,7 +104,7 @@ const users = ref([
     userId: 'user5',
     Vorname: 'Maja',
     Nachname: 'Biene',
-    eMail: 'm.b@mail.de',
+    email: 'm.b@mail.de',
     Position: 'Studiengangsleiter'
   },
   {
@@ -110,10 +112,12 @@ const users = ref([
     userId: 'user6',
     Vorname: 'Maja',
     Nachname: 'Biene',
-    eMail: 'm.b@mail.de',
+    email: 'm.b@mail.de',
     Position: 'Studiengangsleiter'
   }
 ])
+
+const allUsers = ref([]);
 
 // Computed properties
 const filteredGroups = computed(() => {
@@ -127,10 +131,10 @@ const filteredGroups = computed(() => {
 })
 
 const filteredUsers = computed(() => {
-  if (!userSearchQuery.value) return users.value
+  if (!userSearchQuery.value) return usersInGroup.value
 
   const query = userSearchQuery.value.toLowerCase()
-  return users.value.filter(user =>
+  return usersInGroup.value.filter(user =>
     user.firstname.toLowerCase().includes(query) ||
     user.lastname.toLowerCase().includes(query) ||
     user.email.toLowerCase().includes(query)
@@ -138,10 +142,11 @@ const filteredUsers = computed(() => {
 })
 
 // Methods
-const selectGroup = (group) => {
+const selectGroup = async (group) => {
   selectedGroup.value = group
-  // Hier würden normalerweise die User für diese Gruppe geladen werden
-  console.log('Gruppe ausgewählt:', group)
+  const r = await fetchUsersOfGroup(group.groupId)
+  if (r.status === 200)
+    usersInGroup.value = r.body
 }
 
 const handleUserSelectionChange = (data) => {
@@ -153,35 +158,45 @@ const handleEditUser = (user) => {
   console.log('Bearbeite User:', user)
 }
 
-const handleDeleteUser = (user) => {
+const handleDeleteUser = async (user) => {
   console.log('Lösche User:', user)
+  const status = await removeUsersFromGroup(selectedGroup.value.groupId, [user.userId])
   // User aus der Liste entfernen
-  const index = users.value.findIndex(u => u.userId === user.userId)
-  if (index > -1) {
-    users.value.splice(index, 1)
+  if (status === 200) {
+    const index = usersInGroup.value.findIndex(u => u.userId === user.userId)
+    if (index > -1) {
+      usersInGroup.value.splice(index, 1)
+    }
   }
 }
 const openAddModal = () => {
-  console.log('User zur Gruppe hinzufügen');
   showAddUserModal.value = true;
+}
+
+const addUserToGroup = async (user) => {
+  const r = await addUsersToGroup(selectedGroup.value.groupId, [user.userId])
+  if (r === 201)
+    usersInGroup.value.push(user)
   // Hier würde ein Modal oder eine andere UI zum Hinzufügen von Usern geöffnet
 }
 
-const addUserToGroup = (userId) => {
-  console.log('User zur Gruppe hinzufügen', userId);
-  // Hier würde ein Modal oder eine andere UI zum Hinzufügen von Usern geöffnet
+function appendGroupToList(group) {
+  groups.value.push(group)
 }
 
-const removeSelectedUsers = () => {
+const removeSelectedUsers = async() => {
   console.log('Entferne ausgewählte User:', selectedUsers.value)
-  // Ausgewählte User aus der Liste entfernen
-  selectedUsers.value.forEach(user => {
-    const index = users.value.findIndex(u => u.userId === user.userId)
-    if (index > -1) {
-      users.value.splice(index, 1)
-    }
-  })
-  selectedUsers.value = []
+  const status = await removeUsersFromGroup(selectedGroup.value.groupId, selectedUsers.value.map(u => u.userId))
+  // User aus der Liste entfernen
+  if (status === 200) {
+    selectedUsers.value.forEach(user => {
+        const index = usersInGroup.value.findIndex(u => u.userId === user.userId)
+        if (index > -1) {
+          usersInGroup.value.splice(index, 1)
+        }
+    })
+    selectedUsers.value = []
+  }
 }
 
 const saveChanges = () => {
@@ -198,7 +213,7 @@ onMounted(async () => {
   const ru = await fetchAllUsers()
 
   if (ru.status === 200) 
-    users.value = ru.body
+    allUsers.value = ru.body
 })
 
 </script>
@@ -346,11 +361,11 @@ onMounted(async () => {
     // collect all popups here
 
     <Popup title="Neue Usergruppe" :is-open="showCreateGroupModal" @close="showCreateGroupModal = false">
-      <CreateGroup v-model="users"></CreateGroup>
+      <CreateGroup v-model="allUsers" @create="(g) => appendGroupToList(g)"></CreateGroup>
     </Popup>
     <Popup title="Neuer User" :is-open="showAddUserModal" @close="showAddUserModal = false">
       <AddUser
-      v-model="users"
+      v-model="allUsers"
       @add-user="(data)=>addUserToGroup(data)"
       />
     </Popup>

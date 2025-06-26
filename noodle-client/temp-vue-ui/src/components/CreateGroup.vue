@@ -3,6 +3,7 @@ import { ref, computed, defineProps, defineModel } from 'vue'
 import Button from './Button.vue'
 import ToggleInput from './ToggleInput.vue'
 import LineInput from './LineInput.vue'
+import { createGroup } from '@/utils/api'
 
 // Reactive data
 const searchQuery = ref('')
@@ -84,8 +85,13 @@ const filteredUsers = computed(() => {
 })
 
 // Methods
-const handleCreate = () => {
-  const selectedUsers = users.value.filter(user => user.selected)
+const handleCreate = async () => {
+  const selectedUsers = users.value.filter(user => user.selected).map(u => u.userId)
+
+  const r = await createGroup(data.value.name, data.value.shortname, data.value.kind, data.value.parent)
+
+  if (r.status === 201)
+    emitCreate(r.body)
   console.log('Selected users:', selectedUsers)
   // Hier würde die Logik für das Erstellen implementiert werden
 }
@@ -94,14 +100,16 @@ const handleCreate = () => {
 const emit = defineEmits(['create', 'userSelected'])
 
 // Example of emitting events to parent
-const emitCreate = () => {
-  const selectedUsers = users.value.filter(user => user.selected)
-  emit('create', selectedUsers)
+const emitCreate = (group) => {
+  //const selectedUsers = users.value.filter(user => user.selected)
+  emit('create', group)
 }
 
 const data = ref({
-  name: '',
-  shortname: '',
+  name: null,
+  shortname: null,
+  kind: 'learning',
+  parent: null
 })
 
 </script>
