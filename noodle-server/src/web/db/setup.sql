@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS "user" (
     "id" BIGSERIAL PRIMARY KEY,
     "firstname" VARCHAR(255),
     "lastname" VARCHAR(255),
+    "title" VARCHAR(255),
     "email" VARCHAR(255) UNIQUE,
     "password" CHARACTER(60)
 );
@@ -54,6 +55,7 @@ CREATE TABLE IF NOT EXISTS "group" (
     "id" BIGSERIAL PRIMARY KEY,
     "kind" "group_kind",
     "name" VARCHAR(255) UNIQUE,
+    "shortname" VARCHAR(128) UNIQUE,
     "parent" BIGINT REFERENCES "group" (id) ON DELETE SET NULL
 );
 

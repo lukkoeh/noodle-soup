@@ -53,6 +53,14 @@ export async function fetchSelfRoles() {
   return Response(r.status, null)
 }
 
+export async function fetchAllUsers() {
+  const r = await fetch(`${baseUrl}/users`)
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+}
+
 export async function fetchUser(id) {
   const r = await fetch(`${baseUrl}/users/${id}`)
   if (r.status === 200)
@@ -386,10 +394,10 @@ export async function removeUsersFromGroup(id, userIds) {
 }
 
 
-function Response(status, object) {
+function Response(status, body) {
   return {
     status,
-    object,
+    body,
     success: function() {
       return this.status > 199 && this.status < 400
     }
