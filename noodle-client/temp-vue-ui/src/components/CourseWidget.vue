@@ -2,7 +2,9 @@
 import { ref } from 'vue';
 import TagBubbles from './TagBubbles.vue';
 import ToggleInput from './ToggleInput.vue';
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const emit = defineEmits(["bookmarked"])
 
 const props = defineProps({
@@ -10,6 +12,7 @@ const props = defineProps({
     type: Object,
     required: true,
     default: {
+      uid: 123,
       tags: ['one', 'two'],
       dozenten: ['Prof. Dr. Arnulf Mester'],
       description: "T7 | Web Engineering und ganz viel Weiteres",
@@ -21,10 +24,19 @@ const props = defineProps({
 function updateBookmark(newValue){
 
 }
+
+function goToCourse(event, id) {
+  event.preventDefault();
+  router.push(`/course/${id}`)
+}
+
 </script>
 
 <template>
-  <div class="w-80 bg-widget rounded-3xl shadow-lg relative flex-shrink-0">
+  <div
+  class="w-80 bg-widget rounded-3xl shadow-lg relative flex-shrink-0"
+  @click="(event)=>goToCourse(event, props.course.uid)"
+  >
 
     <div class="rounded-t-3xl h-20 w-full bg-accent-t"></div>
     <span class="absolute top-16 right-8 text-3xl">

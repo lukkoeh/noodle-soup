@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import Icon from './Icon.vue';
 
-const rLinkStyles = ref("bg-input min-w-30 min-h-30 flex items-center justify-center rounded-2xl")
+const rLinkStyles = ref("bg-input min-w-30 min-h-30 flex items-center justify-center rounded-2xl text-5xl")
 </script>
 
 <template>
@@ -16,7 +16,7 @@ const rLinkStyles = ref("bg-input min-w-30 min-h-30 flex items-center justify-ce
                 <Icon icon="fa-users-line" icon-style="fa-solid" />
             </RouterLink>
             <RouterLink to="/courses" :class="rLinkStyles">
-                <Icon icon="fa-user" icon-style="fa-solid" />
+                <Icon icon="fa-sheet-plastic" icon-style="fa-solid" />
             </RouterLink>
         </div>
     </div>

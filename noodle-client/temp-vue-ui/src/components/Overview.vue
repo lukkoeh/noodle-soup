@@ -15,11 +15,14 @@ const props = defineProps({
 });
 
 const searchQuery = ref('');
-const emit = defineEmits(['search']);
+const emit = defineEmits(['search', 'showAll']);
 
 const handleSearch = () => {
     emit('search', searchQuery.value);
 };
+const handleShowAll = () => {
+    emit('showAll')
+}
 
 const handleScroll = (event) => {
     // Only handle wheel events with vertical movement
