@@ -44,7 +44,7 @@ impl Type {
         const START: &str = "SELECT 1 FROM ";
         const SECOND: &str = "_permissions LEFT JOIN user_has_role ON user_has_role.role_id = ";
         const THIRD: &str = "_permissions.role_id WHERE (user_has_role.user_id = $1 OR ";
-        const END: &str = "_permissions.user_id = $1) AND ($2::int::bit(16) & permission) <> B'0'::bit(16) AND resource_id = $3";
+        const END: &str = "_permissions.user_id = $1) AND ($2::int::bit(16) & permission) <> B'0'::bit(16) AND (resource_id = $3 OR resource_id IS NULL)";
 
         match self {
             Self::User => {

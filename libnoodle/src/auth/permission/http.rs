@@ -431,9 +431,11 @@ pub mod group {
     };
 
     pub async fn get_all(State(state): State<crate::AppState>) -> Response {
-        let groups = sqlx::query_as::<_, GroupRow>("SELECT * FROM \"group\" LIMIT 1024")
-            .fetch_all(&state.db)
-            .await;
+        let groups = sqlx::query_as::<_, GroupRow>(
+            "SELECT * FROM \"group\" WHERE kind != 'role' LIMIT 1024",
+        )
+        .fetch_all(&state.db)
+        .await;
 
         match groups {
             Ok(r) => Json(r).into_response(),
@@ -454,7 +456,7 @@ pub mod group {
         }
 
         let existing_group =
-            sqlx::query_as::<_, (i32,)>("SELECT 1 FROM \"group\" WHERE \"name\" = $1")
+            sqlx::query_scalar::<_, i32>("SELECT 1 FROM \"group\" WHERE \"name\" = $1")
                 .bind(&group.name)
                 .fetch_optional(&state.db)
                 .await;
@@ -469,10 +471,11 @@ pub mod group {
             _ => {}
         }
 
-        let last_id = sqlx::query_as::<_, (i64,)>(
-            "INSERT INTO \"group\" (\"name\", kind, parent) VALUES ($1, $2, $3) RETURNING id",
+        let last_id = sqlx::query_scalar::<_, i64>(
+            "INSERT INTO \"group\" (\"name\", shortname, kind, parent) VALUES ($1, $2, $3, $4) RETURNING id",
         )
         .bind(&group.name)
+        .bind(&group.shortname)
         .bind(&group.kind)
         .bind(group.parent)
         .fetch_one(&state.db)
@@ -486,7 +489,7 @@ pub mod group {
                 return (
                     StatusCode::CREATED,
                     Json(GroupRow {
-                        group_id: id.0,
+                        group_id: id,
                         name: group.name,
                         shortname: group.shortname,
                         kind: group.kind,
@@ -711,7 +714,9 @@ WHERE group_id = $1",
         )
         .await
         {
-            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Err(_) => {
+                return StatusCode::INTERNAL_SERVER_ERROR;
+            }
             Ok(false) => return StatusCode::UNAUTHORIZED,
             Ok(true) => {}
         };

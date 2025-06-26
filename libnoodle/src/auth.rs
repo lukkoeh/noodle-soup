@@ -196,7 +196,7 @@ pub async fn user_has_permissions_all(
     db: &PgPool,
 ) -> Result<bool, sqlx::Error> {
     let table_name = resource_type.table_name();
-    match sqlx::query_scalar::<_, i64>(&format!(
+    match sqlx::query_scalar::<_, i32>(&format!(
         "SELECT 1 FROM {table_name}_permissions \
 LEFT JOIN user_has_role ON user_has_role.role_id = {table_name}_permissions.role_id \
 WHERE (user_has_role.user_id = $1 OR {table_name}_permissions.user_id = $1) \
@@ -223,7 +223,7 @@ pub async fn user_has_permissions_id<
     user_id: i64,
     db: &PgPool,
 ) -> Result<bool, sqlx::Error> {
-    match sqlx::query_scalar::<_, i64>(resource_type.permission_id_query())
+    match sqlx::query_scalar::<_, i32>(resource_type.permission_id_query())
         .bind(user_id)
         .bind(operations)
         .bind(resource_id)
