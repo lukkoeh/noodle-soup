@@ -204,4 +204,220 @@ AND (cp.permission & $2::int::bit(16)) <> B'0'::bit(16)",
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
+
+    pub async fn get_lecturers(
+        auth_session: AuthSession<auth::Backend>,
+        UrlPath(id): UrlPath<i64>,
+        State(state): State<crate::AppState>,
+    ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &id,
+            Operations::READ,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        }
+
+        match sqlx::query_as::<_, (String, String)>("SELECT u.firstname, u.lastname FROM \"user\" AS u JOIN course_lecturer cl ON cl.user_id = u.id WHERE cl.course_id = $1")
+            .bind(id)
+            .fetch_all(&state.db)
+            .await
+        {
+            Ok(n) => Json(n.iter().map(|v| {format!("{} {}", v.0, v.1)}).collect::<Vec<String>>()).into_response(),
+            Err(e) => {println!("{e}");StatusCode::INTERNAL_SERVER_ERROR.into_response()},
+        }
+    }
+
+    pub async fn add_lecturers(
+        auth_session: AuthSession<auth::Backend>,
+        UrlPath(course_id): UrlPath<i64>,
+        State(state): State<crate::AppState>,
+        Json(user_ids): Json<Vec<i64>>,
+    ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &course_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        }
+
+        match sqlx::query("INSERT INTO course_lecturer SELECT * FROM UNNEST(array_fill($1, ARRAY[array_length($2::int8[], 1)]), $2::int8[])")
+            .bind(course_id)
+            .bind(user_ids)
+            .execute(&state.db)
+            .await
+        {
+            Ok(_) => StatusCode::OK,
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    pub async fn set_lecturers(
+        auth_session: AuthSession<auth::Backend>,
+        UrlPath(course_id): UrlPath<i64>,
+        State(state): State<crate::AppState>,
+        Json(user_ids): Json<Vec<i64>>,
+    ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &course_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        }
+
+        let Ok(mut tx) = state.db.begin().await else {
+            return StatusCode::INTERNAL_SERVER_ERROR;
+        };
+
+        match sqlx::query("DELETE FROM course_lecturer WHERE course_id = $1")
+            .bind(course_id)
+            .execute(&mut *tx)
+            .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(_) => {}
+        };
+
+        match sqlx::query("INSERT INTO course_lecturer(course_id, user_id) SELECT * FROM UNNEST(array_fill($1, ARRAY[array_length($2::int8[], 1)]), $2::int8[])")
+            .bind(course_id)
+            .bind(user_ids)
+            .execute(&mut *tx).await {
+            Ok(_) => match tx.commit().await {
+                Ok(_) => StatusCode::OK,
+                Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            },
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    pub async fn get_groups(
+        auth_session: AuthSession<auth::Backend>,
+        UrlPath(id): UrlPath<i64>,
+        State(state): State<crate::AppState>,
+    ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &id,
+            Operations::READ,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(true) => {}
+        }
+
+        match sqlx::query_scalar::<_, String>("SELECT g.name FROM \"group\" AS g JOIN course_group cg ON cg.group_id = g.id WHERE cg.course_id = $1")
+            .bind(id)
+            .fetch_all(&state.db)
+            .await
+        {
+            Ok(n) => Json(n).into_response(),
+            Err(e) => {println!("{e}");StatusCode::INTERNAL_SERVER_ERROR.into_response()},
+        }
+    }
+
+    pub async fn add_groups(
+        auth_session: AuthSession<auth::Backend>,
+        UrlPath(course_id): UrlPath<i64>,
+        State(state): State<crate::AppState>,
+        Json(group_ids): Json<Vec<i64>>,
+    ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &course_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        }
+
+        match sqlx::query("INSERT INTO course_group(course_id, group_id) SELECT * FROM UNNEST(array_fill($1, ARRAY[array_length($2::int8[], 1)]), $2::int8[])")
+            .bind(course_id)
+            .bind(group_ids)
+            .execute(&state.db)
+            .await
+        {
+            Ok(_) => StatusCode::OK,
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    pub async fn set_groups(
+        auth_session: AuthSession<auth::Backend>,
+        UrlPath(course_id): UrlPath<i64>,
+        State(state): State<crate::AppState>,
+        Json(group_ids): Json<Vec<i64>>,
+    ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &course_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        }
+
+        let Ok(mut tx) = state.db.begin().await else {
+            return StatusCode::INTERNAL_SERVER_ERROR;
+        };
+
+        match sqlx::query("DELETE FROM course_group WHERE course_id = $1")
+            .bind(course_id)
+            .execute(&mut *tx)
+            .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(_) => {}
+        };
+
+        match sqlx::query("INSERT INTO course_group(course_id, group_id) SELECT * FROM UNNEST(array_fill($1, ARRAY[array_length($2::int8[], 1)]), $2::int8[])")
+            .bind(course_id)
+            .bind(group_ids)
+            .execute(&mut *tx).await {
+            Ok(_) => match tx.commit().await {
+                Ok(_) => StatusCode::OK,
+                Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            },
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
 }
