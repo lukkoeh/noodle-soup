@@ -11,6 +11,12 @@ pub struct Permission {
     pub(super) ids: Option<Vec<String>>,
 }
 
+#[derive(Deserialize)]
+pub struct PermissionQueryParam {
+    pub edit: Option<bool>,
+    pub view: Option<bool>,
+}
+
 #[derive(Serialize, Deserialize, sqlx::Type, Hash, PartialEq, Eq, Clone, Copy)]
 #[sqlx(transparent)]
 #[serde(transparent)]

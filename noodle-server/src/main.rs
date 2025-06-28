@@ -181,6 +181,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .put(resources::course::http::set_groups),
         )
         .route(
+            "/course/{courseId}/users",
+            get(resources::course::http::get_users)
+                .post(resources::course::http::add_users)
+                .put(resources::course::http::set_users),
+        )
+        .route(
             "/course/{courseId}/sections",
             get(resources::content_section::http::get_all_for_course)
                 .post(resources::content_section::http::create_for_course),

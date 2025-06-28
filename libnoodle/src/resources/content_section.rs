@@ -83,13 +83,13 @@ pub mod http {
             Ok(true) => {}
         };
 
-        match sqlx::query_as::<_, ContentSection>("SELECT uid, course_id, headline, order_index FROM content_section WHERE course_id = $1 ORDER BY order_index")
+        match sqlx::query_as::<_, ContentSection>("SELECT uid, course_id, template_id, headline, order_index FROM content_section WHERE course_id = $1 ORDER BY order_index")
             .bind(course_id)
             .fetch_all(&state.db)
             .await
         {
             Ok(sections) => Json(sections).into_response(),
-            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Err(e) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
     }
 
