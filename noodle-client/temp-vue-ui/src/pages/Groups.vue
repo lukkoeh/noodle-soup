@@ -182,6 +182,7 @@ const addUserToGroup = async (user) => {
 
 function appendGroupToList(group) {
   groups.value.push(group)
+  showCreateGroupModal.value = false
 }
 
 const removeSelectedUsers = async() => {

@@ -2,14 +2,28 @@
 import LineInput from './LineInput.vue';
 import ToggleInput from './ToggleInput.vue';
 import Button from './Button.vue';
+import { addUsersToCourse, createCourse as apiCreateCourse } from '@/utils/api';
 
 const newCourse = defineModel({})
 const allUsers = defineModel('users')
 
 const emit = defineEmits(['createCourse'])
 
-const createCourse = () => {
-    emit('createCourse')
+const createCourse = async () => {
+    const rc = await apiCreateCourse(newCourse.value.name, newCourse.value.shortname)
+
+    if (rc.status === 200) {
+        let usersToAdd = []
+        for (const u of allUsers.value) {
+            if (u.selected) usersToAdd.push(u.userId)
+        }
+        if (usersToAdd.length > 0) {
+            const ru = await addUsersToCourse(rc.body.courseId, usersToAdd)
+            if (ru === 200)
+                emit('createCourse', rc.body)
+        }
+        emit('createCourse', rc.body)
+    }
 }
 
 </script>
@@ -28,7 +42,7 @@ const createCourse = () => {
             <p>Kürzel</p>
             <LineInput
             placeholder="Kürzel"
-            v-model="newCourse.short"
+            v-model="newCourse.shortname"
             ></LineInput>
             </div>
         </div>

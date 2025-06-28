@@ -8,37 +8,38 @@ import LineInput from '@/components/LineInput.vue';
 import Button from '@/components/Button.vue';
 import AddUser from '@/components/AddUser.vue';
 import AddCourse from '@/components/AddCourse.vue';
+import { deleteCourse as apiDeleteCourse, addUsersToCourse, addUsersToRole, fetchAllUsers, fetchCourses, fetchEditableCourses, fetchUsersForCourse, editCourse } from '@/utils/api';
 
 // Reactive data
 const showAddCourseModal = ref(false)
 const showAddUserModal = ref(false)
-const selectedCourse  = ref({name:""})
+const selectedCourse  = ref({courseId: null})
 const newCourse = ref({})
 
 // Sample data - kurse
 const courses = ref([
-  {
-    uid: 123,
-    "name": "Course 1",
-    "content": ['...']
-  },
-  {
-    uid: 223,
-    "name": "Course 2",
-    "content": ['...']
-  },
+  //{
+    //courseId: 123,
+    //name: "Course 1",
+    //shortname: ['...']
+  //},
+  //{
+    //courseId: 223,
+    //name: "Course 2",
+    //shorname: ['...']
+  //},
 ])
 
 // Sample data - Users (wird normalerweise basierend auf ausgewählter Gruppe geladen)
 const courseUsers = ref([
-  {
-    selected: false,
-    userId: 10,
-    firstname: 'Maja',
-    lastname: 'Biene',
-    email: 'm.b@mail.de',
-    title: 'Studiengangsleiter'
-  }
+  //{
+  //  selected: false,
+  //  userId: 10,
+  //  firstname: 'Maja',
+  //  lastname: 'Biene',
+  //  email: 'm.b@mail.de',
+  //  title: 'Studiengangsleiter'
+  //}
 ])
 
 const allUsers = ref([
@@ -60,13 +61,59 @@ const allUsers = ref([
   }
 ])
 
-const selectCourse = (course)=>{
+const selectCourse = async (course)=>{
     selectedCourse.value = course;
+    const ru = await fetchUsersForCourse(course.courseId)
+    if (ru.status === 200)
+        courseUsers.value = ru.body
 }
 
-const addUserToCourse = () =>{
-
+const addUserToCourse = async (user) =>{
+    const su = await addUsersToCourse(selectedCourse.value.courseId, [user.userId])
+    if (su === 200)
+        courseUsers.value.push(user)
 }
+
+async function deleteCourse() {
+    const sc = await apiDeleteCourse(selectedCourse.value.courseId)
+    if (sc === 200) {
+        const index = courses.value.findIndex(c => c.courseId === selectedCourse.value.courseId)
+        if (index > -1) {
+          courses.value.splice(index, 1)
+        }
+        if (courses.value.length > 0) {
+            await selectCourse(courses.value[courses.value.length - 1])
+        } else {
+            selectedCourse.value.courseId = null
+        }
+    }
+}
+
+async function appendCourse(course) {
+    courses.value.push(course)
+    showAddCourseModal.value = false
+    await selectCourse(course)
+}
+
+async function saveMetadata() {
+    const rc = await editCourse(selectedCourse.value.courseId, selectedCourse.value)
+    if (rc.status === 200)
+        console.log("gespeichert.")
+}
+
+onMounted(async() => {
+    const rc = await fetchEditableCourses()
+    if (rc.status === 401)
+        window.location.href = "/login"
+    if (rc.status === 200)
+        courses.value = rc.body
+    const ru = await fetchAllUsers()
+    if (ru.status === 200)
+        allUsers.value = ru.body
+
+    if (courses.value.length > 0)
+        await selectCourse(courses.value[0])
+})
 
 </script>
 
@@ -102,13 +149,13 @@ const addUserToCourse = () =>{
         <p
         v-for="course in courses"
         @click="()=>selectCourse(course)"
-        :class="['rounded-l-full px-4', selectedCourse.uid == course.uid ? 'bg-input' : 'border-1 border-r-0 border-misc bg-main']"
+        :class="['rounded-l-full px-4', selectedCourse.courseId == course.courseId ? 'bg-input' : 'border-1 border-r-0 border-misc bg-main']"
         >
             {{ course.name }}
         </p>
     </div>
     <!--Course edit section-->
-    <div class="flex flex-col justify-between grow-1 gap-6 px-4">
+    <div class="flex flex-col justify-between grow-1 gap-6 px-4" v-if="selectedCourse.courseId !== null">
         <div class="flex gap-6 justify-between">
             <div>
                 <h2 class="text-xl">Titel</h2>
@@ -120,7 +167,7 @@ const addUserToCourse = () =>{
             <div>
                 <h2 class="text-xl">Kürzel</h2>
                 <LineInput
-                v-model="selectedCourse.name"
+                v-model="selectedCourse.shortname"
                 placeholder="Kürzel"
                 />
             </div>
@@ -147,10 +194,11 @@ const addUserToCourse = () =>{
         <div class="flex justify-end gap-6">
             <Button
             type="secondary"
+            @click="deleteCourse"
             >
                 Kurs Löschen
             </Button>
-            <Button>
+            <Button @click="saveMetadata">
                 speichern
             </Button>
         </div>
@@ -159,7 +207,7 @@ const addUserToCourse = () =>{
     <Popup title="User hinzufügen" :is-open="showAddUserModal" @close="showAddUserModal = false">
       <AddUser
       v-model="allUsers"
-      @add-user="(data)=>addUserToCourse(data)"
+      @add-user="(userId)=>addUserToCourse(userId)"
       />
     </Popup>
     <Popup
@@ -170,6 +218,7 @@ const addUserToCourse = () =>{
         <AddCourse
         v-model="newCourse"
         v-model:users="allUsers"
+        @create-course="(course) => appendCourse(course)"
         />
     </Popup>
   </div>

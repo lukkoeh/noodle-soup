@@ -1,15 +1,17 @@
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Header from '@/components/Header.vue'
 import { useRoute } from 'vue-router'
 import CourseElement from '@/components/CourseElement.vue'
 import Button from '@/components/Button.vue'
 import Popup from '@/components/Popup.vue'
+import { fetchContentForSection, fetchCourse, fetchSectionsForCourse } from '@/utils/api'
 
 // enthält die ID des aktiven Kurses aus der URL
 const route = useRoute()
 const courseId = route.params.id
+const courseTitle = ref("")
 
 // Reactive data
 const editMode = ref(true)
@@ -62,6 +64,28 @@ const Sections = ref([
     }]
   }
 ])
+
+onMounted(async () => {
+  const rco = await fetchCourse(courseId)
+  if (rco.status === 401)
+    window.location.href = "/login"
+  if (rco.status === 200)
+    courseTitle.value = rco.body.name
+
+  const rcs = await fetchSectionsForCourse(courseId)
+  //TODO: put these into one request eventually
+  let sections = []
+  if (rcs.status === 200)
+    sections = rcs.body
+
+  for(let s of sections) {
+    const rc = await fetchContentForSection(courseId, s.sectionId)
+    if (rc.status === 200)
+      s.content = rc.body
+  }
+
+  Sections.value = sections
+})
 
 const availableElements = ref([
   { type: 'markdown', label: 'Markdown' },

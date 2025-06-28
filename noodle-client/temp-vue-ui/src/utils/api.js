@@ -401,6 +401,62 @@ export async function fetchCourses() {
   return Response(r.status, null)
 }
 
+export async function fetchCourse(id) {
+  const r = await fetch(`${baseUrl}/course/${id}`)
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+}
+
+export async function createCourse(name, shortname) {
+  const r = await fetch(`${baseUrl}/courses`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name, shortname
+    })
+  })
+
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+}
+
+export async function editCourse(id, course) {
+  const r = await fetch(`${baseUrl}/course/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(course)
+  })
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+  
+}
+
+export async function deleteCourse(id) {
+  const r = await fetch(`${baseUrl}/course/${id}`, {
+    method: "DELETE",
+  })
+
+  return r.status
+}
+
+export async function fetchEditableCourses() {
+  const r = await fetch(`${baseUrl}/courses?edit=true`)
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+}
+
 export async function fetchLecturersForCourse(id) {
   const r = await fetch(`${baseUrl}/course/${id}/lecturers`)
   if (r.status === 200)
@@ -411,6 +467,42 @@ export async function fetchLecturersForCourse(id) {
 
 export async function fetchGroupsForCourse(id) {
   const r = await fetch(`${baseUrl}/course/${id}/groups`)
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+}
+
+export async function fetchUsersForCourse(id) {
+  const r = await fetch(`${baseUrl}/course/${id}/users`)
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+}
+
+export async function addUsersToCourse(id, userIds) {
+  const r = await fetch(`${baseUrl}/course/${id}/users`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(userIds)
+  })
+
+  return r.status
+}
+
+export async function fetchSectionsForCourse(id) {
+  const r = await fetch(`${baseUrl}/course/${id}/sections`)
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+}
+
+export async function fetchContentForSection(courseId, sectionId) {
+  const r = await fetch(`${baseUrl}/course/${courseId}/section/${sectionId}/content`)
   if (r.status === 200)
     return Response(r.status, await r.json())
 
