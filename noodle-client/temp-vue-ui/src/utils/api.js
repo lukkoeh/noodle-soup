@@ -393,6 +393,29 @@ export async function removeUsersFromGroup(id, userIds) {
   return r.status
 }
 
+export async function fetchCourses() {
+  const r = await fetch(`${baseUrl}/courses`)
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+}
+
+export async function fetchLecturersForCourse(id) {
+  const r = await fetch(`${baseUrl}/course/${id}/lecturers`)
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+}
+
+export async function fetchGroupsForCourse(id) {
+  const r = await fetch(`${baseUrl}/course/${id}/groups`)
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+}
 
 function Response(status, body) {
   return {

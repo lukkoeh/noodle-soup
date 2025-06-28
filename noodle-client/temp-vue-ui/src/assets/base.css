@@ -16,6 +16,7 @@
 }
 
 :root {
+  color-scheme: light;
   --txt-norm: #000;
   /* normal text*/
   --txt-light: #898989;
@@ -42,6 +43,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    color-scheme: dark;
     --txt-norm: #fff;
     /* normal text*/
     --txt-light: #898989;

@@ -58,7 +58,7 @@ function handleClick(event){
 </script>
 
 <template>
-    <span class="input-line bg-input text-light rounded-2xl inline-block px-2 focus-within:outline-2 ">
+    <span class="input-line bg-input text-norm rounded-2xl inline-block px-2 focus-within:outline-2 ">
         <input :type="type" :placeholder="placeholder" :value="model" @input="handleInput"
             class="rounded-2xl outline-0" />
         <Button

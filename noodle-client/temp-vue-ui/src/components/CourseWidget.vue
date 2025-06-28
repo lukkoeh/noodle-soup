@@ -12,10 +12,10 @@ const props = defineProps({
     type: Object,
     required: true,
     default: {
-      uid: 123,
-      tags: ['one', 'two'],
-      dozenten: ['Prof. Dr. Arnulf Mester'],
-      description: "T7 | Web Engineering und ganz viel Weiteres",
+      courseId: 123,
+      groups: ['one', 'two'],
+      lecturers: ['Prof. Dr. Arnulf Mester'],
+      name: "T7 | Web Engineering und ganz viel Weiteres",
       bookmarked: false,
     }
   },
@@ -35,7 +35,7 @@ function goToCourse(event, id) {
 <template>
   <div
   class="w-80 bg-widget rounded-3xl shadow-lg relative flex-shrink-0"
-  @click="(event)=>goToCourse(event, props.course.uid)"
+  @click="(event)=>goToCourse(event, props.course.courseId)"
   >
 
     <div class="rounded-t-3xl h-20 w-full bg-accent-t"></div>
@@ -50,11 +50,11 @@ function goToCourse(event, id) {
     <div class="p-5 w-full">
       
       <!-- Tags -->
-      <TagBubbles :tag-list="course.tags"/>
+      <TagBubbles :tag-list="course.groups"/>
       
       <!-- Content -->
-      <h2 class="text-lg font-bold text-norm mb-2 leading-tight">{{ props.course.description }}</h2>
-      <p v-for="dozent in props.course.dozent" class="text-sm text-norm italic">{{ dozent }}</p>
+      <h2 class="text-lg font-bold text-norm mb-2 leading-tight">{{ props.course.name }}</h2>
+      <p v-for="dozent in props.course.lecturers" class="text-sm text-norm italic">{{ dozent }}</p>
     </div>
     
   </div>

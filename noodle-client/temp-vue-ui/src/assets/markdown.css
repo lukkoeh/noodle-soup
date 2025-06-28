@@ -37,7 +37,7 @@
 .markdown-wrapper p {
   margin: 0.75rem 0;
   line-height: 1.6;
-  color: #333;
+  color: --txt-norm;
 }
 
 /* Lists */

@@ -219,26 +219,26 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-screen bg-gray-50">
+  <div class="flex h-screen bg-main">
     <!-- Left Sidebar -->
-    <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
+    <div class="w-80 bg-main border-r border-gray-200 flex flex-col">
       <!-- Header -->
       <div class="p-4 border-b border-gray-200">
         <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-gray-900">Alle Usergruppen</h2>
+          <h2 class="text-lg font-semibold text-norm">Alle Usergruppen</h2>
           <button @click="showCreateGroupModal = true"
-            class="w-8 h-8 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors">
+            class="w-8 h-8 flex items-center justify-center bg-red-500 text-norm rounded-full hover:bg-red-600 transition-colors">
             <Icon icon="fa-plus" icon-style="fa-solid"></Icon>
           </button>
 
         </div>
 
         <!-- Search Groups -->
-        <LineInput placeholder="Suche Usergruppe" icon="fa-magnifying-glass" icon-style="fa-solid" />
+        <!-- <LineInput placeholder="Suche Usergruppe" icon="fa-magnifying-glass" icon-style="fa-solid" /> -->
         <div class="relative mt-3">
           <input v-model="groupSearchQuery" type="text" placeholder="Suche Usergruppe"
             class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
-          <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none"
+          <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-norm" fill="none"
             stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -252,19 +252,19 @@ onMounted(async () => {
           <div v-for="group in filteredGroups" :key="group.groupId" @click="selectGroup(group)" :class="[
             'flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors mb-1',
             selectedGroup?.groupId === group.groupId
-              ? 'bg-blue-50 border border-blue-200'
-              : 'hover:bg-gray-50'
+              ? 'bg-(--c-misc-1) border border-blue-200'
+              : 'hover:bg-(--c-misc-1)'
           ]">
             <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                <span class="text-xs font-medium text-gray-600">{{ group.shortname}}</span>
+              <div class="w-10 h-10 bg-(--c-misc-1) rounded-lg flex items-center justify-center">
+                <span class="text-xs font-medium text-norm">{{ group.shortname}}</span>
               </div>
               <div>
-                <div class="text-sm font-medium text-gray-900">{{ group.name}}</div>
+                <div class="text-sm font-medium text-norm">{{ group.name}}</div>
                 <!-- <div class="text-xs text-gray-500">{{ group.name}}</div> -->
               </div>
             </div>
-            <div class="text-xs text-gray-400">{{ group.name}}</div>
+            <div class="text-xs text-norm">{{ group.name}}</div>
           </div>
         </div>
       </div>
@@ -273,11 +273,11 @@ onMounted(async () => {
     <!-- Main Content -->
     <div class="flex-1 flex flex-col">
       <!-- Content Header -->
-      <div v-if="selectedGroup" class="bg-white border-b border-gray-200 p-6">
+      <div v-if="selectedGroup" class="border-b border-gray-200 p-6">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-xl font-semibold text-gray-900">{{ selectedGroup.name}}</h1>
-            <div class="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+            <h1 class="text-xl font-semibold text-norm">{{ selectedGroup.name}}</h1>
+            <div class="flex items-center space-x-4 mt-2 text-sm text-norm">
               <!-- <div> -->
                 <!-- <span class="font-medium">Bereich:</span> -->
                 <!-- <span class="ml-1">{{ selectedGroup.bereich }}</span> -->
@@ -293,11 +293,11 @@ onMounted(async () => {
 
       <!-- Users Section -->
       <div v-if="selectedGroup" class="flex-1 p-6">
-        <div class="bg-white rounded-lg border border-gray-200">
+        <div class="bg-main rounded-lg border border-gray-200">
           <!-- Users Header -->
           <div class="p-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
-              <h3 class="text-lg font-medium text-gray-900">User</h3>
+              <h3 class="text-lg font-medium text-norm">User</h3>
               <Button @click="openAddModal">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -310,7 +310,7 @@ onMounted(async () => {
             <div class="relative mt-3">
               <input v-model="userSearchQuery" type="text" placeholder="Suche User"
                 class="w-64 px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
-              <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none"
+              <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-norm" fill="none"
                 stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -327,7 +327,7 @@ onMounted(async () => {
           <!-- Actions -->
           <div v-if="selectedUsers.length > 0" class="p-4 border-t border-gray-200 bg-gray-50">
             <div class="flex items-center justify-between">
-              <span class="text-sm text-gray-600">
+              <span class="text-sm text-norm">
                 {{ selectedUsers.length }} User ausgewählt
               </span>
               <div class="flex space-x-3">
@@ -348,17 +348,17 @@ onMounted(async () => {
       <!-- Empty State -->
       <div v-else class="flex-1 flex items-center justify-center">
         <div class="text-center">
-          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="mx-auto h-12 w-12 text-norm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
             </path>
           </svg>
-          <h3 class="mt-2 text-sm font-medium text-gray-900">Keine Gruppe ausgewählt</h3>
-          <p class="mt-1 text-sm text-gray-500">Wählen Sie eine Gruppe aus der Liste aus.</p>
+          <h3 class="mt-2 text-sm font-medium text-norm">Keine Gruppe ausgewählt</h3>
+          <p class="mt-1 text-sm text-norm">Wählen Sie eine Gruppe aus der Liste aus.</p>
         </div>
       </div>
     </div>
-    // collect all popups here
+    <!-- // collect all popups here -->
 
     <Popup title="Neue Usergruppe" :is-open="showCreateGroupModal" @close="showCreateGroupModal = false">
       <CreateGroup v-model="allUsers" @create="(g) => appendGroupToList(g)"></CreateGroup>

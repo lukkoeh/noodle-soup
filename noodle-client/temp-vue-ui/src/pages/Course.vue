@@ -93,11 +93,11 @@ const handleElementUpdate = () => {
   <Header/>
   <div class="flex h-max bg-main">
     <!-- Header -->
-    <div class="fixed top-0 left-0 right-0 h-1 bg-white border-b border-gray-200 flex items-center justify-between px-5 z-50">
+    <div class="fixed top-0 left-0 right-0 h-1 bg-main border-b border-gray-200 flex items-center justify-between px-5 z-50">
       <span class="font-semibold text-base">{{ courseTitle }}</span>
     </div>
     <!-- Inhalts übersicht -->
-    <div class="w-64 bg-white border-r border-gray-200 pt-16 pb-5 overflow-y-auto">
+    <div class="w-64 bg-main border-r border-gray-200 pt-16 pb-5 overflow-y-auto">
       <div
       v-for="section in Sections"
       >

@@ -129,14 +129,14 @@ const data = ref({
         <!-- <LineInput placeholder="Bereich" v-model="data.bereich" /> -->
       <!-- </div> -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Kürzel</label>
+        <label class="block text-sm font-medium text-norm mb-1">Kürzel</label>
         <LineInput placeholder="Kürzel" v-model="data.shortname" />
       </div>
     </div>
 
     <!-- User Section -->
     <div class="flex gap-4 justify-between">
-      <h2 class="text-lg font-medium text-gray-900 mb-4">User</h2>
+      <h2 class="text-lg font-medium text-norm mb-4">User</h2>
 
       <!-- Search -->
       <LineInput placeholder="Suche" v-model="searchQuery" intype="search" />
@@ -147,7 +147,7 @@ const data = ref({
       <div class="border border-gray-200 rounded-md overflow-scroll max-h-[30vh]">
         <!-- Table Header -->
         <div
-          class="bg-gray-50 px-4 py-3 grid grid-cols-12 gap-4 text-sm font-medium text-gray-700 border-b border-gray-200">
+          class="bg-main px-4 py-3 grid grid-cols-12 gap-4 text-sm font-medium text-norm border-b border-gray-200">
           <div class="col-span-1"></div>
           <div class="col-span-3">Vorname</div>
           <div class="col-span-3">Nachname</div>
@@ -156,15 +156,15 @@ const data = ref({
 
         <!-- User Rows -->
         <div v-for="user in filteredUsers" :key="user.userId"
-          class="px-4 py-3 grid grid-cols-12 gap-4 text-sm border-b border-gray-200 last:border-b-0 hover:bg-gray-50">
+          class="px-4 py-3 grid grid-cols-12 gap-4 text-sm border-b border-gray-200 last:border-b-0 hover:bg-(--input)">
           <div class="col-span-1 flex items-center">
             <ToggleInput v-model="user.selected" />
           </div>
-          <div class="col-span-3 text-gray-900">{{ user.firstname }}</div>
-          <div class="col-span-3 text-gray-900">
+          <div class="col-span-3 text-norm">{{ user.firstname }}</div>
+          <div class="col-span-3 text-norm">
             {{ user.lastname}}
           </div>
-          <div class="col-span-5 text-gray-600">{{ user.email }}</div>
+          <div class="col-span-5 text-norm">{{ user.email }}</div>
         </div>
       </div>
     </div>

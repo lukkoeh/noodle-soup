@@ -47,11 +47,11 @@ const handleScroll = (event) => {
 </script>
 
 <template>
-    <div class="w-full h flex flex-col bg-white px-2">
+    <div class="w-full h flex flex-col bg-main px-2">
         <!-- Header with Title and Search -->
         <div class="flex-shrink-0 flex justify-between">
             <div class="flex items-center justify-between mb-4">
-                <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+                <h1 class="text-3xl font-bold text-norm">{{ title }}</h1>
             </div>
             <!-- search and show all button-->
             <div class="flex gap-2 items-center">
