@@ -21,7 +21,7 @@ const props = defineProps({
 })
 
 const classes = computed(() => {
-  let classes = [props.iconStyle, props.icon, props.class].join(" ");
+  let classes = [props.iconStyle, props.icon].join(" ");
 
   switch(props.type){
     case "plus":
@@ -39,7 +39,12 @@ const classes = computed(() => {
     case "question":
       classes = "fa-solid fa-question"
       break;
+    case "users":
+      classes = "fa-solid fa-users-line"
+      break;
   }
+
+  classes = [classes, props.class].join(" ")
   return classes
 
 });
