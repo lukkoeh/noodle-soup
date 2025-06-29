@@ -1,11 +1,12 @@
+<script setup>
+import Header from './components/Header.vue';
+</script>
+
 <template>
-  <nav class="flex gap-3 ">
-    <RouterLink to="/login">Login</RouterLink>
-    <RouterLink to="/">Go to Home</RouterLink>
-    <RouterLink to="/users"> Users</RouterLink>
-    <RouterLink to="/groups">Groups</RouterLink>
-  </nav>
-  <main class="grow h-1">
-    <RouterView />
+  <main class="flex justify-stretch flex-col h-full">
+    <Header></Header>
+    <div class="grow px-8 py-6">
+      <RouterView />
+    </div>
   </main>
 </template>

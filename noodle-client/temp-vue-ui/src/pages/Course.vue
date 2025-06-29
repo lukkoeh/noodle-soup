@@ -1,20 +1,22 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import Header from '@/components/Header.vue'
+import ToggleInput from '@/components/ToggleInput.vue'
 import { useRoute } from 'vue-router'
 import CourseElement from '@/components/CourseElement.vue'
 import Button from '@/components/Button.vue'
-import Popup from '@/components/Popup.vue'
+import Icon from '@/components/Icon.vue'
 import { fetchContentForSection, fetchCourse, fetchSectionsForCourse } from '@/utils/api'
 
 // enthält die ID des aktiven Kurses aus der URL
 const route = useRoute()
 const courseId = route.params.id
-const courseTitle = ref("")
+const courseTitle = ref("Kurs name")
 
 // Reactive data
-const editMode = ref(true)
+const editMode = ref(false)
+const hasEditPermission = ref(true)
+
 const showAddElementMenu = ref(false)
 const Sections = ref([
   {
@@ -88,20 +90,16 @@ onMounted(async () => {
 })
 
 const availableElements = ref([
-  { type: 'markdown', label: 'Markdown' },
-  { type: 'link', label: 'Verlinkungselement' },
-  { type: 'media', label: 'Media Element' },
-  { type: 'quiz', label: 'Quiz Element' }
+  { type: 'markdown', label: 'Markdown', icon: 'markdown'},
+  { type: 'link', label: 'Link', icon: 'link' },
+  { type: 'media', label: 'Media', icon: 'images' },
+  { type: 'quiz', label: 'Quiz', icon: 'question' }
 ])
 
 const duplicateElement = (type) => {
   console.log(`Duplicating ${type} element`)
 }
 
-const addElement = (type) => {
-  console.log(`Adding ${type} element`)
-  showAddMenu.value = false
-}
 const addSection = () => {
 
 }
@@ -111,17 +109,19 @@ const handleAddElement = () => {
 const handleElementUpdate = () => {
 
 }
+const handleSave = () => {
+
+}
 </script>
 
 <template>
-  <Header/>
-  <div class="flex h-max bg-main">
-    <!-- Header -->
-    <div class="fixed top-0 left-0 right-0 h-1 bg-main border-b border-gray-200 flex items-center justify-between px-5 z-50">
-      <span class="font-semibold text-base">{{ courseTitle }}</span>
-    </div>
+  <div class="flex h-full bg-main grow">
+    
     <!-- Inhalts übersicht -->
-    <div class="w-64 bg-main border-r border-gray-200 pt-16 pb-5 overflow-y-auto">
+    <div class="w-64 h-full border-input dark:border-widget border-r-2 pb-5 overflow-y-auto al">
+      <h2
+      class="pb-4 text-2xl"
+      >{{ courseTitle }}</h2>
       <div
       v-for="section in Sections"
       >
@@ -132,41 +132,65 @@ const handleElementUpdate = () => {
     </div>
 
     <!-- Main Content -->
-    <div class="flex flex-col pt-16 px-5 pb-5 gap-6 overflow-y-auto">
-      <div
-      class="flex flex-col gap-4"
-      v-for="section in Sections">
-        <h1
-        class="font-bold text-2xl"
-        >{{ section.headline }}</h1>
-        <CourseElement
-        v-for="element in section.content"
-        :element="element"
-        :editMode="editMode"
-        @update="() => handleElementUpdate(element.uid)"
-        />
-      </div>
-      <div
-      v-if="editMode == true"
-      class="flex gap-6 justify-center"
-      >
-        <Button
-        @click="showAddElementMenu = true"
-        >Add Element</Button>
-        <Button
-        @click=""
-        >Add Section</Button>
-        <Popup
-        :is-open="showAddElementMenu"
-        @close="showAddElementMenu = false"
-        title="Element hinzufügen"
-        >
+    <div class="h-1 min-h-full flex-grow overflow-y-scroll">
+      <div class="flex flex-col px-4 py-2 gap-6  grow">
+        <!-- Header -->
+        <div class=" bg-main border-b border-misc sticky top-0 flex justify-between p-2">
+          <span class="font-semibold  text-4xl">{{ courseTitle }}
+            <ToggleInput
+            v-if="hasEditPermission"
+            v-model="editMode"
+            :icon="['fa-pencil']"
+            :icon-style="['fa-solid']"
+            />
+          </span>
           <Button
-          v-for="element in availableElements"
-          @click="() => handleAddElement(element.type)"
-          >{{ element.label }}</Button>
-        </Popup>
+          v-if="editMode == true"
+          @click="handleSave">
+          Änderungen Speichern</Button>
+        </div>
+        <div
+        class="flex flex-col gap-6 bg-input dark:bg-widget p-6 rounded-3xl h-max"
+        v-for="(section, index) in Sections">
+          <h1
+          class="font-bold text-2xl"
+          >{{ section.headline }}</h1>
+          <CourseElement
+          v-for="element in section.content"
+          :element="element"
+          :editMode="editMode"
+          @update="() => handleElementUpdate(element.uid)"
+          >
+            <div
+            v-if="editMode == true"
+            class="relative h-6 flex items-center">
+            <hr class="border-accent grow"/>
+            <div
+            class="absolute left-1/2 -translate-x-1/2 flex gap-4">
+                <Button
+              v-for="element in availableElements"
+              type="secondary"
+              class="bg-widget"
+              @click="() => handleAddElement(element.type)"
+              ><Icon :type="element.icon"></Icon> {{ element.label }}</Button>
+            </div>
+            
+          </div>
+          </CourseElement>
+          <div
+          v-if="editMode == true"
+          class="relative h-6 flex items-center">
+            <hr class="border-accent grow"/>
+            <Button
+            type="secondary"
+            size="small"
+            class="absolute left-1/2 -translate-x-1/2 bg-widget"
+            @click="() => addSection()"
+            ><Icon type="plus"></Icon> Add Section</Button>
+          </div>
+        </div>
       </div>
-    </div>
+     </div>
+    
   </div>
 </template>

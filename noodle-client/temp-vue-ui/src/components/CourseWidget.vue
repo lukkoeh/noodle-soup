@@ -12,14 +12,13 @@ const props = defineProps({
     type: Object,
     required: true,
     default: {
-      courseId: 123,
+      uid: 123,
       groups: ['one', 'two'],
       lecturers: ['Prof. Dr. Arnulf Mester'],
       name: "T7 | Web Engineering und ganz viel Weiteres",
       bookmarked: false,
-    }
-  },
-})
+    }}}
+  )
 
 function updateBookmark(newValue){
 
@@ -35,7 +34,7 @@ function goToCourse(event, id) {
 <template>
   <div
   class="w-80 bg-widget rounded-3xl shadow-lg relative flex-shrink-0"
-  @click="(event)=>goToCourse(event, props.course.courseId)"
+  @click="(event)=>goToCourse(event, props.course.uid)"
   >
 
     <div class="rounded-t-3xl h-20 w-full bg-accent-t"></div>

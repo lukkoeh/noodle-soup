@@ -1,13 +1,10 @@
 <script setup>
-    import HeaderNavigation from "@/components/Header.vue";
-    import Popup from "@/components/Popup.vue"
     import CourseWidget from "@/components/CourseWidget.vue";
     import Contact from "@/components/Contact.vue";
     import Overview from "@/components/Overview.vue";
     import {ref, onMounted} from "vue"
     import { fetchSelf, fetchCourses, fetchGroupsForCourse, fetchLecturersForCourse } from "@/utils/api";
 
-    const showPopup = ref(false)
     const userInfo = ref({
         firstname: 'Max'
     })
@@ -62,15 +59,16 @@
         bookmarked: false,
     }
 ]
-)
-const contacts = ref([
-    {
-        userId: 6,
-        firstname: "Karl",
-        lastname: "Lama",
-        email: "karl@hats.com",
-    }
-]);
+    )
+
+    const contacts = ref([
+        {
+            userId: 6,
+            firstname: "Karl",
+            lastname: "Lama",
+            email: "karl@hats.com",
+        }
+    ]);
 
 onMounted(async () => {
     //TODO: merge these into one request eventually, this is terrible.
@@ -107,7 +105,6 @@ onMounted(async () => {
     <div
         class="flex-col flex justify-between h-full bg-main"
     >
-        <HeaderNavigation/>
         <h1>Hallo, {{ userInfo.firstname }}!</h1>
         <Overview
             title="Deine Kurse"

@@ -23,4 +23,5 @@ const emit = defineEmits(['update'])
     :edit-mode="props.editMode"
     @update="emit('update')"
     />
+    <slot></slot>
 </template>

@@ -5,6 +5,7 @@ import LineInput from './LineInput.vue';
 import Button from './Button.vue';
 import Popup from './Popup.vue';
 import EditModal from './EditModal.vue';
+import { RouterLink } from 'vue-router';
 
 const searchQuery = ref('')
 const showEditModal = ref(false)
@@ -12,13 +13,16 @@ const showEditModal = ref(false)
 </script>
 
 <template>
-  <header class="bg-main flex justify-between items-center px-4 shadow-sm w-full">
-    <div>
-      <!-- Logo Section -->
-      <div class="bg-gray-300 px-6 py-2 rounded">
-        <span class="text-gray-700 font-medium text-sm">LOGO</span>
+  <header class="bg-main flex justify-between items-center px-4 py-2 shadow-sm w-full">
+    <RouterLink to="/">
+      <div>
+        <!-- Logo Section -->
+        <div class="bg-gray-300 px-6 py-2 rounded">
+          <span class="text-gray-700 font-medium text-sm">LOGO</span>
+        </div>
       </div>
-    </div>
+    </RouterLink>
+    
     <!-- Search and Icons Section -->
     <div class="flex items-center gap-2">
       <!-- Search Input -->
@@ -58,7 +62,8 @@ const showEditModal = ref(false)
     :is-open="showEditModal"
     @close="showEditModal = false"
     >
-      <EditModal/>
+      <EditModal
+      @selected="showEditModal = false"/>
     </Popup>
   </header>
 </template>

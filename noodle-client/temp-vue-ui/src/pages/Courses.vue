@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import UserList from '@/components/UserList.vue';
-import Header from '@/components/Header.vue';
 import Popup from '@/components/Popup.vue';
 import Icon from '@/components/Icon.vue';
 import LineInput from '@/components/LineInput.vue';
@@ -118,109 +117,108 @@ onMounted(async() => {
 </script>
 
 <template>
-    <div class="">
-    <Header/>
-    <div class="flex justify-between my-6">
+    <div class="h-full">
+        <div class="flex justify-between my-6">
+            <div
+            class="flex gap-6 mb-6">
+                <h1
+                class="text-2xl"
+                >Alle Kurse</h1>
+                <Button
+                @click="showAddCourseModal = true"
+                >
+                    <Icon
+                    icon="fa-plus"
+                    icon-style="fa-solid"
+                    />
+                </Button>
+            </div>
+            <div>
+                <LineInput
+                placeholder="Kurs suchen"
+                intype="search"/>
+            </div>
+        </div>
+        
+        <div class="flex bg-main items-stretch px-4">
         <div
-        class="flex gap-6 mb-6">
-            <h1
-            class="text-2xl"
-            >Alle Kurse</h1>
-            <Button
-            @click="showAddCourseModal = true"
-            >
-                <Icon
-                icon="fa-plus"
-                icon-style="fa-solid"
-                />
-            </Button>
-        </div>
-        <div>
-            <LineInput
-            placeholder="Kurs suchen"
-            intype="search"/>
-        </div>
-    </div>
-    
-    <div class="flex bg-main items-stretch px-4">
-    <div
-    class="bg-main flex flex-col gap-2 justify-start items-end border-r-3 border-misc"
-    >
-        <p
-        v-for="course in courses"
-        @click="()=>selectCourse(course)"
-        :class="['rounded-l-full px-4', selectedCourse.courseId == course.courseId ? 'bg-input' : 'border-1 border-r-0 border-misc bg-main']"
+        class="bg-main flex flex-col gap-2 justify-start items-end border-r-3 border-misc"
         >
-            {{ course.name }}
-        </p>
-    </div>
-    <!--Course edit section-->
-    <div class="flex flex-col justify-between grow-1 gap-6 px-4" v-if="selectedCourse.courseId !== null">
-        <div class="flex gap-6 justify-between">
-            <div>
-                <h2 class="text-xl">Titel</h2>
-                <LineInput
-                v-model="selectedCourse.name"
-                placeholder="Kurs Name"
-                />
-            </div>
-            <div>
-                <h2 class="text-xl">Kürzel</h2>
-                <LineInput
-                v-model="selectedCourse.shortname"
-                placeholder="Kürzel"
-                />
-            </div>
-        </div>
-        <!-- User Select section-->
-        <div class="flex flex-col gap-6">
-            <!--Add User-->
-            <div>
-                <h2 class="text-2xl">
-                    User
-                    <Button
-                    @click="showAddUserModal = true"
-                    type="primary">
-                    <Icon icon="fa-plus" icon-style="fa-solid"/>
-                    </Button>
-                </h2>
-
-            </div>
-            <UserList
-            :users="courseUsers"
-            />
-
-        </div>
-        <div class="flex justify-end gap-6">
-            <Button
-            type="secondary"
-            @click="deleteCourse"
+            <p
+            v-for="course in courses"
+            @click="()=>selectCourse(course)"
+            :class="['rounded-l-full px-4', selectedCourse.courseId == course.courseId ? 'bg-input' : 'border-1 border-r-0 border-misc bg-main']"
             >
-                Kurs Löschen
-            </Button>
-            <Button @click="saveMetadata">
-                speichern
-            </Button>
+                {{ course.name }}
+            </p>
         </div>
-    </div>
-    <!--collect all popups here-->
-    <Popup title="User hinzufügen" :is-open="showAddUserModal" @close="showAddUserModal = false">
-      <AddUser
-      v-model="allUsers"
-      @add-user="(userId)=>addUserToCourse(userId)"
-      />
-    </Popup>
-    <Popup
-    title="Neuen Kurs anlegen"
-    :is-open="showAddCourseModal"
-    @close="showAddCourseModal = false"
-    >
-        <AddCourse
-        v-model="newCourse"
-        v-model:users="allUsers"
-        @create-course="(course) => appendCourse(course)"
+        <!--Course edit section-->
+        <div class="flex flex-col justify-between grow-1 gap-6 px-4" v-if="selectedCourse.courseId !== null">
+            <div class="flex gap-6 justify-between">
+                <div>
+                    <h2 class="text-xl">Titel</h2>
+                    <LineInput
+                    v-model="selectedCourse.name"
+                    placeholder="Kurs Name"
+                    />
+                </div>
+                <div>
+                    <h2 class="text-xl">Kürzel</h2>
+                    <LineInput
+                    v-model="selectedCourse.shortname"
+                    placeholder="Kürzel"
+                    />
+                </div>
+            </div>
+            <!-- User Select section-->
+            <div class="flex flex-col gap-6">
+                <!--Add User-->
+                <div>
+                    <h2 class="text-2xl">
+                        User
+                        <Button
+                        @click="showAddUserModal = true"
+                        type="primary">
+                        <Icon icon="fa-plus" icon-style="fa-solid"/>
+                        </Button>
+                    </h2>
+
+                </div>
+                <UserList
+                :users="courseUsers"
+                />
+
+            </div>
+            <div class="flex justify-end gap-6">
+                <Button
+                type="secondary"
+                @click="deleteCourse"
+                >
+                    Kurs Löschen
+                </Button>
+                <Button @click="saveMetadata">
+                    speichern
+                </Button>
+            </div>
+        </div>
+        <!--collect all popups here-->
+        <Popup title="User hinzufügen" :is-open="showAddUserModal" @close="showAddUserModal = false">
+        <AddUser
+        v-model="allUsers"
+        @add-user="(userId)=>addUserToCourse(userId)"
         />
-    </Popup>
-  </div>
+        </Popup>
+        <Popup
+        title="Neuen Kurs anlegen"
+        :is-open="showAddCourseModal"
+        @close="showAddCourseModal = false"
+        >
+            <AddCourse
+            v-model="newCourse"
+            v-model:users="allUsers"
+            @create-course="(course) => appendCourse(course)"
+            />
+        </Popup>
+    </div>
   </div>
 </template>

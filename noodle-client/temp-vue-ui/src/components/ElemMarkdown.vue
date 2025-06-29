@@ -44,7 +44,7 @@ const handleInput = (event) => {
         <textarea
         class="w-80"
         @input="(event)=>{handleInput(event)}"
-        >{{ content.value }}</textarea>
+        >{{ content }}</textarea>
         <div class="markdown-wrapper" v-html="renderedMarkdown"></div>
     </div>
     <div
