@@ -14,6 +14,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update'])
 
+
 </script>
 
 <template>
@@ -25,3 +26,9 @@ const emit = defineEmits(['update'])
     />
     <slot></slot>
 </template>
+
+<script>
+    export const availableElements = [
+  { type: 'markdown', label: 'Markdown', icon: 'markdown'}
+]
+</script>
