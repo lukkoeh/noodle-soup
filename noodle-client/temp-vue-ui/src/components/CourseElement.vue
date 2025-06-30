@@ -29,9 +29,6 @@ const emit = defineEmits(['update'])
 
 <script>
     export const availableElements = [
-  { type: 'markdown', label: 'Markdown', icon: 'markdown'},
-  { type: 'link', label: 'Link', icon: 'link' },
-  { type: 'media', label: 'Media', icon: 'images' },
-  { type: 'quiz', label: 'Quiz', icon: 'question' }
+  { type: 'markdown', label: 'Markdown', icon: 'markdown'}
 ]
 </script>
