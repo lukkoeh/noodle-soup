@@ -83,13 +83,13 @@ onMounted(async () => {
         cs = rc.body
         for (let c of cs) {
             c.lecturers = []
-            const rl = await fetchLecturersForCourse(c.courseId)
+            const rl = await fetchLecturersForCourse(c.uid)
             if (rl.status === 200) {
                 c.lecturers = rl.body
             }
 
             c.groups = [] //TODO
-            const rg = await fetchGroupsForCourse(c.courseId)
+            const rg = await fetchGroupsForCourse(c.uid)
             if (rg.status === 200) {
                 c.groups= rg.body
             }

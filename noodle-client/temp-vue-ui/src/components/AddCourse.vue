@@ -18,9 +18,10 @@ const createCourse = async () => {
             if (u.selected) usersToAdd.push(u.userId)
         }
         if (usersToAdd.length > 0) {
-            const ru = await addUsersToCourse(rc.body.courseId, usersToAdd)
+            const ru = await addUsersToCourse(rc.body.uid, usersToAdd)
             if (ru === 200)
                 emit('createCourse', rc.body)
+                return
         }
         emit('createCourse', rc.body)
     }

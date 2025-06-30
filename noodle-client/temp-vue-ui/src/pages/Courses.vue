@@ -7,23 +7,23 @@ import LineInput from '@/components/LineInput.vue';
 import Button from '@/components/Button.vue';
 import AddUser from '@/components/AddUser.vue';
 import AddCourse from '@/components/AddCourse.vue';
-import { deleteCourse as apiDeleteCourse, addUsersToCourse, addUsersToRole, fetchAllUsers, fetchCourses, fetchEditableCourses, fetchUsersForCourse, editCourse } from '@/utils/api';
+import { deleteCourse as apiDeleteCourse, addUsersToCourse, removeUserFromCourse as apiRemoveUserFromCourse, fetchAllUsers, fetchCourses, fetchEditableCourses, fetchUsersForCourse, editCourse } from '@/utils/api';
 
 // Reactive data
 const showAddCourseModal = ref(false)
 const showAddUserModal = ref(false)
-const selectedCourse  = ref({courseId: null})
+const selectedCourse  = ref({uid: null})
 const newCourse = ref({})
 
 // Sample data - kurse
 const courses = ref([
   //{
-    //courseId: 123,
+    //uid: 123,
     //name: "Course 1",
     //shortname: ['...']
   //},
   //{
-    //courseId: 223,
+    //uid: 223,
     //name: "Course 2",
     //shorname: ['...']
   //},
@@ -62,28 +62,38 @@ const allUsers = ref([
 
 const selectCourse = async (course)=>{
     selectedCourse.value = course;
-    const ru = await fetchUsersForCourse(course.courseId)
+    const ru = await fetchUsersForCourse(course.uid)
     if (ru.status === 200)
         courseUsers.value = ru.body
 }
 
 const addUserToCourse = async (user) =>{
-    const su = await addUsersToCourse(selectedCourse.value.courseId, [user.userId])
+    const su = await addUsersToCourse(selectedCourse.value.uid, [user.userId])
     if (su === 200)
         courseUsers.value.push(user)
 }
 
+async function removeUserFromCourse(user) {
+    const su = await apiRemoveUserFromCourse(selectedCourse.value.uid, user.userId)
+    if (su === 200) {
+        const index = courseUsers.value.findIndex(u => u.userId === user.userId)
+        if (index > -1) {
+          courseUsers.value.splice(index, 1)
+        }
+    }
+}
+
 async function deleteCourse() {
-    const sc = await apiDeleteCourse(selectedCourse.value.courseId)
+    const sc = await apiDeleteCourse(selectedCourse.value.uid)
     if (sc === 200) {
-        const index = courses.value.findIndex(c => c.courseId === selectedCourse.value.courseId)
+        const index = courses.value.findIndex(c => c.uid === selectedCourse.value.uid)
         if (index > -1) {
           courses.value.splice(index, 1)
         }
         if (courses.value.length > 0) {
             await selectCourse(courses.value[courses.value.length - 1])
         } else {
-            selectedCourse.value.courseId = null
+            selectedCourse.value.uid = null
         }
     }
 }
@@ -95,7 +105,7 @@ async function appendCourse(course) {
 }
 
 async function saveMetadata() {
-    const rc = await editCourse(selectedCourse.value.courseId, selectedCourse.value)
+    const rc = await editCourse(selectedCourse.value.uid, selectedCourse.value)
     if (rc.status === 200)
         console.log("gespeichert.")
 }
@@ -147,13 +157,13 @@ onMounted(async() => {
             <p
             v-for="course in courses"
             @click="()=>selectCourse(course)"
-            :class="['rounded-l-full px-4', selectedCourse.courseId == course.courseId ? 'bg-input' : 'border-1 border-r-0 border-misc bg-main']"
+            :class="['rounded-l-full px-4', selectedCourse.uid == course.uid ? 'bg-input' : 'border-1 border-r-0 border-misc bg-main']"
             >
                 {{ course.name }}
             </p>
         </div>
         <!--Course edit section-->
-        <div class="flex flex-col justify-between grow-1 gap-6 px-4" v-if="selectedCourse.courseId !== null">
+        <div class="flex flex-col justify-between grow-1 gap-6 px-4" v-if="selectedCourse.uid !== null">
             <div class="flex gap-6 justify-between">
                 <div>
                     <h2 class="text-xl">Titel</h2>
@@ -186,6 +196,7 @@ onMounted(async() => {
                 </div>
                 <UserList
                 :users="courseUsers"
+                @delete-user="removeUserFromCourse"
                 />
 
             </div>
