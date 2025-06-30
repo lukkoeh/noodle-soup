@@ -40,6 +40,50 @@ pub mod http {
     pub async fn get_all(
         auth_session: AuthSession<auth::Backend>,
         State(state): State<crate::AppState>,
+    ) -> Response {
+        let s_user = auth_session.user.unwrap();
+        let courses = match auth::user_has_permissions_all(
+            resources::Type::Course,
+            Operations::READ,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Ok(true) => {
+                match sqlx::query_as::<_, Course>("SELECT uid, name, shortname FROM \"course\"")
+                    .fetch_all(&state.db)
+                    .await
+                {
+                    Ok(c) => c,
+                    Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                }
+            }
+            Ok(false) => match sqlx::query_as::<_, Course>(
+                "WITH user_courses AS (\
+SELECT course_id FROM course_user WHERE user_id = $1 UNION \
+SELECT cg.course_id FROM course_group cg \
+JOIN user_in_group uig ON uig.group_id = cg.group_id \
+WHERE uig.user_id = $1) \
+SELECT c.uid, c.name, c.shortname FROM course c \
+JOIN user_courses uc ON c.uid = uc.course_id"
+            )
+            .bind(s_user.user_id)
+            .fetch_all(&state.db)
+            .await
+            {
+                Ok(c) => c,
+                Err(e) => {println!("{e}");return StatusCode::INTERNAL_SERVER_ERROR.into_response()},
+            },
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        };
+
+        Json(courses).into_response()
+    }
+
+    pub async fn get_all_management(
+        auth_session: AuthSession<auth::Backend>,
+        State(state): State<crate::AppState>,
         Query(perm): Query<PermissionQueryParam>,
     ) -> Response {
         let s_user = auth_session.user.unwrap();
@@ -80,13 +124,13 @@ AND (cp.permission & $2::int::bit(16)) <> B'0'::bit(16)",
             .await
             {
                 Ok(c) => c,
-                Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                Err(e) => {println!("{e}");return StatusCode::INTERNAL_SERVER_ERROR.into_response()},
             },
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         };
 
         Json(courses).into_response()
-    }
+    }    
 
     pub async fn get_by_uid(
         auth_session: AuthSession<auth::Backend>,
@@ -104,7 +148,22 @@ AND (cp.permission & $2::int::bit(16)) <> B'0'::bit(16)",
         .await
         {
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(false) => {
+                match sqlx::query_as::<_, Course>(
+                    "SELECT c.uid, c.name, c.shortname FROM course c WHERE c.uid = $2 \
+AND (EXISTS(SELECT 1 FROM course_user cu WHERE cu.course_id = c.uid AND cu.user_id = $1) \
+OR EXISTS(SELECT 1 FROM course_group cg JOIN user_in_group uig ON uig.group_id = cg.group_id \
+WHERE cg.course_id = c.uid \
+AND uig.user_id = $1))",
+                )
+                .bind(s_user.user_id)
+                .bind(id).fetch_optional(&state.db).await {
+                    Ok(Some(c)) => return Json(c).into_response(),
+                    Ok(None) => return StatusCode::UNAUTHORIZED.into_response(),
+                    Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                }
+                
+            },
             Ok(true) => {}
         };
 
@@ -244,7 +303,21 @@ AND (cp.permission & $2::int::bit(16)) <> B'0'::bit(16)",
         .await
         {
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(false) => {
+                match sqlx::query_as::<_, (String, String)>(
+                    "SELECT u.firstname, u.lastname FROM \"user\" AS u JOIN course_lecturer cl ON cl.user_id = u.id \
+WHERE cl.course_id = $2 \
+AND (EXISTS(SELECT 1 FROM course_user cu WHERE cu.course_id = $1 AND cu.user_id = $1) \
+OR EXISTS(SELECT 1 FROM course_group cg JOIN user_in_group uig ON uig.group_id = cg.group_id \
+WHERE cg.course_id = $2 \
+AND uig.user_id = $1))",
+                )
+                .bind(s_user.user_id)
+                .bind(id).fetch_all(&state.db).await {
+                    Ok(n) => return Json(n.iter().map(|v| {format!("{} {}", v.0, v.1)}).collect::<Vec<String>>()).into_response(),
+                    Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                }
+            },
             Ok(true) => {}
         }
 
@@ -352,7 +425,20 @@ AND (cp.permission & $2::int::bit(16)) <> B'0'::bit(16)",
         .await
         {
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(false) => {
+                match sqlx::query_scalar::<_, String>(
+                    "SELECT g.name FROM \"group\" AS g JOIN course_group cg ON cg.group_id = g.id \
+WHERE cg.course_id = $2 \
+AND (EXISTS(SELECT 1 FROM course_user cu WHERE cu.course_id = $2 AND cu.user_id = $1) \
+OR EXISTS(SELECT 1 FROM course_group cg2 JOIN user_in_group uig ON uig.group_id = cg2.group_id \
+WHERE cg2.course_id = $2 AND uig.user_id = $1))",
+                )
+                .bind(s_user.user_id)
+                .bind(id).fetch_all(&state.db).await {
+                    Ok(n) => return Json(n).into_response(),
+                    Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                }
+            },
             Ok(true) => {}
         }
 
@@ -467,7 +553,7 @@ AND (cp.permission & $2::int::bit(16)) <> B'0'::bit(16)",
         match sqlx::query_as::<_, Profile>(
             "SELECT u.id, u.firstname, u.lastname, u.title, u.email FROM \"user\" u \
 LEFT JOIN course_user cu ON cu.user_id = u.id \
-WHERE cu.course_id = $1
+WHERE cu.course_id = $1 \
 OR u.id IN (SELECT user_id FROM user_in_group uig JOIN course_group cg ON cg.group_id = uig.group_id WHERE cg.course_id = $1)",
         )
         .bind(id)

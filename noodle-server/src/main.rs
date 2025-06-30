@@ -163,6 +163,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get(resources::course::http::get_all).post(resources::course::http::create),
         )
         .route(
+            "/courses/manage",
+            get(resources::course::http::get_all_management),
+        )
+        .route(
             "/course/{id}",
             get(resources::course::http::get_by_uid)
                 .put(resources::course::http::update)

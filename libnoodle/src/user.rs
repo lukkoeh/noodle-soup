@@ -147,9 +147,10 @@ pub mod http {
                         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
                     };
 
-                    let result =sqlx::query("INSERT INTO \"user\" (firstname, lastname, email, password) VALUES ($1, $2, $3, $4)")
+                    let result = sqlx::query("INSERT INTO \"user\" (firstname, lastname, title, email, password) VALUES ($1, $2, $3, $4, $5)")
                     .bind(&user.firstname)
                     .bind(&user.lastname)
+                    .bind(&user.title)
                     .bind(&user.email)
                     .bind(pw.unwrap())
                     .execute(&state.db).await;
