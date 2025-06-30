@@ -23,15 +23,15 @@ export async function fetchSelf() {
   return Response(r.status, null)
 }
 
-export async function createUser(firstname, lastname, email, password) {
+export async function createUser(firstname, lastname, title, email, password) {
   const r = await fetch(`${baseUrl}/user`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ firstname, lastname, email, password })
+    body: JSON.stringify({ firstname, lastname, title, email, password })
   })
-  if (r.status === 200)
+  if (r.status === 201)
     return Response(r.status, await r.json())
 
   return Response(r.status, null)
@@ -449,7 +449,7 @@ export async function deleteCourse(id) {
 }
 
 export async function fetchEditableCourses() {
-  const r = await fetch(`${baseUrl}/courses?edit=true`)
+  const r = await fetch(`${baseUrl}/courses/manage?edit=true`)
   if (r.status === 200)
     return Response(r.status, await r.json())
 

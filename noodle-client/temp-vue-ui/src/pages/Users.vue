@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { fetchAllUsers } from '@/utils/api.js'
+import { createUser, fetchAllUsers } from '@/utils/api.js'
 import UserList from '@/components/UserList.vue'
 import Button from '@/components/Button.vue'
 import Popup from '@/components/Popup.vue'
@@ -20,10 +20,16 @@ onMounted(async () => {
 function handleSelectionChange(data) {
     console.log('Ausgewählte Benutzer:', data.selectedUsers)
 }
-function handleCreateUser(createUser){
 
-    console.log(createUser)
-    newUser.value = {}
+async function handleCreateUser(user){
+    const pw = "DefaultPassword!123";
+    const ru = await createUser(user.firstname, user.lastname, user.title, user.email, pw)
+    console.log(pw)
+    if (ru.status === 201) {
+        loadAllUsers()
+        newUser.value = {}
+        showAddUserModal.value = false
+    }
 }
 function handleEditUser(user) {
     console.log('Bearbeite Benutzer:', user)
