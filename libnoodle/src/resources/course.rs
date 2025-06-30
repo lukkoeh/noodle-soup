@@ -5,6 +5,7 @@ use sqlx::FromRow;
 #[serde(rename_all = "camelCase")]
 pub struct Course {
     #[sqlx(rename = "uid")]
+    #[serde(rename = "uid")]
     pub course_id: i64,
     pub name: String,
     pub shortname: String,
@@ -361,7 +362,7 @@ AND (cp.permission & $2::int::bit(16)) <> B'0'::bit(16)",
             .await
         {
             Ok(n) => Json(n).into_response(),
-            Err(e) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
     }
 
@@ -543,10 +544,9 @@ array_fill($2, ARRAY[array_length($1::int8[], 1)]))",
         };
 
         match sqlx::query(
-            "DELETE FROM course_permissions WHERE course_id = $1 AND permission = $2::int::bit(16)",
+            "DELETE FROM course_user WHERE course_id = $1",
         )
         .bind(course_id)
-        .bind(Operations::READ)
         .execute(&mut *tx)
         .await
         {
@@ -569,6 +569,39 @@ array_fill($2::int::bit(16), ARRAY[array_length($1::int8[], 1)]))",
                 Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
             },
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    pub async fn delete_user(
+        auth_session: AuthSession<auth::Backend>,
+        UrlPath((course_id, user_id)): UrlPath<(i64, i64)>,
+        State(state): State<crate::AppState>,
+    ) -> StatusCode {
+        let s_user = auth_session.user.unwrap();
+        match auth::user_has_permissions_id(
+            resources::Type::Course,
+            &course_id,
+            Operations::UPDATE,
+            s_user.user_id,
+            &state.db,
+        )
+        .await
+        {
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Ok(true) => {}
+        }
+
+        match sqlx::query(
+            "DELETE FROM course_user WHERE course_id = $1 AND user_id = $2",
+        )
+        .bind(course_id)
+        .bind(user_id)
+        .execute(&state.db)
+        .await
+        {
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(_) => StatusCode::OK
         }
     }
 }

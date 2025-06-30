@@ -493,6 +493,14 @@ export async function addUsersToCourse(id, userIds) {
   return r.status
 }
 
+export async function removeUserFromCourse(id, userId) {
+  const r = await fetch(`${baseUrl}/course/${id}/users/${userId}`, {
+    method: "DELETE",
+  })
+
+  return r.status
+}
+
 export async function fetchSectionsForCourse(id) {
   const r = await fetch(`${baseUrl}/course/${id}/sections`)
   if (r.status === 200)

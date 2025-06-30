@@ -1,4 +1,4 @@
-use axum::routing::post;
+use axum::routing::{delete, post};
 use axum::{Router, routing::get};
 use axum_login::tower_sessions::{ExpiredDeletion, SessionManagerLayer};
 use axum_login::{AuthManagerLayerBuilder, login_required};
@@ -185,6 +185,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get(resources::course::http::get_users)
                 .post(resources::course::http::add_users)
                 .put(resources::course::http::set_users),
+        )
+        .route(
+            "/course/{courseId}/users/{userId}",
+            delete(resources::course::http::delete_user),
         )
         .route(
             "/course/{courseId}/sections",
