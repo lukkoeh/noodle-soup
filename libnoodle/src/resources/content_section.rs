@@ -89,7 +89,7 @@ pub mod http {
             .await
         {
             Ok(sections) => Json(sections).into_response(),
-            Err(e) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
     }
 
@@ -351,10 +351,6 @@ pub mod http {
             Ok(true) => {}
         };
 
-        // sanity checks
-        if elem.section_id != section_id {
-            return StatusCode::BAD_REQUEST.into_response();
-        }
         match sqlx::query_scalar::<_, i32>(
             "SELECT 1 FROM content_section WHERE uid=$1 AND course_id=$2",
         )

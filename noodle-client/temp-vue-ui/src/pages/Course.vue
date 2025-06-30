@@ -1,4 +1,3 @@
-
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import ToggleInput from '@/components/ToggleInput.vue'
@@ -7,7 +6,7 @@ import CourseElement from '@/components/CourseElement.vue'
 import { availableElements } from '@/components/CourseElement.vue'
 import Button from '@/components/Button.vue'
 import Icon from '@/components/Icon.vue'
-import { fetchContentForSection, fetchCourse, fetchSectionsForCourse } from '@/utils/api'
+import { createContentForSection, createSectionForCourse, editContentForSection, editSectionForCourse, fetchContentForSection, fetchCourse, fetchSectionsForCourse } from '@/utils/api'
 
 // enthält die ID des aktiven Kurses aus der URL
 const route = useRoute()
@@ -21,7 +20,7 @@ const hasEditPermission = ref(true)
 const showAddElementMenu = ref(false)
 
 
-const Sections = ref([/*
+const Sections = ref([
   {
     "sectionId": 1,
     "parentCourseId": 123,
@@ -29,21 +28,28 @@ const Sections = ref([/*
     "content": [{
       "uid": 456,
       "courseId": 123,
+      contentId: null,
       "parentSectionId": 1,
       "type": "markdown",
       "content": "# This is Markdown\n- I am a list Item\n- mee too",
       "files": [
         {
-          "targetUid": 789sectionId
+          "targetUid": 789
         }
       ]
     },
     {
       "uid": 457,
       "courseId": 123,
+      contentId: null,
       "parentSectionId": 1,
       "type": "markdown",
-      "content": "I am some Text",
+      "content": [
+        {
+          contentId: null,
+          content: "I am some text"
+        }
+      ],
       "files": [
         {
           "targetUid": 789
@@ -56,18 +62,23 @@ const Sections = ref([/*
     "parentCourseId": 123,
     "headline": "Section 2", 
     "content": [{
-      "uid": 456,
+      "contentId": 456,
       "courseId": 123,
       "parentSectionId": 1,
       "type": "markdown",
-      "content": "base64encodedcontent",
+      "content": [
+        {
+          contentId: null,
+          content: "b64"
+        }
+      ],
       "files": [
         {
           "targetUid": 789
         }
       ]
     }]
-  }*/
+  }
 ])
 
 onMounted(async () => {
@@ -96,7 +107,7 @@ onMounted(async () => {
 const handleAddSection = (addAtIndex) => {
   //Todo get new sectionId from server
   const emptySection = {
-  "sectionId": 1,
+  "sectionId": null,
   "parentCourseId": courseId,
   "headline": "New Section",
   "content": [],
@@ -107,11 +118,13 @@ const handleAddSection = (addAtIndex) => {
   console.log('NewSection: ', newSections)
   Sections.value = newSections;
 }
+
 const handleAddElement = (elementType, addAtIndex, sectIndex, parentSectionId) => {
   //Todo getnew uid from server
   const newElement = {
       "courseId": courseId,
       "parentSectionId": parentSectionId,
+      contentId: null,
       "type": elementType,
       "content": "",
   };
@@ -121,11 +134,48 @@ const handleAddElement = (elementType, addAtIndex, sectIndex, parentSectionId) =
 
   Sections.value[sectIndex].content = newElements;
 }
+
 const handleElementUpdate = () => {
 
 }
-const handleSave = () => {
 
+const handleSave = async () => {
+  let success = true
+  //TODO: delete elements, bundle requests
+  for (let i = 0; i < Sections.value.length; i++) {
+    if (Sections.value[i].sectionId !== null) {
+      const rs = await editSectionForCourse(courseId, Sections.value[i].sectionId, Sections.value[i].headline, i)
+      if (rs.status !== 200)
+        success = false
+  
+    } else {
+      const rs = await createSectionForCourse(courseId, Sections.value[i].headline, i)
+      if (rs.status === 200)
+        Sections.value[i].sectionId = rs.body.sectionId
+      else
+        success = false
+    }
+    //TODO: delete elements
+    for (let j = 0; j < Sections.value[i].content.length; j++) {
+      if (Sections.value[i].content[j].contentId !== null) {
+        console.log(Sections.value[i].content[j])
+        const rs = await editContentForSection(courseId, Sections.value[i].sectionId, Sections.value[i].content[j].contentId, Sections.value[i].content[j].content, j)
+        if (rs.status !== 200)
+          success = false
+      } else {
+        const rs = await createContentForSection(courseId, Sections.value[i].sectionId, Sections.value[i].content[j].content, j)
+        if (rs.status === 200)
+          Sections.value[i].content[j].contentId = rs.body.contentId
+        else
+          success = false
+      }
+    }
+  }
+
+  if (success)
+    alert("Course was saved.")
+  else
+    alert("Course couldn't be saved.")
 }
 </script>
 

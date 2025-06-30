@@ -438,7 +438,6 @@ export async function editCourse(id, course) {
     return Response(r.status, await r.json())
 
   return Response(r.status, null)
-  
 }
 
 export async function deleteCourse(id) {
@@ -509,8 +508,73 @@ export async function fetchSectionsForCourse(id) {
   return Response(r.status, null)
 }
 
+export async function createSectionForCourse(id, headline, orderIndex) {
+  const r = await fetch(`${baseUrl}/course/${id}/sections`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      headline, orderIndex
+    })
+  })
+
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+}
+
+export async function editSectionForCourse(courseId, sectionId, headline, orderIndex) {
+  const r = await fetch(`${baseUrl}/course/${courseId}/section/${sectionId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ headline, orderIndex })
+  })
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+}
+
 export async function fetchContentForSection(courseId, sectionId) {
   const r = await fetch(`${baseUrl}/course/${courseId}/section/${sectionId}/content`)
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+}
+
+export async function createContentForSection(courseId, sectionId, content, orderIndex) {
+  const r = await fetch(`${baseUrl}/course/${courseId}/section/${sectionId}/content`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      type: 'markdown', content, orderIndex
+    })
+  })
+
+  if (r.status === 200)
+    return Response(r.status, await r.json())
+
+  return Response(r.status, null)
+}
+
+export async function editContentForSection(courseId, sectionId, contentId, content, orderIndex) {
+  const r = await fetch(`${baseUrl}/course/${courseId}/section/${sectionId}/content`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      contentId, parentSectionId: sectionId, orderIndex, type: 'markdown', content
+    })
+  })
+
   if (r.status === 200)
     return Response(r.status, await r.json())
 
