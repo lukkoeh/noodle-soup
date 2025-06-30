@@ -4,6 +4,7 @@ import { ref, computed, onMounted } from 'vue'
 import ToggleInput from '@/components/ToggleInput.vue'
 import { useRoute } from 'vue-router'
 import CourseElement from '@/components/CourseElement.vue'
+import { availableElements } from '@/components/CourseElement.vue'
 import Button from '@/components/Button.vue'
 import Icon from '@/components/Icon.vue'
 import { fetchContentForSection, fetchCourse, fetchSectionsForCourse } from '@/utils/api'
@@ -18,7 +19,14 @@ const editMode = ref(false)
 const hasEditPermission = ref(true)
 
 const showAddElementMenu = ref(false)
-const Sections = ref([
+
+const emptySection = {
+  "parentCourseId": courseId,
+    "headline": "Section 1",
+    "content": []
+  }
+
+const Sections = ref([/*
   {
     "sectionId": 1,
     "parentCourseId": 123,
@@ -64,7 +72,7 @@ const Sections = ref([
         }
       ]
     }]
-  }
+  }*/
 ])
 
 onMounted(async () => {
@@ -89,22 +97,17 @@ onMounted(async () => {
   Sections.value = sections
 })
 
-const availableElements = ref([
-  { type: 'markdown', label: 'Markdown', icon: 'markdown'},
-  { type: 'link', label: 'Link', icon: 'link' },
-  { type: 'media', label: 'Media', icon: 'images' },
-  { type: 'quiz', label: 'Quiz', icon: 'question' }
-])
 
-const duplicateElement = (type) => {
-  console.log(`Duplicating ${type} element`)
+const handleAddSection = (addAtIndex) => {
+  console.log('Section: ', addAtIndex)
+  const newSections = addAtIndex == 0 ? [emptySection] : [...Sections.value.slice(0, addAtIndex), emptySection, ...Sections.value.slice(addAtIndex)]; 
+  console.log('NewSection: ', newSections)
+  Sections.value = newSections;
 }
+const handleAddElement = (elementType, addAtIndex, sectionIndex) => {
+  const newElements = addAtIndex == 0 ? [emptySection] : [...Sections.value.slice(0, addAtIndex), emptySection, ...Sections.value.slice(addAtIndex)];
 
-const addSection = () => {
-
-}
-const handleAddElement = () => {
-  showAddElementMenu.value = false
+  Sections.value[sectionIndex] = newElements;
 }
 const handleElementUpdate = () => {
 
@@ -151,12 +154,12 @@ const handleSave = () => {
         </div>
         <div
         class="flex flex-col gap-6 bg-input dark:bg-widget p-6 rounded-3xl h-max"
-        v-for="(section, index) in Sections">
+        v-for="(section, sectionIndex) in Sections">
           <h1
           class="font-bold text-2xl"
           >{{ section.headline }}</h1>
           <CourseElement
-          v-for="element in section.content"
+          v-for="(element, elemIndex) in section.content"
           :element="element"
           :editMode="editMode"
           @update="() => handleElementUpdate(element.uid)"
@@ -168,15 +171,28 @@ const handleSave = () => {
             <div
             class="absolute left-1/2 -translate-x-1/2 flex gap-4">
                 <Button
+              v-for="addElement in availableElements"
+              type="secondary"
+              class="bg-widget"
+              @click="() => handleAddElement(addElement.type, (elemIndex + 1))"
+              ><Icon :type="addElement.icon"></Icon> {{ addElement.label }}</Button>
+            </div>
+          </div>
+          </CourseElement>
+          <div
+            v-if="(editMode == true && section.content.length == 0)"
+            class="relative h-6 flex items-center">
+            <hr class="border-accent grow"/>
+            <div
+            class="absolute left-1/2 -translate-x-1/2 flex gap-4">
+                <Button
               v-for="element in availableElements"
               type="secondary"
               class="bg-widget"
-              @click="() => handleAddElement(element.type)"
+              @click="() => handleAddElement(element.type, 0, sectionIndex)"
               ><Icon :type="element.icon"></Icon> {{ element.label }}</Button>
             </div>
-            
           </div>
-          </CourseElement>
           <div
           v-if="editMode == true"
           class="relative h-6 flex items-center">
@@ -185,10 +201,21 @@ const handleSave = () => {
             type="secondary"
             size="small"
             class="absolute left-1/2 -translate-x-1/2 bg-widget"
-            @click="() => addSection()"
+            @click="() => handleAddSection(sectionIndex + 1)"
             ><Icon type="plus"></Icon> Add Section</Button>
           </div>
         </div>
+        <div
+          v-if="(editMode == true && Sections.length == 0)"
+          class="relative h-6 flex items-center">
+            <hr class="border-accent grow"/>
+            <Button
+            type="secondary"
+            size="small"
+            class="absolute left-1/2 -translate-x-1/2 bg-widget"
+            @click="() => handleAddSection(0)"
+            ><Icon type="plus"></Icon> Add Section</Button>
+          </div>
       </div>
      </div>
     
