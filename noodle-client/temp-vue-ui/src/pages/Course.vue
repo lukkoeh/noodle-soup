@@ -8,6 +8,7 @@ import { availableElements } from '@/components/CourseElement.vue'
 import Button from '@/components/Button.vue'
 import Icon from '@/components/Icon.vue'
 import { fetchContentForSection, fetchCourse, fetchSectionsForCourse } from '@/utils/api'
+import LineInput from '@/components/LineInput.vue'
 
 // enthält die ID des aktiven Kurses aus der URL
 const route = useRoute()
@@ -135,6 +136,7 @@ const handleSave = () => {
     <!-- Inhalts übersicht -->
     <div class="w-64 h-full border-input dark:border-widget border-r-2 pb-5 overflow-y-auto al">
       <h2
+      v-if="!editMode"
       class="pb-4 text-2xl"
       >{{ courseTitle }}</h2>
       <div
@@ -151,7 +153,14 @@ const handleSave = () => {
       <div class="flex flex-col px-4 py-2 gap-6  grow">
         <!-- Header -->
         <div class=" bg-main border-b border-misc sticky top-0 flex justify-between p-2">
-          <span class="font-semibold  text-4xl">{{ courseTitle }}
+          <span class="font-semibold  text-4xl">
+            <span
+            v-if="!editMode">
+            {{ courseTitle }}</span>
+            <LineInput
+            v-else
+            v-model="courseTitle"
+            />
             <ToggleInput
             v-if="hasEditPermission"
             v-model="editMode"
@@ -180,9 +189,16 @@ const handleSave = () => {
         v-for="(section, sectionIndex) in Sections">
         <div
         class="flex flex-col gap-6 bg-input dark:bg-widget p-6 rounded-3xl h-max">
-          <h1
+          <h2
           class="font-bold text-2xl"
-          >{{ section.headline }}</h1>
+          >
+            <span v-if="!editMode">{{ section.headline }}</span>
+            <LineInput
+            class="border-accent border"
+            v-if="editMode"
+            v-model="Sections[sectionIndex].headline"
+            />
+          </h2>
           <div
             v-if="(editMode == true)"
             class="relative h-6 flex items-center">
