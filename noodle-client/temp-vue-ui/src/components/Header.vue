@@ -6,9 +6,11 @@ import Button from './Button.vue';
 import Popup from './Popup.vue';
 import EditModal from './EditModal.vue';
 import { RouterLink } from 'vue-router';
+import ProfileModal from './ProfileModal.vue';
 
 const searchQuery = ref('')
 const showEditModal = ref(false)
+const showProfileModal = ref(false)
 
 </script>
 
@@ -50,7 +52,8 @@ const showEditModal = ref(false)
 
       <!-- User Profile Icon -->
       <Button 
-      type="simple">
+      type="simple"
+      @click="showProfileModal = true">
         <Icon
         icon="fa-user"
         icon-style="fa-regular"
@@ -64,6 +67,12 @@ const showEditModal = ref(false)
     >
       <EditModal
       @selected="showEditModal = false"/>
+    </Popup>
+    <Popup
+    :is-open="showProfileModal"
+    @close="showProfileModal = false"
+    title="Dein Profil">
+      <ProfileModal/>
     </Popup>
   </header>
 </template>

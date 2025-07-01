@@ -6,8 +6,12 @@ import CourseElement from '@/components/CourseElement.vue'
 import { availableElements } from '@/components/CourseElement.vue'
 import Button from '@/components/Button.vue'
 import Icon from '@/components/Icon.vue'
+<<<<<<< HEAD
 import { createContentForSection, createSectionForCourse, editContentForSection, editSectionForCourse, fetchContentForSection, fetchCourse, fetchSectionsForCourse } from '@/utils/api'
+=======
+import { fetchContentForSection, fetchCourse, fetchSectionsForCourse } from '@/utils/api'
 import LineInput from '@/components/LineInput.vue'
+>>>>>>> client-ui
 
 // enthält die ID des aktiven Kurses aus der URL
 const route = useRoute()
