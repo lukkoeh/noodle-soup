@@ -6,13 +6,13 @@ import CourseElement from '@/components/CourseElement.vue'
 import { availableElements } from '@/components/CourseElement.vue'
 import Button from '@/components/Button.vue'
 import Icon from '@/components/Icon.vue'
-import { createContentForSection, createSectionForCourse, editContentForSection, editSectionForCourse, fetchContentForSection, fetchCourse, fetchSectionsForCourse } from '@/utils/api'
+import { createContentForSection, createSectionForCourse, editContentForSection, editCourse, editSectionForCourse, fetchContentForSection, fetchCourse, fetchSectionsForCourse } from '@/utils/api'
 import LineInput from '@/components/LineInput.vue'
 
 // enthält die ID des aktiven Kurses aus der URL
 const route = useRoute()
 const courseId = route.params.id
-const courseTitle = ref("Kurs name")
+const currentCourse = ref({})
 
 // Reactive data
 const editMode = ref(false)
@@ -87,7 +87,7 @@ onMounted(async () => {
   if (rco.status === 401)
     window.location.href = "/login"
   if (rco.status === 200)
-    courseTitle.value = rco.body.name
+    currentCourse.value = rco.body
 
   const rcs = await fetchSectionsForCourse(courseId)
   //TODO: put these into one request eventually
@@ -143,6 +143,8 @@ const handleElementUpdate = () => {
 const handleSave = async () => {
   let success = true
   //TODO: delete elements, bundle requests
+  const rc = await editCourse(currentCourse.value.uid, currentCourse.value.name, currentCourse.value.shortname)
+  if (rc.status !== 200) success = false
   for (let i = 0; i < Sections.value.length; i++) {
     if (Sections.value[i].sectionId !== null) {
       const rs = await editSectionForCourse(courseId, Sections.value[i].sectionId, Sections.value[i].headline, i)
@@ -188,7 +190,7 @@ const handleSave = async () => {
       <h2
       v-if="!editMode"
       class="pb-4 text-2xl"
-      >{{ courseTitle }}</h2>
+      >{{ currentCourse.name }}</h2>
       <div
       v-for="section in Sections"
       >
@@ -206,10 +208,10 @@ const handleSave = async () => {
           <span class="font-semibold  text-4xl">
             <span
             v-if="!editMode">
-            {{ courseTitle }}</span>
+            {{ currentCourse.name }}</span>
             <LineInput
             v-else
-            v-model="courseTitle"
+            v-model="currentCourse.name"
             />
             <ToggleInput
             v-if="hasEditPermission"

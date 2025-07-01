@@ -20,7 +20,7 @@ const props = defineProps(
         },
     }
 )
-const visible = ref(!(props.type == 'password'));
+const visible = ref(!(props.intype == 'password'));
 const icon = ref('');
 const iconStyle = ref('');
 const type = computed(() => visible.value ? "text" : "password");

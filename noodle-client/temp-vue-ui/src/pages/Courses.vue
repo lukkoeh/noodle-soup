@@ -105,7 +105,7 @@ async function appendCourse(course) {
 }
 
 async function saveMetadata() {
-    const rc = await editCourse(selectedCourse.value.uid, selectedCourse.value)
+    const rc = await editCourse(selectedCourse.value.uid, selectedCourse.value.name, selectedCourse.value.shortname)
     if (rc.status === 200)
         console.log("gespeichert.")
 }

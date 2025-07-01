@@ -426,13 +426,13 @@ export async function createCourse(name, shortname) {
   return Response(r.status, null)
 }
 
-export async function editCourse(id, course) {
+export async function editCourse(id, name, shortname) {
   const r = await fetch(`${baseUrl}/course/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify(course)
+    body: JSON.stringify({name, shortname})
   })
   if (r.status === 200)
     return Response(r.status, await r.json())
