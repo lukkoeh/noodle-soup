@@ -16,6 +16,9 @@
 <template>
     <div class="flex items-center justify-center min-h-full">
         <div class="login-widget flex-col flex gap-2 bg-widget shadow-xl p-4 rounded-lg">
+            <h2 class="text-lg font-semibold text-normal text-center">
+                Login
+            </h2>
             <LineInput
                 placeholder="Email"
                 v-model="email"
