@@ -1,0 +1,18 @@
+import { Theme } from "./theme-struct.slint";
+
+export component TagBubble inherits Rectangle {
+    in property <string> text_content: "ON22";
+    in property <length> font_height: Theme.fs-s;
+    in property <brush> bg_color: Theme.c-ac-trans;
+    in property <brush> font_color: Theme.c-ac;
+
+    background: root.bg_color;
+    border-radius: font_height + 2 * Theme.pad-s;
+    Text {
+        horizontal-alignment: center;
+        width: parent.width + 2 * Theme.pad-s;
+        padding: Theme.pad-s;
+        color: root.font_color;
+        text: root.text_content;
+    }
+}

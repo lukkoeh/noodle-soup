@@ -1,0 +1,160 @@
+/* Headers */
+.markdown-wrapper h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 1.5rem 0 1rem 0;
+  line-height: 1.2;
+  border-bottom: 2px solid #e5e5e5;
+  padding-bottom: 0.3rem;
+}
+
+.markdown-wrapper h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 1.25rem 0 0.75rem 0;
+  line-height: 1.3;
+  border-bottom: 1px solid #e5e5e5;
+  padding-bottom: 0.2rem;
+}
+
+.markdown-wrapper h3 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 1rem 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.markdown-wrapper h4,
+.markdown-wrapper h5,
+.markdown-wrapper h6 {
+  font-size: 1rem;
+  font-weight: bold;
+  margin: 0.75rem 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+/* Paragraphs */
+.markdown-wrapper p {
+  margin: 0.75rem 0;
+  line-height: 1.6;
+  color: --txt-norm;
+}
+
+/* Lists */
+.markdown-wrapper ul,
+.markdown-wrapper ol {
+  margin: 0.75rem 0;
+  padding-left: 2rem;
+}
+
+.markdown-wrapper li {
+  margin: 0.25rem 0;
+  line-height: 1.5;
+}
+
+.markdown-wrapper ul li {
+  list-style-type: disc;
+}
+
+.markdown-wrapper ol li {
+  list-style-type: decimal;
+}
+
+/* Code */
+.markdown-wrapper code {
+  background-color: #f5f5f5;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  color: #d63384;
+}
+
+.markdown-wrapper pre {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.markdown-wrapper pre code {
+  background-color: transparent;
+  padding: 0;
+  color: #333;
+  font-size: 0.875rem;
+}
+
+/* Links */
+.markdown-wrapper a {
+  color: #0066cc;
+  text-decoration: underline;
+}
+
+.markdown-wrapper a:hover {
+  color: #004499;
+}
+
+/* Blockquotes */
+.markdown-wrapper blockquote {
+  border-left: 4px solid #ddd;
+  margin: 1rem 0;
+  padding: 0.5rem 0 0.5rem 1rem;
+  color: #666;
+  font-style: italic;
+  background-color: #f9f9f9;
+}
+
+/* Horizontal Rules */
+.markdown-wrapper hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 2rem 0;
+}
+
+/* Images */
+.markdown-wrapper img {
+  max-width: 100%;
+  height: auto;
+  margin: 0.5rem 0;
+  border-radius: 4px;
+}
+
+/* Tables */
+.markdown-wrapper table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.markdown-wrapper th,
+.markdown-wrapper td {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.markdown-wrapper th {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+
+/* Strong and Emphasis */
+.markdown-wrapper strong {
+  font-weight: bold;
+}
+
+.markdown-wrapper em {
+  font-style: italic;
+}
+
+/* First element margin reset */
+.markdown-wrapper :first-child {
+  margin-top: 0;
+}
+
+/* Last element margin reset */
+.markdown-wrapper :last-child {
+  margin-bottom: 0;
+}

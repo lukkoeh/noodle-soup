@@ -1,0 +1,43 @@
+import {Theme} from "./theme-struct.slint";
+import { IconFA } from "./fa-icon.slint";
+import { Empty } from "empty.slint";
+
+enum ButtonTypes {primary, secondary, round, simple}
+export component UiButton inherits Rectangle{
+    out property <bool> has-hover: toucharea.has-hover;
+    in property <ButtonTypes> type: primary;
+    in property <string> text: "";
+    in property <string> icon: "";
+
+    callback clicked <=> toucharea.clicked;
+
+    horizontal-stretch: 0;
+    vertical-stretch: 0;
+    border-radius: Theme.fs-m;
+    background: Theme.c-ac;
+    height: Theme.fs-m + 2 * Theme.pad-s;
+    preferred-width: 30px;
+    padding: root.type == ButtonTypes.simple ? 0px : Theme.pad-s;
+
+    HorizontalLayout {
+        padding-left: Theme.pad-m;
+        padding-right: Theme.pad-m;
+        if root.text != "":Text {
+            padding-right: 5px;
+            text: root.text;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+        }
+        if root.icon != "": IconFA {
+            vertical-alignment: center;
+            horizontal-alignment: center;
+            icon-size: Theme.fs-m;
+            icon: root.icon;
+        }
+    }
+
+    toucharea := TouchArea {
+        width: root.width;
+        height: root.height;
+    }
+}

@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+@theme {
+  --color-norm: var(--txt-norm);
+  --color-light: var(--txt-light);
+
+  --color-main: var(--main);
+  --color-widget: var(--widget);
+  --color-input: var(--input);
+
+  --color-misc: var(--c-misc-1);
+
+  --color-accent: var(--accent-hsl);
+  --color-accent-t: var(--accent-trans);
+  --color-accent-l: var(--accent-light);
+}
+
+:root {
+  color-scheme: light;
+  --txt-norm: #000;
+  /* normal text*/
+  --txt-light: #898989;
+  /*  searchfield text*/
+  --main: #FFF;
+  /* regular background*/
+  --widget: #FFF;
+  /* widget background*/
+  --input: #E0E0E0;
+  /* search and dropdown background*/
+
+  /* misc colors*/
+  --c-misc-1: #CACACA;
+  /* #CACACA Trennlinie*/
+
+  /* suposed to contain accent color and a brighter variant of color*/
+  --accent-hsl: hsl(5 100 50);
+  /* Custom color in darkmode HSL -20 L*/
+  --accent-trans: hsla(5 100 50 / 0.2);
+  /* Custom color 20% transparency*/
+  --accent-light-hsl: hsl(5 100 70);
+  /*Custom color + or - 20 HSL brightnes*/
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --txt-norm: #fff;
+    /* normal text*/
+    --txt-light: #898989;
+    /*  searchfield text*/
+    --main: #2D2D2D;
+    /* regular background*/
+    --widget: #242424;
+    /* widget background*/
+    --input: #313131;
+    /* search and dropdown background*/
+
+    /* misc colors*/
+    --c-misc-1: #494949;
+    /* #CACACA Trennlinie*/
+
+    /* suposed to contain accent color and a brighter variant of color*/
+    --accent-hsl: hsl(5 100 50);
+    /* Custom color in darkmode HSL -20 L*/
+    --accent-trans: hsl(5 100 50 / 0.2);
+    /* Custom color 20% transparency*/
+    --accent-light-hsl: hsl(5 100 30);
+    /*Custom color + or - 20 HSL brightnes*/
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--color-text);
+  background: var(--color-background);
+  transition:
+    color 0.5s,
+    background-color 0.5s;
+  line-height: 1.6;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
+    sans-serif;
+  font-size: 14px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

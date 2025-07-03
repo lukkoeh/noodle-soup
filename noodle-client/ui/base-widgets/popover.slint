@@ -1,0 +1,60 @@
+import { WindowSize } from "../base-components/global-window-size.slint";
+import {Theme} from "../base-components/theme-struct.slint";
+import { UiButton } from "../custom-widgets.slint";
+import { Empty } from "../base-components/empty.slint";
+
+export component Popover inherits PopupWindow {
+    in property <string> title: "Popup Window";
+    width <=> WindowSize.width;
+    height <=> WindowSize.height;
+    close-policy: no-auto-close;
+    padding: Theme.pad-m;
+
+    Rectangle {
+        width: root.width;
+        height: root.height;
+        background: #00000022;
+    }
+
+    Empty {
+        preferred-height: parent.height * 50%;
+        preferred-width: parent.width * 50%;
+        Rectangle {
+            background: Theme.c-bg-widget;
+            border-radius: Theme.b-rad;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+        //width: parent.width;
+        //height: parent.height;
+        VerticalLayout {
+                padding: Theme.pad-m;
+                popoverHeader := HorizontalLayout {
+                    horizontal-stretch: 0;
+                    vertical-stretch: 0;
+                    alignment: space-between;
+                    Text {
+                        horizontal-stretch: 0;
+                        font-weight: Theme.fw-b;
+                        text: title;
+                    }
+
+                    UiButton {
+                        type: simple;
+                        text: "";
+                        icon: "\u{f00d}";
+                        clicked => {
+                            root.close();
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    preferred-width: root.width * 50%;
+                    horizontal-stretch: 0;
+                    alignment: center;
+                    @children
+                }
+            }
+        }
+    }   //TODO popover Layout Reusable Popover element that adjusts its size to fit the content
+}

@@ -1,15 +1,44 @@
-use axum::routing::post;
+use axum::routing::{delete, post};
 use axum::{Router, routing::get};
 use axum_login::tower_sessions::{ExpiredDeletion, SessionManagerLayer};
 use axum_login::{AuthManagerLayerBuilder, login_required};
 use dotenv::dotenv;
 use libnoodle::AppState;
 use libnoodle::{auth, resources, user};
+use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::net::SocketAddr;
 use tokio::task::AbortHandle;
+use tower_http::cors::{Any, CorsLayer};
 use tower_sessions_sqlx_store::PostgresStore;
+
+async fn migrate_test(db_pool: &PgPool) {
+    sqlx::raw_sql("DELETE FROM \"user\"")
+        .execute(db_pool)
+        .await
+        .unwrap();
+
+    let main_user_id = sqlx::query_scalar::<_, i64>(
+        "INSERT INTO \"user\" (firstname, lastname, title, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+    )
+    .bind(&env::var("ADMIN_FIRSTNAME").unwrap())
+    .bind(&env::var("ADMIN_LASTNAME").unwrap())
+    .bind(&env::var("ADMIN_TITLE").unwrap())
+    .bind(&env::var("ADMIN_MAIL").unwrap())
+    .bind(&bcrypt::hash(&env::var("ADMIN_PASSWORD").unwrap(), bcrypt::DEFAULT_COST).unwrap())
+    .fetch_one(db_pool)
+    .await
+    .unwrap();
+
+    sqlx::raw_sql(&format!(
+        "INSERT INTO user_has_role (user_id, role_id) VALUES ('{}', (SELECT id FROM \"role\" WHERE \"role\".name = 'admin'));",
+        main_user_id
+    ))
+    .execute(db_pool)
+    .await
+    .unwrap();
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -50,21 +79,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         media_path: env::var("MEDIA_PATH").unwrap(),
     };
 
-    //for testing only
-    sqlx::raw_sql("DELETE FROM \"user\"")
-        .execute(&db_pool)
-        .await?;
-
-    //for testing only
-    sqlx::raw_sql(&format!(
-        "INSERT INTO \"user\" (firstname, lastname, email, password) VALUES ('{}', '{}', '{}', '{}');",
-        &env::var("ADMIN_FIRSTNAME").unwrap(),
-        &env::var("ADMIN_LASTNAME").unwrap(),
-        &env::var("ADMIN_MAIL").unwrap(),
-        &bcrypt::hash(&env::var("ADMIN_PASSWORD").unwrap(), bcrypt::DEFAULT_COST).unwrap()
-    ))
-    .execute(&db_pool)
-    .await?;
+    //testing only
+    migrate_test(&db_pool).await;
 
     let listener = tokio::net::TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 3000))).await?;
 
@@ -73,6 +89,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/user", get(user::http::get_self).post(user::http::create))
         .route("/user/groups", get(user::http::get_self_groups))
         .route("/user/roles", get(user::http::get_self_roles))
+        .route("/users", get(user::http::get_all))
         .route(
             "/users/{id}",
             get(user::http::get)
@@ -146,10 +163,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get(resources::course::http::get_all).post(resources::course::http::create),
         )
         .route(
+            "/courses/manage",
+            get(resources::course::http::get_all_management),
+        )
+        .route(
             "/course/{id}",
             get(resources::course::http::get_by_uid)
                 .put(resources::course::http::update)
                 .delete(resources::course::http::delete),
+        )
+        .route(
+            "/course/{courseId}/lecturers",
+            get(resources::course::http::get_lecturers)
+                .post(resources::course::http::add_lecturers)
+                .put(resources::course::http::set_lecturers),
+        )
+        .route(
+            "/course/{courseId}/groups",
+            get(resources::course::http::get_groups)
+                .post(resources::course::http::add_groups)
+                .put(resources::course::http::set_groups),
+        )
+        .route(
+            "/course/{courseId}/users",
+            get(resources::course::http::get_users)
+                .post(resources::course::http::add_users)
+                .put(resources::course::http::set_users),
+        )
+        .route(
+            "/course/{courseId}/users/{userId}",
+            delete(resources::course::http::delete_user),
         )
         .route(
             "/course/{courseId}/sections",
@@ -200,7 +243,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route_layer(login_required!(auth::Backend))
         //NOTE: potentially temporary
         .route("/login", post(auth::create_session_handler))
-        .layer(auth_layer)
+        .layer(
+            tower::ServiceBuilder::new().layer(auth_layer).layer(
+                CorsLayer::new()
+                    .allow_methods(Any)
+                    .allow_origin(Any)
+                    .allow_headers(Any),
+            ),
+        )
         .with_state(app_state);
 
     axum::serve(listener, app)

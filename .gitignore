@@ -25,3 +25,5 @@ noodle-server/target/
 
 # Add nix gitignore for direnv
 .direnv/
+
+noodle-client/temp-vue-ui/.env

@@ -79,11 +79,26 @@ pub mod http {
         .await
         {
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(false) => {
+                match sqlx::query_as::<_, ContentSection>(
+                    "SELECT uid, course_id, template_id, headline, order_index FROM content_section cs \
+WHERE course_id = $2 \
+AND (EXISTS(SELECT 1 FROM course_user cu WHERE cu.course_id = $2 AND cu.user_id = $1) \
+OR EXISTS(SELECT 1 FROM course_group cg JOIN user_in_group uig ON uig.group_id = cg.group_id \
+WHERE cg.course_id = $2 \
+AND uig.user_id = $1))",
+                )
+                .bind(s_user.user_id)
+                .bind(course_id)
+                .fetch_all(&state.db).await {
+                    Ok(c) => return Json(c).into_response(),
+                    Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                }
+            }
             Ok(true) => {}
         };
 
-        match sqlx::query_as::<_, ContentSection>("SELECT uid, course_id, headline, order_index FROM content_section WHERE course_id = $1 ORDER BY order_index")
+        match sqlx::query_as::<_, ContentSection>("SELECT uid, course_id, template_id, headline, order_index FROM content_section WHERE course_id = $1 ORDER BY order_index")
             .bind(course_id)
             .fetch_all(&state.db)
             .await
@@ -150,7 +165,25 @@ pub mod http {
         .await
         {
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(false) => {
+                match sqlx::query_as::<_, ContentSection>(
+                    "SELECT uid, course_id, template_id, headline, order_index FROM content_section cs \
+WHERE course_id = $2 AND uid = $3 \
+AND (EXISTS(SELECT 1 FROM course_user cu WHERE cu.course_id = $2 AND cu.user_id = $1) \
+OR EXISTS(SELECT 1 FROM course_group cg JOIN user_in_group uig ON uig.group_id = cg.group_id \
+WHERE cg.course_id = $2 \
+AND uig.user_id = $1)) \
+ORDER BY order_index",
+                )
+                .bind(s_user.user_id)
+                .bind(course_id)
+                .bind(section_id)
+                .fetch_optional(&state.db).await {
+                    Ok(Some(c)) => return Json(c).into_response(),
+                    Ok(None) => return StatusCode::NOT_FOUND.into_response(),
+                    Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                }
+            }
             Ok(true) => {}
         };
 
@@ -264,7 +297,23 @@ pub mod http {
         .await
         {
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-            Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
+            Ok(false) => {
+                match sqlx::query_as::<_, ContentElement>(
+                    "SELECT uid, section_id, order_index, type, content FROM content_element WHERE section_id = $3 AND section_id IN (SELECT uid FROM content_section WHERE course_id = $2)\
+AND (EXISTS(SELECT 1 FROM course_user cu WHERE cu.course_id = $2 AND cu.user_id = $1) \
+OR EXISTS(SELECT 1 FROM course_group cg JOIN user_in_group uig ON uig.group_id = cg.group_id \
+WHERE cg.course_id = $2 \
+AND uig.user_id = $1)) \
+ORDER BY order_index",
+                )
+                .bind(s_user.user_id)
+                .bind(course_id)
+                .bind(section_id)
+                .fetch_all(&state.db).await {
+                    Ok(c) => return Json(c).into_response(),
+                    Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                }
+            },
             Ok(true) => {}
         };
 
@@ -351,10 +400,6 @@ pub mod http {
             Ok(true) => {}
         };
 
-        // sanity checks
-        if elem.section_id != section_id {
-            return StatusCode::BAD_REQUEST.into_response();
-        }
         match sqlx::query_scalar::<_, i32>(
             "SELECT 1 FROM content_section WHERE uid=$1 AND course_id=$2",
         )

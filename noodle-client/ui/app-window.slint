@@ -1,17 +1,59 @@
-import { Button, VerticalBox } from "std-widgets.slint";
+import { Button } from "std-widgets.slint";
+import {UiButton} from "./custom-widgets.slint";
+import { Theme } from "base-components/theme-struct.slint";
+import {WindowSize} from "base-components/global-window-size.slint";
+import { Popover } from "base-widgets/popover.slint";
+import { Empty } from "base-components/empty.slint";
+
+export global CurrentView { }
 
 export component AppWindow inherits Window {
-    in-out property <int> counter: 42;
-    callback request-increase-value();
-    VerticalBox {
-        Text {
-            text: "Counter: \{root.counter}";
-        }
 
-        Button {
-            text: "Increase value";
-            clicked => {
-                root.request-increase-value();
+    callback on_resize(new_width: length, new_height: length);
+
+    min-width: 400px;
+    min-height: 300px;
+    max-height: 1080px;
+
+    default-font-family: "Arial";
+    default-font-weight: Theme.fw-m;
+    default-font-size: Theme.fs-m;
+
+    title: "Noodle-Soup";
+    icon: @image-url("../../noodle-soup.png");
+    Empty {
+            horizontal-stretch: 1;
+            vertical-stretch: 1;
+            preferred-height: 400px;
+            UiButton {
+                horizontal-stretch: 0;
+                clicked => {
+                    popover.show();
+                }
+                text: self.has-hover ? "has hover" : "hover me";
+            }
+
+            popover := Popover {
+                Text {
+                    text: "hello i am text";
+                }
+            }
+    }
+    // Timer for custom on resize implementation
+    Timer {
+        // Detect size changes
+        private property <length> previous_width: 0px;
+        private property <length> previous_height: 0px;
+        interval: 100ms;
+        running: true;
+
+        triggered() => {
+            if (root.width != self.previous_width || root.height != self.previous_height) {
+                root.on_resize(root.width, root.height);
+                self.previous_width = root.width;
+                self.previous_height = root.height;
+                WindowSize.height = root.height;
+                WindowSize.width = root.width;
             }
         }
     }

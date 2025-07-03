@@ -18,6 +18,12 @@ DROP TABLE IF EXISTS "user" CASCADE;
 
 DROP TYPE IF EXISTS "group_kind" CASCADE;
 
+DROP TABLE IF EXISTS "course_lecturer" CASCADE;
+
+DROP TABLE IF EXISTS "course_group" CASCADE;
+
+DROP TABLE IF EXISTS "course_user" CASCADE;
+
 DROP TABLE IF EXISTS "course" CASCADE;
 
 DROP TABLE IF EXISTS "content_section" CASCADE;
@@ -38,6 +44,7 @@ CREATE TABLE IF NOT EXISTS "user" (
     "id" BIGSERIAL PRIMARY KEY,
     "firstname" VARCHAR(255),
     "lastname" VARCHAR(255),
+    "title" VARCHAR(255),
     "email" VARCHAR(255) UNIQUE,
     "password" CHARACTER(60)
 );
@@ -54,6 +61,7 @@ CREATE TABLE IF NOT EXISTS "group" (
     "id" BIGSERIAL PRIMARY KEY,
     "kind" "group_kind",
     "name" VARCHAR(255) UNIQUE,
+    "shortname" VARCHAR(128) UNIQUE,
     "parent" BIGINT REFERENCES "group" (id) ON DELETE SET NULL
 );
 
@@ -110,7 +118,23 @@ CREATE TABLE IF NOT EXISTS "file" (
 
 CREATE TABLE IF NOT EXISTS "course" (
     "uid" BIGSERIAL PRIMARY KEY,
-    "name" VARCHAR(255)
+    "name" VARCHAR(255),
+    "shortname" VARCHAR(128)
+);
+
+CREATE TABLE IF NOT EXISTS "course_lecturer" (
+    "course_id" BIGINT NOT NULL REFERENCES "course" ON DELETE CASCADE,
+    "user_id" BIGINT NOT NULL REFERENCES "user" ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "course_group" (
+    "course_id" BIGINT NOT NULL REFERENCES "course" ON DELETE CASCADE,
+    "group_id" BIGINT NOT NULL REFERENCES "group" ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "course_user" (
+    "course_id" BIGINT NOT NULL REFERENCES "course" ON DELETE CASCADE,
+    "user_id" BIGINT NOT NULL REFERENCES "user" ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "template" (

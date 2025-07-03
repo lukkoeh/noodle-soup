@@ -11,6 +11,12 @@ pub struct Permission {
     pub(super) ids: Option<Vec<String>>,
 }
 
+#[derive(Deserialize)]
+pub struct PermissionQueryParam {
+    pub edit: Option<bool>,
+    pub view: Option<bool>,
+}
+
 #[derive(Serialize, Deserialize, sqlx::Type, Hash, PartialEq, Eq, Clone, Copy)]
 #[sqlx(transparent)]
 #[serde(transparent)]
@@ -90,7 +96,7 @@ impl RoleRow {
 JOIN user_has_role ON role_id = r.id \
 WHERE EXISTS (\
 SELECT 1 FROM role_permissions rp \
-WHERE rp.resource_id = r.id
+WHERE (rp.resource_id = r.id OR rp.resource_id IS NULL) \
 AND (rp.permission & $3::int::bit(16)) <> B'0'::bit(16) \
 AND (rp.user_id = $2 OR rp.role_id IN (SELECT role_id FROM user_has_role WHERE user_id = $2)))",
         )
@@ -172,6 +178,7 @@ pub enum GroupKind {
 pub struct Group {
     group_id: i64,
     name: String,
+    shortname: String,
     kind: GroupKind,
     #[serde(skip_serializing_if = "Option::is_none")]
     parent: Option<Box<Group>>,
@@ -183,6 +190,7 @@ pub struct GroupRow {
     #[sqlx(rename = "id")]
     group_id: i64,
     name: String,
+    shortname: String,
     kind: GroupKind,
     parent: Option<i64>,
 }
@@ -194,11 +202,11 @@ impl GroupRow {
         target_user_id: i64,
     ) -> Result<Vec<Self>, sqlx::Error> {
         match sqlx::query_as::<_, GroupRow>(
-            "SELECT g.id, g.\"name\", g.kind, g.parent FROM \"group\" g \
+            "SELECT g.id, g.\"name\", g.shortname, g.kind, g.parent FROM \"group\" g \
 JOIN user_in_group uig ON uig.group_id = g.id \
 WHERE EXISTS (\
 SELECT 1 FROM group_permissions gp \
-WHERE gp.resource_id = g.id \
+WHERE (gp.resource_id = g.id OR gp.resource_id IS NULL) \
 AND (gp.permission & $3::int::bit(16)) <> B'0'::bit(16) \
 AND (gp.user_id = $2 OR gp.role_id IN (SELECT role_id FROM user_has_role WHERE user_id = $2)))",
         )
@@ -216,6 +224,7 @@ AND (gp.user_id = $2 OR gp.role_id IN (SELECT role_id FROM user_has_role WHERE u
     pub async fn create_in_db(
         db: &PgPool,
         name: &str,
+        shortname: &str,
         kind: &GroupKind,
         parent: Option<i64>,
         user_id: i64,
@@ -227,9 +236,10 @@ AND (gp.user_id = $2 OR gp.role_id IN (SELECT role_id FROM user_has_role WHERE u
         };
 
         match sqlx::query_scalar::<_, i64>(
-            "INSERT INTO \"group\"(\"name\", kind, parent) VALUES ($1, $2, $3) RETURNING id",
+            "INSERT INTO \"group\"(\"name\", shortname, kind, parent) VALUES ($1, $2, $3, $4) RETURNING id",
         )
         .bind(name)
+        .bind(shortname)
         .bind(kind)
         .bind(parent)
         .fetch_one(db)
@@ -292,6 +302,7 @@ pub fn add_users_to_roles_query<'a>()
 #[derive(Serialize, Deserialize)]
 pub struct GroupDescription {
     name: String,
+    shortname: String,
     kind: GroupKind,
     parent: Option<i64>,
 }

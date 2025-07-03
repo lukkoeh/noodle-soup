@@ -1,0 +1,13 @@
+import "../fonts/font-awesome-4.7.0/FontAwesome.otf";
+import {Theme} from "./theme-struct.slint";
+
+export component IconFA inherits Text{
+    // requires unicode string to work. like this "\u{f002}"
+    in property <string> icon: "";
+    in property <length> icon-size: Theme.fs-m;
+    padding: 0;
+    font-size: icon-size;
+    font-weight: 400;
+    font-family: "FontAwesome";
+    text: "\{icon}";
+}

@@ -69,7 +69,7 @@ impl AuthnBackend for Backend {
         &self,
         credentials: Self::Credentials,
     ) -> Result<Option<Self::User>, Self::Error> {
-        let user: Result<Option<(i64, String, String, String, String)>, _> =
+        let user: Result<Option<(i64, String, String, String, String, String)>, _> =
             sqlx::query_as("SELECT * FROM \"user\" WHERE email = $1")
                 .bind(credentials.email)
                 .fetch_optional(&self.db)
@@ -80,7 +80,7 @@ impl AuthnBackend for Backend {
         let user = user.unwrap();
         match task::spawn_blocking(|| {
             user.filter(|u| {
-                if let Ok(true) = bcrypt::verify(credentials.password, &u.4) {
+                if let Ok(true) = bcrypt::verify(credentials.password, &u.5) {
                     true
                 } else {
                     false
@@ -94,15 +94,16 @@ impl AuthnBackend for Backend {
                 user_id: u.0,
                 firstname: u.1,
                 lastname: u.2,
-                email: u.3,
-                password: u.4.into(),
+                title: u.3,
+                email: u.4,
+                password: u.5.into(),
             })),
             _ => Ok(None),
         }
     }
 
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
-        let user: Result<Option<(i64, String, String, String, String)>, _> =
+        let user: Result<Option<(i64, String, String, String, String, String)>, _> =
             sqlx::query_as("SELECT * FROM \"user\" WHERE id = $1")
                 .bind(user_id)
                 .fetch_optional(&self.db)
@@ -116,8 +117,9 @@ impl AuthnBackend for Backend {
                 user_id: u.0,
                 firstname: u.1,
                 lastname: u.2,
-                email: u.3,
-                password: u.4.into(),
+                title: u.3,
+                email: u.4,
+                password: u.5.into(),
             }))
         } else {
             Ok(None)
@@ -194,7 +196,7 @@ pub async fn user_has_permissions_all(
     db: &PgPool,
 ) -> Result<bool, sqlx::Error> {
     let table_name = resource_type.table_name();
-    match sqlx::query_scalar::<_, i64>(&format!(
+    match sqlx::query_scalar::<_, i32>(&format!(
         "SELECT 1 FROM {table_name}_permissions \
 LEFT JOIN user_has_role ON user_has_role.role_id = {table_name}_permissions.role_id \
 WHERE (user_has_role.user_id = $1 OR {table_name}_permissions.user_id = $1) \
@@ -221,7 +223,7 @@ pub async fn user_has_permissions_id<
     user_id: i64,
     db: &PgPool,
 ) -> Result<bool, sqlx::Error> {
-    match sqlx::query_scalar::<_, i64>(resource_type.permission_id_query())
+    match sqlx::query_scalar::<_, i32>(resource_type.permission_id_query())
         .bind(user_id)
         .bind(operations)
         .bind(resource_id)

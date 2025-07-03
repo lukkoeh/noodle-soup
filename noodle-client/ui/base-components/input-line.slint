@@ -1,0 +1,45 @@
+import { Theme } from "./theme-struct.slint";
+import {IconFA} from "./fa-icon.slint";
+import {UiButton} from "./ui-button.slint";
+export component InputLine inherits Rectangle{
+
+    in-out property <string> input_text: "";
+    in property <string> placeholder: "";
+    in property <string> icon: "";
+    in property <length> font_size: Theme.fs-m;
+
+    callback input-action();
+
+    border-radius: font_size / 2 + Theme.pad-s;
+    background: Theme.c-bg-input;
+    border-width: 0px;
+    height: font_size + 2 * Theme.pad-s;
+    min-width: 80px;
+
+    HorizontalLayout {
+        padding: Theme.pad-s;
+        padding-left: Theme.pad-s * 2;
+        padding-right: Theme.pad-s * 2;
+        alignment: space-between;
+
+        //border-width: 0px;
+        TextInput {
+            if root.input_text == "" : Text {text: root.placeholder; color: Theme.c-txt-search; padding: 0px; x: 0; height: 100%;}
+            height: 100%;
+            wrap: no-wrap;
+            vertical-alignment: center;
+            min-width: 60px; 
+            text: root.input_text;
+            accessible-placeholder-text: root.placeholder;
+            edited => {root.input_text = self.text}
+        }
+        if root.icon != "": UiButton{
+            clicked => {
+                input-action()
+            }
+            type: simple;
+            text: "";
+            icon: root.icon;
+        }
+    }
+}
