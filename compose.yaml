@@ -1,0 +1,17 @@
+services:
+  web:
+    image: noodle/http
+    build: .
+    ports:
+      - "80:80"
+  db:
+    image: noodle/db
+    build:
+      context: .
+      dockerfile: pg.Dockerfile
+    environment:
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PW}
+      - POSTGRES_DB=${PG_DB}
+    ports:
+      - "5432:5432"  # has to be the same as $PG_PORT

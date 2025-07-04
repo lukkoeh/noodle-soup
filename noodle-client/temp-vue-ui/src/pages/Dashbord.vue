@@ -8,67 +8,9 @@
     const userInfo = ref({
         firstname: 'Max'
     })
-    const courseData = ref([
-    {
-        uid: 123,
-        groups: ['ON22', 'ON22B'],
-        lecturers: ['Prof. Dr. Arnulf Mester'],
-        name: "T7 | Web Engineering und ganz viel Weiteres",
-        bookmarked: false,
-    },
-    {
-        uid: 124,
-        groups: ['ON23', 'ON23A'],
-        lecturers: ['Dr. Maria Schmidt'],
-        name: "T8 | Künstliche Intelligenz und maschinelles Lernen",
-        bookmarked: true,
-    },
-    {
-        uid: 125,
-        groups: ['ON24', 'ON24B'],
-        lecturers: ['Prof. Dr. Peter Müller'],
-        name: "T9 | Data Science für Anfänger und Fortgeschrittene",
-        bookmarked: false,
-    },
-    {
-        uid: 126,
-        groups: ['ON25', 'ON25A'],
-        lecturers: ['Prof. Dr. Jens Weber'],
-        name: "T10 | Einführung in die Blockchain-Technologie",
-        bookmarked: true,
-    },
-    {
-        uid: 127,
-        groups: ['ON26', 'ON26B'],
-        lecturers: ['Dr. Laura Fuchs'],
-        name: "T11 | Webentwicklung mit React und Redux",
-        bookmarked: false,
-    },
-    {
-        uid: 128,
-        groups: ['ON27', 'ON27A'],
-        lecturers: ['Prof. Dr. Thomas Richter'],
-        name: "T12 | Datenvisualisierung mit Python und D3.js",
-        bookmarked: true,
-    },
-    {
-        uid: 129,
-        groups: ['ON28', 'ON28B'],
-        lecturers: ['Dr. Sabine König'],
-        name: "T13 | Einführung in die Cloud-Computing-Technologien",
-        bookmarked: false,
-    }
-]
-    )
+    const courseData = ref([])
 
-    const contacts = ref([
-        {
-            userId: 6,
-            firstname: "Karl",
-            lastname: "Lama",
-            email: "karl@hats.com",
-        }
-    ]);
+    const contacts = ref([]);
 
 onMounted(async () => {
     //TODO: merge these into one request eventually, this is terrible.

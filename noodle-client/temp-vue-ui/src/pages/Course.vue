@@ -21,66 +21,7 @@ const hasEditPermission = ref(true)
 const showAddElementMenu = ref(false)
 
 
-const Sections = ref([
-  {
-    "sectionId": 1,
-    "parentCourseId": 123,
-    "headline": "Section 1",
-    "content": [{
-      "uid": 456,
-      "courseId": 123,
-      contentId: null,
-      "parentSectionId": 1,
-      "type": "markdown",
-      "content": "# This is Markdown\n- I am a list Item\n- mee too",
-      "files": [
-        {
-          "targetUid": 789
-        }
-      ]
-    },
-    {
-      "uid": 457,
-      "courseId": 123,
-      contentId: null,
-      "parentSectionId": 1,
-      "type": "markdown",
-      "content": [
-        {
-          contentId: null,
-          content: "I am some text"
-        }
-      ],
-      "files": [
-        {
-          "targetUid": 789
-        }
-      ]
-    },]
-  },
-  {
-    "sectionId": 2,
-    "parentCourseId": 123,
-    "headline": "Section 2", 
-    "content": [{
-      "contentId": 456,
-      "courseId": 123,
-      "parentSectionId": 1,
-      "type": "markdown",
-      "content": [
-        {
-          contentId: null,
-          content: "b64"
-        }
-      ],
-      "files": [
-        {
-          "targetUid": 789
-        }
-      ]
-    }]
-  }
-])
+const Sections = ref([])
 
 onMounted(async () => {
   const rco = await fetchCourse(courseId)
@@ -115,7 +56,7 @@ const handleAddSection = (addAtIndex) => {
   }
 
 
-  const newSections = [...Sections.value.slice(0, addAtIndex), emptySection, ...Sections.value.slice(addAtIndex)]; 
+  const newSections = [...Sections.value.slice(0, addAtIndex), emptySection, ...Sections.value.slice(addAtIndex)];
   console.log('NewSection: ', newSections)
   Sections.value = newSections;
 }
@@ -150,7 +91,7 @@ const handleSave = async () => {
       const rs = await editSectionForCourse(courseId, Sections.value[i].sectionId, Sections.value[i].headline, i)
       if (rs.status !== 200)
         success = false
-  
+
     } else {
       const rs = await createSectionForCourse(courseId, Sections.value[i].headline, i)
       if (rs.status === 200)
@@ -184,7 +125,7 @@ const handleSave = async () => {
 
 <template>
   <div class="flex h-full bg-main grow">
-    
+
     <!-- Inhalts übersicht -->
     <div class="w-64 h-full border-input dark:border-widget border-r-2 pb-5 overflow-y-auto al">
       <h2
@@ -287,8 +228,8 @@ const handleSave = async () => {
           </div>
           </CourseElement>
         </div>
-          
-          
+
+
           <div
           v-if="editMode == true"
           class="relative h-6 flex items-center">
@@ -301,9 +242,9 @@ const handleSave = async () => {
             ><Icon type="plus"></Icon> Add Section</Button>
           </div>
         </div>
-        
+
       </div>
      </div>
-    
+
   </div>
 </template>
