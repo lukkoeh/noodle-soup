@@ -27,3 +27,4 @@ noodle-server/target/
 .direnv/
 
 noodle-client/temp-vue-ui/.env
+.env

@@ -14,30 +14,34 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_sessions_sqlx_store::PostgresStore;
 
 async fn migrate_test(db_pool: &PgPool) {
-    sqlx::raw_sql("DELETE FROM \"user\"")
-        .execute(db_pool)
+    let exists = sqlx::query_scalar::<_, i32>("SELECT 1 FROM \"user\" WHERE email = $1")
+        .bind(&env::var("ADMIN_MAIL").unwrap())
+        .fetch_optional(db_pool)
+        .await
+        .unwrap()
+        .is_some();
+
+    if !exists {
+        let main_user_id = sqlx::query_scalar::<_, i64>(
+            "INSERT INTO \"user\" (firstname, lastname, title, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+        )
+        .bind(&env::var("ADMIN_FIRSTNAME").unwrap())
+        .bind(&env::var("ADMIN_LASTNAME").unwrap())
+        .bind(&env::var("ADMIN_TITLE").unwrap())
+        .bind(&env::var("ADMIN_MAIL").unwrap())
+        .bind(&bcrypt::hash(&env::var("ADMIN_PASSWORD").unwrap(), bcrypt::DEFAULT_COST).unwrap())
+        .fetch_one(db_pool)
         .await
         .unwrap();
 
-    let main_user_id = sqlx::query_scalar::<_, i64>(
-        "INSERT INTO \"user\" (firstname, lastname, title, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-    )
-    .bind(&env::var("ADMIN_FIRSTNAME").unwrap())
-    .bind(&env::var("ADMIN_LASTNAME").unwrap())
-    .bind(&env::var("ADMIN_TITLE").unwrap())
-    .bind(&env::var("ADMIN_MAIL").unwrap())
-    .bind(&bcrypt::hash(&env::var("ADMIN_PASSWORD").unwrap(), bcrypt::DEFAULT_COST).unwrap())
-    .fetch_one(db_pool)
-    .await
-    .unwrap();
-
-    sqlx::raw_sql(&format!(
-        "INSERT INTO user_has_role (user_id, role_id) VALUES ('{}', (SELECT id FROM \"role\" WHERE \"role\".name = 'admin'));",
-        main_user_id
-    ))
-    .execute(db_pool)
-    .await
-    .unwrap();
+        sqlx::raw_sql(&format!(
+            "INSERT INTO user_has_role (user_id, role_id) VALUES ('{}', (SELECT id FROM \"role\" WHERE \"role\".name = 'admin'))",
+            main_user_id
+        ))
+        .execute(db_pool)
+        .await
+        .unwrap();
+    }
 }
 
 #[tokio::main]
